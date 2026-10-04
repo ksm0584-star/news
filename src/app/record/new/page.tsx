@@ -9,6 +9,7 @@ import { SECTORS } from "@/lib/sectors";
 import { createRecord, findPastRecordWithThought, updateRecord } from "@/lib/storage";
 import { useRecord } from "@/lib/use-store";
 import { extractDomain, guessTitleFromUrl } from "@/lib/format";
+import { track, trackClick } from "@/lib/mixpanel";
 
 function NewRecordForm() {
   const router = useRouter();
@@ -59,6 +60,7 @@ function NewRecordForm() {
       setError("기사 URL을 입력해주세요");
       return;
     }
+    trackClick("write_fetch_meta");
     setTitle(guessTitleFromUrl(url));
     setImageUrl(undefined);
     setError(null);
@@ -82,6 +84,11 @@ function NewRecordForm() {
         imageUrl,
         thought,
       });
+      track("record_edited", {
+        record_id: editingRecord.id,
+        sector,
+        has_thought: Boolean(thought.trim()),
+      });
       const destination =
         from === "complete"
           ? `/record/complete/${editingRecord.id}`
@@ -98,6 +105,12 @@ function NewRecordForm() {
       articleId: article?.id,
       url: article ? undefined : url.trim(),
       thought,
+    });
+    track("record_saved", {
+      record_id: record.id,
+      sector: record.sector,
+      source_type: record.sourceType,
+      has_thought: Boolean(record.thought),
     });
 
     if (record.thought) {

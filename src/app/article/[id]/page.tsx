@@ -7,6 +7,7 @@ import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
 import { getArticleById } from "@/lib/mock-news";
 import { formatDate } from "@/lib/format";
+import { trackClick } from "@/lib/mixpanel";
 
 export default function ArticlePage() {
   const params = useParams<{ id: string }>();
@@ -57,6 +58,7 @@ export default function ArticlePage() {
         <div className="pointer-events-auto mx-auto max-w-[430px] border-t border-border-subtle bg-surface/95 px-5 py-3 backdrop-blur">
           <Link
             href={`/record/new?articleId=${article.id}`}
+            onClick={() => trackClick("article_write_cta", { article_id: article.id })}
             className="flex w-full items-center justify-center rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white active:bg-point-dark"
           >
             생각 기록하기

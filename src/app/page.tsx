@@ -1,13 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
 import NewsCarousel from "@/components/NewsCarousel";
 import RecordCard from "@/components/RecordCard";
 import FabButton from "@/components/FabButton";
 import EmptyState from "@/components/EmptyState";
 import { useRecords } from "@/lib/use-store";
+import { track } from "@/lib/mixpanel";
 
 export default function HomePage() {
   const records = useRecords();
+
+  useEffect(() => {
+    track("home_viewed");
+  }, []);
 
   return (
     <div className="pb-28">

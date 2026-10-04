@@ -9,6 +9,7 @@ import SectorBadge from "@/components/SectorBadge";
 import { deleteRecord, updateRecordThought } from "@/lib/storage";
 import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-store";
 import { formatDate } from "@/lib/format";
+import { track, trackClick } from "@/lib/mixpanel";
 import type { Reflection } from "@/lib/types";
 
 const RESULT_LABEL: Record<Reflection["result"], string> = {
@@ -53,6 +54,7 @@ function RecordDetailInner() {
   }
 
   function handleConfirmDelete() {
+    track("record_deleted", { record_id: record!.id, sector: record!.sector });
     deleteRecord(record!.id);
     setConfirmingDelete(false);
     router.replace("/");
@@ -87,6 +89,7 @@ function RecordDetailInner() {
           </div>
           <Link
             href={`/record/new?editId=${record.id}&from=detail`}
+            onClick={() => trackClick("detail_edit_cta", { record_id: record.id })}
             className="text-[12.5px] font-medium text-point"
           >
             정보 수정
@@ -113,6 +116,10 @@ function RecordDetailInner() {
               <button
                 type="button"
                 onClick={() => {
+                  trackClick("detail_thought_edit_toggle", {
+                    record_id: record.id,
+                    had_thought: Boolean(record.thought),
+                  });
                   setDraft(record.thought ?? "");
                   setEditing(true);
                 }}
@@ -197,7 +204,10 @@ function RecordDetailInner() {
 
         <button
           type="button"
-          onClick={() => setConfirmingDelete(true)}
+          onClick={() => {
+            trackClick("detail_delete_intent", { record_id: record.id });
+            setConfirmingDelete(true);
+          }}
           className="mt-8 w-full text-center text-[12.5px] font-medium text-red-500"
         >
           기록 삭제

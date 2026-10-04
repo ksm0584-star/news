@@ -8,6 +8,7 @@ import SectorBadge from "@/components/SectorBadge";
 import { saveReflection } from "@/lib/storage";
 import { useRecord, usePastRecordWithThought } from "@/lib/use-store";
 import { formatDate } from "@/lib/format";
+import { trackClick } from "@/lib/mixpanel";
 import type { ReflectionResult } from "@/lib/types";
 
 const OPTIONS: { value: ReflectionResult; label: string }[] = [
@@ -39,12 +40,14 @@ export default function CompareRecordPage() {
     );
   }
 
-  function goToDetail() {
+  function goToDetail(exitLabel: string) {
+    trackClick(exitLabel, { record_id: record!.id });
     router.push(`/record/${record!.id}`);
   }
 
   function handleSelect(result: ReflectionResult) {
     if (!past) return;
+    trackClick("complete_reflection_selected", { record_id: record!.id, result });
     setSelected(result);
     saveReflection({ recordId: record!.id, comparedRecordId: past.id, result });
   }
@@ -62,13 +65,14 @@ export default function CompareRecordPage() {
         <div className="px-5 py-5">
           <button
             type="button"
-            onClick={goToDetail}
+            onClick={() => goToDetail("complete_confirm")}
             className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white"
           >
             확인
           </button>
           <Link
             href={`/record/new?editId=${record.id}&from=complete`}
+            onClick={() => trackClick("complete_edit_cta", { record_id: record.id })}
             className="mt-3 block text-center text-[12.5px] font-medium text-point"
           >
             내용 수정하기
@@ -117,6 +121,7 @@ export default function CompareRecordPage() {
             </div>
             <Link
               href={`/record/new?editId=${record.id}&from=complete`}
+              onClick={() => trackClick("complete_edit_cta", { record_id: record.id })}
               className="text-[12.5px] font-medium text-point"
             >
               수정
@@ -155,7 +160,7 @@ export default function CompareRecordPage() {
         {selected ? (
           <button
             type="button"
-            onClick={goToDetail}
+            onClick={() => goToDetail("complete_done")}
             className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white"
           >
             완료
@@ -163,7 +168,7 @@ export default function CompareRecordPage() {
         ) : (
           <button
             type="button"
-            onClick={goToDetail}
+            onClick={() => goToDetail("complete_skip")}
             className="w-full rounded-xl py-3.5 text-[13.5px] font-medium text-muted"
           >
             나중에 하기
