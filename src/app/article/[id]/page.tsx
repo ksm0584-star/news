@@ -1,17 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { getArticleById } from "@/lib/mock-news";
 import { formatDate } from "@/lib/format";
 import { trackClick } from "@/lib/mixpanel";
+import { useAuth } from "@/lib/auth-context";
 
 export default function ArticlePage() {
   const params = useParams<{ id: string }>();
   const article = getArticleById(params.id);
+  const { user } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   if (!article) {
     return (
@@ -58,13 +63,23 @@ export default function ArticlePage() {
         <div className="pointer-events-auto mx-auto max-w-[430px] border-t border-border-subtle bg-surface/95 px-5 py-3 backdrop-blur">
           <Link
             href={`/record/new?articleId=${article.id}`}
-            onClick={() => trackClick("article_write_cta", { article_id: article.id })}
+            onClick={(e) => {
+              trackClick("article_write_cta", { article_id: article.id });
+              if (!user) {
+                e.preventDefault();
+                setShowLoginModal(true);
+              }
+            }}
             className="flex w-full items-center justify-center rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white active:bg-point-dark"
           >
-            생각 기록하기
+            메모 기록하기
           </Link>
         </div>
       </div>
+
+      {showLoginModal ? (
+        <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
+      ) : null}
     </div>
   );
 }

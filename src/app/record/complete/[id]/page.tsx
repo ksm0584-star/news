@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
-import { saveReflection } from "@/lib/storage";
-import { useRecord, usePastRecordWithThought } from "@/lib/use-store";
+import LoginPrompt from "@/components/LoginPrompt";
+import { saveReflection } from "@/lib/records";
+import { useRecord, usePastRecordWithThought } from "@/lib/use-records-store";
+import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
 import { trackClick } from "@/lib/mixpanel";
 import type { ReflectionResult } from "@/lib/types";
@@ -21,12 +23,25 @@ export default function CompareRecordPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
-  const record = useRecord(params.id);
-  const past = usePastRecordWithThought(record?.sector, record?.id);
+  const { user, loading: authLoading } = useAuth();
+  const { record, loading: recordLoading } = useRecord(params.id);
+  const { past, loading: pastLoading } = usePastRecordWithThought(record?.sector, record?.id);
   const [selected, setSelected] = useState<ReflectionResult | null>(null);
+  const [saving, setSaving] = useState(false);
 
   function goToHome() {
     router.replace("/");
+  }
+
+  if (authLoading || (user && (recordLoading || (record && pastLoading)))) return null;
+
+  if (!user) {
+    return (
+      <div>
+        <BackHeader title="저장 완료" onBack={goToHome} />
+        <LoginPrompt />
+      </div>
+    );
   }
 
   if (!record) {
@@ -45,11 +60,16 @@ export default function CompareRecordPage() {
     router.push(`/record/${record!.id}`);
   }
 
-  function handleSelect(result: ReflectionResult) {
-    if (!past) return;
+  async function handleSelect(result: ReflectionResult) {
+    if (!past || saving) return;
     trackClick("complete_reflection_selected", { record_id: record!.id, result });
     setSelected(result);
-    saveReflection({ recordId: record!.id, comparedRecordId: past.id, result });
+    setSaving(true);
+    try {
+      await saveReflection({ recordId: record!.id, comparedRecordId: past.id, result });
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!past) {
@@ -144,7 +164,8 @@ export default function CompareRecordPage() {
               key={option.value}
               type="button"
               onClick={() => handleSelect(option.value)}
-              className={`rounded-xl border py-3 text-[14px] font-semibold ${
+              disabled={saving}
+              className={`rounded-xl border py-3 text-[14px] font-semibold disabled:opacity-60 ${
                 selected === option.value
                   ? "border-point bg-point text-white"
                   : "border-border-subtle text-foreground/80"

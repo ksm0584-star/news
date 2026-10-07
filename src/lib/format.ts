@@ -21,25 +21,3 @@ export function extractDomain(url: string): string {
     return url;
   }
 }
-
-export function guessTitleFromUrl(url: string): string {
-  try {
-    const { pathname, hostname } = new URL(url);
-    const segments = pathname.split("/").filter(Boolean);
-    const last = segments[segments.length - 1];
-    if (!last) {
-      return `${hostname.replace(/^www\./, "")}의 기사`;
-    }
-    const cleaned = last
-      .replace(/\.(html?|aspx?|php)$/i, "")
-      .replace(/[-_]+/g, " ")
-      .replace(/\b\d{6,}\b/g, "")
-      .trim();
-    if (!cleaned) {
-      return `${hostname.replace(/^www\./, "")}의 기사`;
-    }
-    return cleaned.length > 60 ? `${cleaned.slice(0, 60)}...` : cleaned;
-  } catch {
-    return "불러온 외부 기사";
-  }
-}

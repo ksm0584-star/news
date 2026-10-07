@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import AnalyticsPageView from "@/components/AnalyticsPageView";
+import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 const notoSansKr = Noto_Sans_KR({
@@ -25,10 +26,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className={`${notoSansKr.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <AnalyticsPageView />
-        <div className="mx-auto min-h-screen w-full max-w-[430px] bg-surface shadow-sm sm:border-x sm:border-border-subtle">
-          {children}
-        </div>
+        <AuthProvider>
+          <AnalyticsPageView />
+          <div className="mx-auto min-h-screen w-full max-w-[430px] bg-surface shadow-sm sm:border-x sm:border-border-subtle">
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

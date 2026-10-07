@@ -6,8 +6,10 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
-import { deleteRecord, updateRecordThought } from "@/lib/storage";
-import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-store";
+import LoginPrompt from "@/components/LoginPrompt";
+import { deleteRecord } from "@/lib/records";
+import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-records-store";
+import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
 import type { Reflection } from "@/lib/types";
@@ -22,19 +24,30 @@ function RecordDetailInner() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const saved = searchParams.get("saved") === "1";
+  const duplicate = searchParams.get("duplicate") === "1";
 
-  const record = useRecord(params.id);
-  const reflections = useReflectionsForRecord(params.id);
-  const allRecords = useRecords();
+  const { user, loading: authLoading } = useAuth();
+  const { record, loading: recordLoading } = useRecord(params.id);
+  const { reflections } = useReflectionsForRecord(params.id);
+  const { records: allRecords } = useRecords();
   const recordsById = new Map(allRecords.map((r) => [r.id, r]));
 
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   function goToHome() {
     router.replace("/");
+  }
+
+  if (authLoading || (user && recordLoading)) return null;
+
+  if (!user) {
+    return (
+      <div>
+        <BackHeader title="기록" onBack={goToHome} />
+        <LoginPrompt />
+      </div>
+    );
   }
 
   if (!record) {
@@ -48,24 +61,24 @@ function RecordDetailInner() {
     );
   }
 
-  function handleSaveThought() {
-    updateRecordThought(record!.id, draft);
-    setEditing(false);
-  }
-
-  function handleConfirmDelete() {
+  async function handleConfirmDelete() {
+    setDeleting(true);
     track("record_deleted", { record_id: record!.id, sector: record!.sector });
-    deleteRecord(record!.id);
-    setConfirmingDelete(false);
-    router.replace("/");
+    try {
+      await deleteRecord(record!.id);
+      router.replace("/");
+    } catch {
+      setDeleting(false);
+      setConfirmingDelete(false);
+    }
   }
 
   return (
     <div className="pb-10">
       <BackHeader title="기록" onBack={goToHome} />
-      {saved ? (
-        <div className="mx-5 mt-3 rounded-xl bg-point/10 px-4 py-2.5 text-center text-[13px] font-medium text-point">
-          저장했어요
+      {duplicate ? (
+        <div className="mx-5 mt-3 rounded-xl bg-background px-4 py-2.5 text-center text-[13px] font-medium text-muted">
+          이미 스크랩한 기사예요
         </div>
       ) : null}
 
@@ -92,77 +105,30 @@ function RecordDetailInner() {
             onClick={() => trackClick("detail_edit_cta", { record_id: record.id })}
             className="text-[12.5px] font-medium text-point"
           >
-            정보 수정
+            기록 수정
           </Link>
         </div>
         <h1 className="text-[18px] font-bold leading-snug text-foreground">
           {record.title}
         </h1>
         {record.url ? (
-          <a
-            href={record.url}
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            href={`/record/${record.id}/article`}
             className="mt-1 inline-block truncate text-[12.5px] text-point"
           >
             원문 보기
-          </a>
+          </Link>
         ) : null}
 
         <div className="mt-6">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-[14px] font-bold text-foreground">내 생각</h2>
-            {!editing && (
-              <button
-                type="button"
-                onClick={() => {
-                  trackClick("detail_thought_edit_toggle", {
-                    record_id: record.id,
-                    had_thought: Boolean(record.thought),
-                  });
-                  setDraft(record.thought ?? "");
-                  setEditing(true);
-                }}
-                className="text-[12.5px] font-medium text-point"
-              >
-                {record.thought ? "수정" : "생각 추가하기"}
-              </button>
-            )}
-          </div>
-
-          {editing ? (
-            <div>
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                rows={5}
-                autoFocus
-                className="w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 text-[14px] leading-6 text-foreground outline-none focus:border-point"
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="flex-1 rounded-xl border border-border-subtle py-2.5 text-[13.5px] font-medium text-foreground/70"
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveThought}
-                  className="flex-1 rounded-xl bg-point py-2.5 text-[13.5px] font-semibold text-white"
-                >
-                  저장
-                </button>
-              </div>
-            </div>
-          ) : record.thought ? (
+          <h2 className="mb-2 text-[14px] font-bold text-foreground">나의 메모</h2>
+          {record.thought ? (
             <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 text-[14px] leading-6 text-foreground/80">
               {record.thought}
             </p>
           ) : (
             <p className="rounded-xl bg-background px-4 py-3.5 text-[13.5px] text-muted">
-              아직 작성한 생각이 없어요
+              아직 작성한 메모가 없어요
             </p>
           )}
         </div>
@@ -225,16 +191,18 @@ function RecordDetailInner() {
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(false)}
-                className="flex-1 rounded-xl border border-border-subtle py-2.5 text-[13.5px] font-medium text-foreground/70"
+                disabled={deleting}
+                className="flex-1 rounded-xl border border-border-subtle py-2.5 text-[13.5px] font-medium text-foreground/70 disabled:opacity-60"
               >
                 취소
               </button>
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="flex-1 rounded-xl bg-red-500 py-2.5 text-[13.5px] font-semibold text-white"
+                disabled={deleting}
+                className="flex-1 rounded-xl bg-red-500 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-60"
               >
-                삭제
+                {deleting ? "삭제 중..." : "삭제"}
               </button>
             </div>
           </div>
