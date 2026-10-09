@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -12,6 +12,7 @@ import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-record
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
+import { isIframeUnsupported } from "@/lib/iframe-support";
 import type { Reflection } from "@/lib/types";
 
 const RESULT_LABEL: Record<Reflection["result"], string> = {
@@ -20,6 +21,15 @@ const RESULT_LABEL: Record<Reflection["result"], string> = {
   unsure: "아직 모르겠어요",
   hard_to_compare: "비교하기 어려워요",
 };
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 function RecordDetailInner() {
   const params = useParams<{ id: string }>();
@@ -35,6 +45,26 @@ function RecordDetailInner() {
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDownOutside(event: PointerEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDownOutside);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDownOutside);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   function goToHome() {
     router.replace("/");
@@ -101,24 +131,76 @@ function RecordDetailInner() {
             <SectorBadge sector={record.sector} />
             <span className="text-xs text-muted">{formatDate(record.createdAt)}</span>
           </div>
-          <Link
-            href={`/record/new?editId=${record.id}&from=detail`}
-            onClick={() => trackClick("detail_edit_cta", { record_id: record.id })}
-            className="text-[12.5px] font-medium text-point"
-          >
-            기록 수정
-          </Link>
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label="기록 관리 메뉴"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[18px] font-bold leading-none text-foreground/70 active:bg-background"
+            >
+              ···
+            </button>
+            {menuOpen ? (
+              <div
+                role="menu"
+                aria-label="기록 관리 메뉴"
+                className="absolute right-0 top-full z-10 mt-1 w-36 overflow-hidden rounded-xl border border-border-subtle bg-surface py-1 shadow-lg"
+              >
+                <Link
+                  href={`/record/new?editId=${record.id}&from=detail`}
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    trackClick("detail_edit_cta", { record_id: record.id });
+                  }}
+                  className="block px-4 py-2.5 text-[13.5px] font-medium text-foreground active:bg-background"
+                >
+                  기록 수정
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    trackClick("detail_delete_intent", { record_id: record.id });
+                    setConfirmingDelete(true);
+                  }}
+                  className="block w-full px-4 py-2.5 text-left text-[13.5px] font-medium text-red-500 active:bg-background"
+                >
+                  기록 삭제
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
         <h1 className="text-[18px] font-bold leading-snug text-foreground">
           {record.title}
         </h1>
-        {record.url ? (
-          <Link
-            href={`/record/${record.id}/article`}
-            className="mt-1 inline-block truncate text-[12.5px] text-point"
-          >
-            원문 보기
-          </Link>
+        {record.url && isHttpUrl(record.url) ? (
+          isIframeUnsupported(record.url) ? (
+            // This domain is confirmed to block framing — the internal
+            // /article viewer can't show it either, so sending the user
+            // there would just land them on its "원문을 불러올 수 없어요"
+            // notice. Open the real article directly instead.
+            <a
+              href={record.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackClick("external_open_new_tab")}
+              className="mt-1 inline-block truncate text-[12.5px] text-point"
+            >
+              원문 보기 ↗
+            </a>
+          ) : (
+            <Link
+              href={`/record/${record.id}/article`}
+              className="mt-1 inline-block truncate text-[12.5px] text-point"
+            >
+              원문 보기
+            </Link>
+          )
         ) : null}
 
         <div className="mt-6">
@@ -179,17 +261,6 @@ function RecordDetailInner() {
             </div>
           </div>
         ) : null}
-
-        <button
-          type="button"
-          onClick={() => {
-            trackClick("detail_delete_intent", { record_id: record.id });
-            setConfirmingDelete(true);
-          }}
-          className="mt-8 w-full text-center text-[12.5px] font-medium text-red-500"
-        >
-          기록 삭제
-        </button>
       </div>
 
       {confirmingDelete ? (

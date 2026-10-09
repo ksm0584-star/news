@@ -25,6 +25,8 @@ const ExternalArticleWritePanel = forwardRef<
     error: string | null;
     submitting: boolean;
     onSubmit: () => void;
+    submitLabel?: string;
+    submitPendingLabel?: string;
   }
 >(function ExternalArticleWritePanel(
   {
@@ -43,6 +45,8 @@ const ExternalArticleWritePanel = forwardRef<
     error,
     submitting,
     onSubmit,
+    submitLabel = "저장",
+    submitPendingLabel = "저장 중...",
   },
   articleSummaryRef,
 ) {
@@ -62,7 +66,7 @@ const ExternalArticleWritePanel = forwardRef<
           disabled={submitting}
           className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
         >
-          {submitting ? "저장 중..." : "저장"}
+          {submitting ? submitPendingLabel : submitLabel}
         </button>
       }
     >

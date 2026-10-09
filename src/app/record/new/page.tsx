@@ -40,13 +40,25 @@ function NewRecordForm() {
   const [sectorNeedsReselect, setSectorNeedsReselect] = useState(false);
   const memoInputRef = useRef<HTMLTextAreaElement>(null);
 
+  // A record saved through the external-article flow has a URL — editing
+  // it now reuses that same write screen's UI (iframe/plain-page + shared
+  // form) instead of this older plain form, so it's redirected there. Only
+  // a URL-less (app-internal/scrap) record still edits here.
+  useEffect(() => {
+    if (editId && editingRecord && editingRecord.url) {
+      const query = new URLSearchParams({ editId });
+      if (from) query.set("from", from);
+      router.replace(`/record/new/external?${query.toString()}`);
+    }
+  }, [editId, editingRecord, from, router]);
+
   // Edit mode fetches the record over the network, so it can arrive a render
   // or two after mount. Apply it to the form exactly once, when it shows up.
   const [editApplied, setEditApplied] = useState(!editId);
   // Seeding local editable fields from an async-loaded record, exactly once;
   // guarded by editApplied so it can't loop or re-run on every render.
   useEffect(() => {
-    if (editId && editingRecord && !editApplied) {
+    if (editId && editingRecord && !editingRecord.url && !editApplied) {
       const resolvedSector = resolveCategoryForSector(editingRecord.sector);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(editingRecord.title);
@@ -163,7 +175,7 @@ function NewRecordForm() {
     return <LoginPrompt />;
   }
 
-  if (isEditMode && (editingRecordLoading || !editApplied)) {
+  if (isEditMode && (editingRecordLoading || editingRecord?.url || !editApplied)) {
     return (
       <div className="px-5 py-10 text-center text-sm text-muted">불러오는 중...</div>
     );

@@ -1,6 +1,15 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import {
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
+import { useVisualViewportHeight } from "@/lib/use-visual-viewport-height";
+import { useKeyboardInsetPx } from "@/lib/use-keyboard-inset";
 
 /**
  * "minimized": a slim always-visible handle bar — doesn't block reading.
@@ -12,6 +21,13 @@ import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode
  * (ExternalArticleWritePanel) and the record-detail read-only viewer
  * (RecordBottomSheet) — same minimize/peek/expand mechanics and layout,
  * different content passed as children.
+ *
+ * Focusing an input/textarea inside `children` temporarily overrides the
+ * resting height to fill the current Visual Viewport (the keyboard-aware
+ * one), and lifts the sheet's `bottom` by the keyboard's live inset — see
+ * useKeyboardInsetPx/useVisualViewportHeight below. `state` itself is never
+ * touched by this, so blurring back out simply falls back to whatever
+ * height `state` already resolves to.
  */
 export type SheetPanelState = "minimized" | "peek" | "expanded";
 
@@ -28,6 +44,12 @@ const EXPANDED_MAX_PX = 640;
 const TAP_MAX_MOVEMENT_PX = 10;
 const DRAG_DISTANCE_THRESHOLD_PX = 40;
 const FLICK_VELOCITY_PX_PER_MS = 0.5;
+
+// Cosmetic-only top gap for the keyboard-expanded height below, so the
+// sheet's rounded top corners still peek into view — not a keyboard height
+// assumption. The actual available height always comes from the live
+// Visual Viewport reading (see useKeyboardInsetPx/useVisualViewportHeight).
+const KEYBOARD_EXPANDED_TOP_GAP_PX = 24;
 
 function restingHeightPx(state: SheetPanelState, viewportHeight: number): number {
   if (state === "minimized") return MINIMIZED_PX;
@@ -73,6 +95,31 @@ export default function ArticleBottomSheet({
   // whichever state the gesture resolved to.
   const [dragHeightPx, setDragHeightPx] = useState<number | null>(null);
   const dragRef = useRef<DragTracking | null>(null);
+
+  // True while focus is somewhere inside `children` (a field in the write
+  // form) — used to temporarily expand the sheet so the keyboard can't
+  // cover whatever's focused. Cleared on blur-out; also falls back to
+  // false on its own when the sheet closes, since its content (and
+  // whatever's focused inside it) unmounts then, which blurs it first.
+  // `isOpen &&` at the point of use below is a belt-and-suspenders guard
+  // against briefly reusing a stale `true` from the sheet's previous open.
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const viewportHeight = useVisualViewportHeight();
+  const keyboardInsetPx = useKeyboardInsetPx();
+
+  function handleContentFocus(event: FocusEvent<HTMLDivElement>) {
+    setIsInputFocused(true);
+    const target = event.target as HTMLElement;
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  }
+
+  function handleContentBlur(event: FocusEvent<HTMLDivElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+      setIsInputFocused(false);
+    }
+  }
 
   function beginDrag(event: PointerEvent<HTMLElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -152,12 +199,24 @@ export default function ArticleBottomSheet({
     onPointerCancel: endDrag,
   };
 
+  const keyboardExpandedHeightPx =
+    isOpen && isInputFocused && viewportHeight
+      ? Math.max(MINIMIZED_PX, viewportHeight - KEYBOARD_EXPANDED_TOP_GAP_PX)
+      : null;
+
   return (
     <div
       role="region"
       aria-label={ariaLabel}
-      style={dragHeightPx !== null ? { height: `${dragHeightPx}px`, transition: "none" } : undefined}
-      className={`fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[430px] flex flex-col rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] transition-[height] duration-200 ease-out ${
+      style={{
+        bottom: keyboardInsetPx,
+        ...(dragHeightPx !== null
+          ? { height: `${dragHeightPx}px`, transition: "none" }
+          : keyboardExpandedHeightPx !== null
+            ? { height: `${keyboardExpandedHeightPx}px` }
+            : {}),
+      }}
+      className={`fixed inset-x-0 z-40 mx-auto w-full max-w-[430px] flex flex-col rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] transition-[height,bottom] duration-200 ease-out ${
         isOpen
           ? state === "expanded"
             ? "h-[78dvh] max-h-[640px]"
@@ -198,7 +257,13 @@ export default function ArticleBottomSheet({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-3">{children}</div>
+          <div
+            onFocus={handleContentFocus}
+            onBlur={handleContentBlur}
+            className="flex-1 overflow-y-auto overscroll-contain px-5 py-3"
+          >
+            {children}
+          </div>
 
           {footer ? <div className="border-t border-border-subtle px-5 py-3">{footer}</div> : null}
         </>

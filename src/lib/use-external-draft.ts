@@ -69,25 +69,33 @@ function removeDraft(url: string): void {
  * article URL, so switching tabs to read the original article — or the OS
  * backgrounding/evicting the app — never loses what the user typed. A
  * different article URL starts from a blank draft.
+ *
+ * `enabled` (default true): when false, this is just plain in-memory field
+ * state — no localStorage read or write at all. Used for editing an
+ * existing record: its fields are seeded from the record itself (not a
+ * draft), and the record's URL may coincidentally match some unrelated
+ * in-progress *new*-record draft, which editing must never read from or
+ * overwrite.
  */
-export function useExternalDraft(url: string) {
+export function useExternalDraft(url: string, enabled = true) {
   const [draft, setDraft] = useState<ExternalDraft>(EMPTY_DRAFT);
   const loadedRef = useRef(false);
 
   useEffect(() => {
+    if (!enabled) return;
     // Reading localStorage is a synchronous external-system read, not
     // derivable state — it can only happen after mount (no `window` during
     // SSR), so there's no render-time alternative to this effect.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraft(readDraft(url) ?? EMPTY_DRAFT);
     loadedRef.current = true;
-  }, [url]);
+  }, [url, enabled]);
 
   useEffect(() => {
-    if (!loadedRef.current) return;
+    if (!enabled || !loadedRef.current) return;
     const timeout = setTimeout(() => writeDraft(url, draft), 300);
     return () => clearTimeout(timeout);
-  }, [url, draft]);
+  }, [url, draft, enabled]);
 
   return {
     title: draft.title,
@@ -99,6 +107,7 @@ export function useExternalDraft(url: string) {
     investmentNote: draft.investmentNote,
     setInvestmentNote: (investmentNote: string) => setDraft((d) => ({ ...d, investmentNote })),
     clear: () => {
+      if (!enabled) return;
       removeDraft(url);
       setDraft(EMPTY_DRAFT);
     },
