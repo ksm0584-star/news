@@ -12,6 +12,11 @@ const INFO_POPOVER_ID = "article-open-external-info";
  * ArticleViewer's own timeout/retry UI). Deliberately a single low-key row,
  * not an error card: the goal is "read it over here instead," not "this is
  * broken."
+ *
+ * No `target="_blank"` — this opens in the *same* tab, as a normal
+ * top-level navigation, so the browser's own back button returns here
+ * (this screen's own draft/record state is what survives the round trip,
+ * not window/tab state).
  */
 export default function ArticleOpenExternalBar({ url }: { url: string }) {
   const [infoOpen, setInfoOpen] = useState(false);
@@ -32,7 +37,6 @@ export default function ArticleOpenExternalBar({ url }: { url: string }) {
     <div ref={containerRef} className="relative flex items-center gap-2 px-4 pt-4">
       <a
         href={url}
-        target="_blank"
         rel="noopener noreferrer"
         onPointerDown={(event) => event.stopPropagation()}
         onClick={() => trackClick("external_open_new_tab")}

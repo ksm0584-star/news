@@ -183,10 +183,11 @@ function RecordDetailInner() {
             // This domain is confirmed to block framing — the internal
             // /article viewer can't show it either, so sending the user
             // there would just land them on its "원문을 불러올 수 없어요"
-            // notice. Open the real article directly instead.
+            // notice. Open the real article directly instead, in the same
+            // tab (no target="_blank") so the browser's own back button
+            // returns here.
             <a
               href={record.url}
-              target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackClick("external_open_new_tab")}
               className="mt-1 inline-block truncate text-[12.5px] text-point"

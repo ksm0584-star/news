@@ -17,13 +17,13 @@ const EMPTY_DRAFT: ExternalDraft = {
   investmentNote: "",
 };
 
-function draftKey(url: string): string {
-  return `newsnote:external-draft:${url}`;
+function draftKey(storageKey: string): string {
+  return `newsnote:external-draft:${storageKey}`;
 }
 
-function readDraft(url: string): ExternalDraft | null {
+function readDraft(storageKey: string): ExternalDraft | null {
   try {
-    const raw = localStorage.getItem(draftKey(url));
+    const raw = localStorage.getItem(draftKey(storageKey));
     if (!raw) return null;
     // `thought` is read for compatibility with drafts saved before the
     // 기사 정리/투자에 적용하기 split — it maps onto the new articleSummary field.
@@ -48,37 +48,43 @@ function readDraft(url: string): ExternalDraft | null {
   }
 }
 
-function writeDraft(url: string, draft: ExternalDraft): void {
+function writeDraft(storageKey: string, draft: ExternalDraft): void {
   try {
-    localStorage.setItem(draftKey(url), JSON.stringify(draft));
+    localStorage.setItem(draftKey(storageKey), JSON.stringify(draft));
   } catch {
     // Best-effort: private browsing / storage quota can throw.
   }
 }
 
-function removeDraft(url: string): void {
+function removeDraft(storageKey: string): void {
   try {
-    localStorage.removeItem(draftKey(url));
+    localStorage.removeItem(draftKey(storageKey));
   } catch {
     // Best-effort.
   }
 }
 
 /**
- * Persists the external-article write form to localStorage, keyed by the
- * article URL, so switching tabs to read the original article — or the OS
- * backgrounding/evicting the app — never loses what the user typed. A
- * different article URL starts from a blank draft.
+ * Persists the external-article write form to localStorage, keyed by
+ * `storageKey` — the article URL for a new record (so a different article
+ * URL starts blank), or something caller-chosen and distinct for other
+ * cases (e.g. an edit session, keyed by record id so it can never collide
+ * with an unrelated new-record draft for the same URL). Survives switching
+ * tabs, navigating to the original article in the same tab and coming back,
+ * or the OS backgrounding/evicting the app.
  *
  * `enabled` (default true): when false, this is just plain in-memory field
- * state — no localStorage read or write at all. Used for editing an
- * existing record: its fields are seeded from the record itself (not a
- * draft), and the record's URL may coincidentally match some unrelated
- * in-progress *new*-record draft, which editing must never read from or
- * overwrite.
+ * state — no localStorage read or write at all.
+ *
+ * `restoredDraft` in the return value is `null` until the initial
+ * localStorage read finishes (or immediately, when `enabled` is false),
+ * then `true`/`false` for whether a saved draft actually existed — callers
+ * that only want to seed fields from elsewhere when there's nothing to
+ * restore can wait on this instead of guessing from current field values.
  */
-export function useExternalDraft(url: string, enabled = true) {
+export function useExternalDraft(storageKey: string, enabled = true) {
   const [draft, setDraft] = useState<ExternalDraft>(EMPTY_DRAFT);
+  const [restoredDraft, setRestoredDraft] = useState<boolean | null>(enabled ? null : false);
   const loadedRef = useRef(false);
 
   useEffect(() => {
@@ -86,16 +92,18 @@ export function useExternalDraft(url: string, enabled = true) {
     // Reading localStorage is a synchronous external-system read, not
     // derivable state — it can only happen after mount (no `window` during
     // SSR), so there's no render-time alternative to this effect.
+    const stored = readDraft(storageKey);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft(readDraft(url) ?? EMPTY_DRAFT);
+    setDraft(stored ?? EMPTY_DRAFT);
+    setRestoredDraft(Boolean(stored));
     loadedRef.current = true;
-  }, [url, enabled]);
+  }, [storageKey, enabled]);
 
   useEffect(() => {
     if (!enabled || !loadedRef.current) return;
-    const timeout = setTimeout(() => writeDraft(url, draft), 300);
+    const timeout = setTimeout(() => writeDraft(storageKey, draft), 300);
     return () => clearTimeout(timeout);
-  }, [url, draft, enabled]);
+  }, [storageKey, draft, enabled]);
 
   return {
     title: draft.title,
@@ -106,9 +114,10 @@ export function useExternalDraft(url: string, enabled = true) {
     setArticleSummary: (articleSummary: string) => setDraft((d) => ({ ...d, articleSummary })),
     investmentNote: draft.investmentNote,
     setInvestmentNote: (investmentNote: string) => setDraft((d) => ({ ...d, investmentNote })),
+    restoredDraft,
     clear: () => {
       if (!enabled) return;
-      removeDraft(url);
+      removeDraft(storageKey);
       setDraft(EMPTY_DRAFT);
     },
   };

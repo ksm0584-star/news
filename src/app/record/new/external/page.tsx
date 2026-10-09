@@ -52,26 +52,35 @@ function ExternalArticleView() {
   const rawUrl = isEditMode ? (editingRecord?.url ?? "") : (searchParams.get("url") ?? "");
   const urlIsValid = isHttpUrl(rawUrl);
   const { user, loading: authLoading } = useAuth();
-  // Edit mode's fields are seeded from the record below, not a draft — the
-  // localStorage draft (keyed by this same URL) belongs to a *new*-record
-  // attempt and must not be read from or overwritten while editing.
-  const draft = useExternalDraft(rawUrl, !isEditMode);
+  // Edit mode is keyed by record id (never the URL) — the article's URL
+  // could coincidentally match some unrelated in-progress *new*-record
+  // draft, which editing must never read from or overwrite. Keying by id
+  // instead also means this safely survives opening the original article
+  // in the same tab (this screen unmounts) and coming back via browser
+  // back (it remounts and restores from here) just like the create flow
+  // already did by URL.
+  const draft = useExternalDraft(isEditMode ? `edit:${editId}` : rawUrl);
 
   // Edit mode fetches the record over the network, so its fields can arrive
-  // a render or two after mount — seed the draft fields from it exactly
-  // once, the same way /record/new's edit mode already does.
+  // a render or two after mount. Only seed from the record when there's no
+  // already-restored draft for this edit session (see useExternalDraft's
+  // `restoredDraft`) — otherwise this would stomp on in-progress edits the
+  // user made, navigated away from (e.g. to read the original article),
+  // and came back to.
   const [editDraftApplied, setEditDraftApplied] = useState(!isEditMode);
   useEffect(() => {
-    if (isEditMode && editingRecord && !editDraftApplied) {
+    if (!isEditMode || !editingRecord || editDraftApplied) return;
+    if (draft.restoredDraft === null) return; // wait for the initial read
+    if (!draft.restoredDraft) {
       const { articleSummary, investmentNote } = splitExternalContent(editingRecord.thought);
       const resolvedSector = resolveCategoryForSector(editingRecord.sector);
       draft.setTitle(editingRecord.title);
       if (resolvedSector) draft.setSector(resolvedSector);
       draft.setArticleSummary(articleSummary);
       draft.setInvestmentNote(investmentNote);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setEditDraftApplied(true);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEditDraftApplied(true);
   }, [isEditMode, editingRecord, editDraftApplied, draft]);
 
   const [panelState, setPanelState] = useState<WritePanelState>("minimized");
@@ -230,6 +239,7 @@ function ExternalArticleView() {
           sector: draft.sector,
           thought: combineExternalContent(draft.articleSummary, draft.investmentNote),
         });
+        draft.clear();
         track("record_edited", {
           record_id: updated.id,
           sector: updated.sector,
