@@ -17,6 +17,7 @@ const OPTIONS: { value: ReflectionResult; label: string }[] = [
   { value: "same", label: "생각이 같아요" },
   { value: "changed", label: "달라졌어요" },
   { value: "unsure", label: "아직 모르겠어요" },
+  { value: "hard_to_compare", label: "비교하기 어려워요" },
 ];
 
 export default function CompareRecordPage() {
@@ -27,7 +28,13 @@ export default function CompareRecordPage() {
   const { record, loading: recordLoading } = useRecord(params.id);
   const { past, loading: pastLoading } = usePastRecordWithThought(record?.sector, record?.id);
   const [selected, setSelected] = useState<ReflectionResult | null>(null);
+  // Shown as a highlighted-but-not-yet-confirmed state while a save is in
+  // flight — `selected` itself only updates once the save actually
+  // succeeds (see handleSelect), so a failed save leaves the last
+  // confirmed value displayed instead of showing an unsaved choice.
+  const [pendingResult, setPendingResult] = useState<ReflectionResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function goToHome() {
     router.replace("/");
@@ -63,12 +70,18 @@ export default function CompareRecordPage() {
   async function handleSelect(result: ReflectionResult) {
     if (!past || saving) return;
     trackClick("complete_reflection_selected", { record_id: record!.id, result });
-    setSelected(result);
+    setPendingResult(result);
     setSaving(true);
+    setSaveError(null);
     try {
       await saveReflection({ recordId: record!.id, comparedRecordId: past.id, result });
+      setSelected(result);
+    } catch (err) {
+      console.error("saveReflection failed:", err);
+      setSaveError("저장에 실패했어요. 다시 시도해주세요.");
     } finally {
       setSaving(false);
+      setPendingResult(null);
     }
   }
 
@@ -114,25 +127,7 @@ export default function CompareRecordPage() {
       </div>
 
       <div className="flex-1 px-5">
-        <div className="rounded-2xl border border-border-subtle p-4">
-          <div className="mb-1.5 flex items-center gap-2">
-            <SectorBadge sector={past.sector} />
-            <span className="text-xs text-muted">{formatDate(past.createdAt)}</span>
-          </div>
-          <p className="mb-1 text-[13px] font-semibold text-foreground">
-            {past.title}
-          </p>
-          <p className="text-[13.5px] leading-6 text-foreground/80">
-            {past.thought}
-          </p>
-        </div>
-
-        <div className="my-3 flex items-center gap-2 px-1 text-muted">
-          <span className="h-px flex-1 bg-border-subtle" />
-          <span className="text-[12px]">지금의 생각</span>
-          <span className="h-px flex-1 bg-border-subtle" />
-        </div>
-
+        <p className="mb-2 text-[13px] font-semibold text-foreground">지금의 생각</p>
         <div className="rounded-2xl border border-point/30 bg-point/5 p-4">
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -155,6 +150,20 @@ export default function CompareRecordPage() {
           </p>
         </div>
 
+        <p className="mt-6 mb-2 text-[13px] font-semibold text-foreground">과거의 생각</p>
+        <div className="rounded-2xl border border-border-subtle p-4">
+          <div className="mb-1.5 flex items-center gap-2">
+            <SectorBadge sector={past.sector} />
+            <span className="text-xs text-muted">{formatDate(past.createdAt)}</span>
+          </div>
+          <p className="mb-1 text-[13px] font-semibold text-foreground">
+            {past.title}
+          </p>
+          <p className="text-[13.5px] leading-6 text-foreground/80">
+            {past.thought}
+          </p>
+        </div>
+
         <p className="mt-6 mb-3 text-center text-[13.5px] font-medium text-foreground">
           두 생각을 비교해보니 어떤가요?
         </p>
@@ -166,7 +175,7 @@ export default function CompareRecordPage() {
               onClick={() => handleSelect(option.value)}
               disabled={saving}
               className={`rounded-xl border py-3 text-[14px] font-semibold disabled:opacity-60 ${
-                selected === option.value
+                (pendingResult ?? selected) === option.value
                   ? "border-point bg-point text-white"
                   : "border-border-subtle text-foreground/80"
               }`}
@@ -175,6 +184,9 @@ export default function CompareRecordPage() {
             </button>
           ))}
         </div>
+        {saveError ? (
+          <p className="mt-2 text-center text-[12.5px] text-red-500">{saveError}</p>
+        ) : null}
       </div>
 
       <div className="px-5 py-5">

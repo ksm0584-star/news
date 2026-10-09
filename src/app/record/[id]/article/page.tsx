@@ -1,15 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
 import LoginPrompt from "@/components/LoginPrompt";
 import ArticleViewer from "@/components/ArticleViewer";
+import ArticleUnavailableNotice from "@/components/ArticleUnavailableNotice";
+import OpenInBrowserLink from "@/components/OpenInBrowserLink";
 import RecordBottomSheet from "@/components/RecordBottomSheet";
+import RecordSummaryContent from "@/components/RecordSummaryContent";
 import type { SheetPanelState } from "@/components/ArticleBottomSheet";
 import { useRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { useCollapseSheetOnArticleActivity } from "@/lib/use-collapse-sheet-on-article-activity";
+import { isIframeUnsupported } from "@/lib/iframe-support";
 
 /**
  * Read-only "원문 보기" screen reached from the record detail page: the
@@ -85,9 +90,32 @@ export default function RecordArticlePage() {
     );
   }
 
+  // iframe-unsupported articles get no Bottom Sheet — there's no article
+  // view worth protecting/switching back to, so the saved record just
+  // shows as a normal page below the guidance card.
+  if (isIframeUnsupported(record.url)) {
+    return (
+      <div className="pb-10">
+        <BackHeader title="원문" />
+        <div className="px-5 py-5">
+          <ArticleUnavailableNotice url={record.url} />
+        </div>
+        <div className="px-5 pb-5">
+          <RecordSummaryContent record={record} />
+          <Link
+            href={`/record/new?editId=${record.id}&from=detail`}
+            className="mt-2 block w-full rounded-xl bg-point py-3.5 text-center text-[15px] font-semibold text-white active:bg-point-dark"
+          >
+            기록 수정
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      <BackHeader title="원문" />
+      <BackHeader title="원문" right={<OpenInBrowserLink url={record.url} />} />
       <div
         onPointerDown={() => {
           if (panelState !== "minimized") collapsePanel();

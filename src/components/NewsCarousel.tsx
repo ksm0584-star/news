@@ -34,7 +34,7 @@ export default function NewsCarousel() {
             </button>
           </div>
         ) : (
-          <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-1 snap-x snap-mandatory">
+          <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-1 snap-x snap-mandatory scroll-px-5">
             {articles.map((article) => (
               <NewsCard key={article.id} article={article} />
             ))}

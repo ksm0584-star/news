@@ -230,12 +230,33 @@ export async function getReflectionsForRecord(recordId: string): Promise<Reflect
   return (data ?? []).map(rowToReflection);
 }
 
+/**
+ * Upserts by (record_id, compared_record_id) — the DB doesn't enforce this
+ * pairing as unique yet (see supabase/migrations/0002_reflections_unique.sql,
+ * not applied automatically), so this function does the check itself:
+ * re-selecting the same comparison just updates the one existing row
+ * instead of inserting a duplicate. A genuinely different pair (either id
+ * differs) is a separate reflection and still gets its own row, preserving
+ * history across different comparisons.
+ */
 export async function saveReflection(input: {
   recordId: string;
   comparedRecordId: string;
   result: ReflectionResult;
 }): Promise<Reflection> {
   const supabase = getSupabaseBrowserClient();
+  const { data: existing, error: findError } = await supabase
+    .from("reflections")
+    .select("id")
+    .eq("record_id", input.recordId)
+    .eq("compared_record_id", input.comparedRecordId)
+    .maybeSingle();
+  if (findError) throw toError(findError);
+
+  if (existing) {
+    return updateReflection(existing.id, input.result);
+  }
+
   const { data, error } = await supabase
     .from("reflections")
     .insert({
@@ -243,6 +264,20 @@ export async function saveReflection(input: {
       compared_record_id: input.comparedRecordId,
       result: input.result,
     })
+    .select()
+    .single();
+  if (error) throw toError(error);
+  emitChange();
+  return rowToReflection(data);
+}
+
+/** Updates one reflection by its own id — unambiguous, never touches any other row. */
+export async function updateReflection(id: string, result: ReflectionResult): Promise<Reflection> {
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("reflections")
+    .update({ result })
+    .eq("id", id)
     .select()
     .single();
   if (error) throw toError(error);

@@ -3,7 +3,7 @@
 import { useVisualViewportHeight } from "./use-visual-viewport-height";
 import type { SheetPanelState } from "@/components/ArticleBottomSheet";
 
-export const SHEET_MINIMIZED_HEIGHT_PX = 64;
+export const SHEET_MINIMIZED_HEIGHT_PX = 48;
 
 /**
  * Matches ArticleBottomSheet's own CSS sizing (h-[46dvh]/h-[78dvh], each

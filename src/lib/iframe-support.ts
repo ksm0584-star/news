@@ -11,6 +11,7 @@
  */
 export const IFRAME_UNSUPPORTED_DOMAINS = [
   "news.naver.com", // X-Frame-Options: SAMEORIGIN — confirmed via /webview-test
+  "mt.co.kr", // www.mt.co.kr — blocked embedding, confirmed via /webview-test. Covers subdomains too (e.g. news.mt.co.kr).
 ];
 
 export function isIframeUnsupported(url: string): boolean {

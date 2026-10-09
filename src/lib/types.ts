@@ -1,6 +1,6 @@
 export type SourceType = "internal" | "external";
 
-export type ReflectionResult = "same" | "changed" | "unsure";
+export type ReflectionResult = "same" | "changed" | "unsure" | "hard_to_compare";
 
 export interface NewsArticle {
   id: string;

@@ -4,8 +4,12 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
+import LoginPrompt from "@/components/LoginPrompt";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import ArticleViewer from "@/components/ArticleViewer";
+import ArticleUnavailableNotice from "@/components/ArticleUnavailableNotice";
+import OpenInBrowserLink from "@/components/OpenInBrowserLink";
+import ExternalRecordFields from "@/components/ExternalRecordFields";
 import ExternalArticleWritePanel, {
   type WritePanelState,
 } from "@/components/ExternalArticleWritePanel";
@@ -16,6 +20,7 @@ import { useSheetHeightPx } from "@/lib/use-sheet-height";
 import { useCollapseSheetOnArticleActivity } from "@/lib/use-collapse-sheet-on-article-activity";
 import { useNativeArticleWebView } from "@/lib/native/use-native-article-webview";
 import { isNativePlatform } from "@/lib/platform";
+import { isIframeUnsupported } from "@/lib/iframe-support";
 import { combineExternalContent } from "@/lib/external-record-content";
 import { isMemoValid } from "@/lib/validate-memo";
 import { track, trackClick } from "@/lib/mixpanel";
@@ -65,6 +70,30 @@ function ExternalArticleView() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  // This is the write screen, so the record form should already be visible
+  // on entry rather than needing a tap first — but only once we know the
+  // user is actually logged in (same gate openPanel already applies), and
+  // only if nothing has changed panelState in the meantime.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || authLoading || !user) return;
+    autoOpenedRef.current = true;
+    setPanelState((current) => (current === "minimized" ? "peek" : current));
+  }, [authLoading, user]);
+
+  // Brief grace window before the blur-based "user tapped the article"
+  // signal (see the hook below) is allowed to collapse the sheet. Without
+  // it, any stray focus shift around initial mount/layout — before the
+  // user has had a chance to even see the screen — could instantly
+  // collapse a sheet that's now open by default. A direct tap on the
+  // non-iframe article area (the pointerdown handler below) isn't gated by
+  // this — only the ambiguous blur signal is.
+  const [autoCollapseArmed, setAutoCollapseArmed] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setAutoCollapseArmed(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   function openPanel() {
     if (authLoading) return;
     if (!user) {
@@ -89,7 +118,11 @@ function ExternalArticleView() {
 
   // Closes the sheet when the user goes back to reading — see the hook's
   // own comment for what it can and can't detect across the iframe boundary.
-  useCollapseSheetOnArticleActivity(panelState !== "minimized", iframeRef, collapsePanel);
+  useCollapseSheetOnArticleActivity(
+    panelState !== "minimized" && autoCollapseArmed,
+    iframeRef,
+    collapsePanel,
+  );
 
   if (!urlIsValid) {
     return (
@@ -174,10 +207,55 @@ function ExternalArticleView() {
   }
 
   const native = isNativePlatform();
+  // Native shows a real native WebView (not an iframe), so it never needs
+  // this plain-layout fallback — only the web iframe path can silently fail.
+  const showPlainLayout = !native && isIframeUnsupported(rawUrl);
+
+  if (showPlainLayout) {
+    return (
+      <div className="pb-10">
+        <BackHeader title="기사 보며 기록하기" />
+        <div className="px-5 py-5">
+          <ArticleUnavailableNotice url={rawUrl} />
+        </div>
+        {authLoading ? null : !user ? (
+          <div className="px-5 pb-6">
+            <LoginPrompt />
+          </div>
+        ) : (
+          <div className="px-5 pb-6">
+            <ExternalRecordFields
+              ref={articleSummaryRef}
+              title={draft.title}
+              onTitleChange={draft.setTitle}
+              sector={draft.sector}
+              onSectorChange={draft.setSector}
+              articleSummary={draft.articleSummary}
+              onArticleSummaryChange={draft.setArticleSummary}
+              investmentNote={draft.investmentNote}
+              onInvestmentNoteChange={draft.setInvestmentNote}
+              error={error}
+            />
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="mt-3 w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
+            >
+              {submitting ? "저장 중..." : "저장"}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      <BackHeader title="기사 보며 기록하기" />
+      <BackHeader
+        title="기사 보며 기록하기"
+        right={native ? undefined : <OpenInBrowserLink url={rawUrl} />}
+      />
 
       <div
         ref={articleAreaRef}
@@ -186,13 +264,7 @@ function ExternalArticleView() {
         }}
         className="relative flex-1 overflow-hidden bg-background"
       >
-        {native ? null : (
-          <ArticleViewer
-            ref={iframeRef}
-            url={rawUrl}
-            extraNote="새 탭에서 읽고 돌아와도 작성 중인 내용은 그대로 남아있어요"
-          />
-        )}
+        {native ? null : <ArticleViewer ref={iframeRef} url={rawUrl} />}
       </div>
 
       <ExternalArticleWritePanel

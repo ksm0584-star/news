@@ -1,54 +1,141 @@
 "use client";
 
-import { forwardRef } from "react";
-import { isIframeUnsupported } from "@/lib/iframe-support";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { trackClick } from "@/lib/mixpanel";
 
 /**
- * Renders an article URL as a plain <iframe>, or a "open in new tab"
- * fallback for domains in src/lib/iframe-support.ts's manually-curated
- * unsupported list (X-Frame-Options/CSP can't be reliably detected from
- * iframe `onload`, so this isn't a runtime check — see that file to add a
- * newly-confirmed domain). Shared by the external-article write screen and
- * the record-detail "원문 보기" screen so the iframe/fallback logic isn't
- * duplicated between them.
- *
- * Forwards a ref to the <iframe> itself (null when the fallback card is
- * shown instead) — callers use it to tell whether focus has moved into the
- * iframe, since cross-origin content never reports clicks/scrolls directly.
+ * How long to wait before treating a load as "taking too long" and showing
+ * the retry UI. Not a confirmed failure — iframe `onload` doesn't guarantee
+ * the article actually rendered, and there's no reliable way to detect a
+ * cross-origin X-Frame-Options/CSP block from here, so this is just "has
+ * it been unusually long," never a success/failure determination. Kept as
+ * a named constant so it's easy to tune later.
  */
-const ArticleViewer = forwardRef<
-  HTMLIFrameElement,
-  {
-    url: string;
-    /** Optional extra line shown under the fallback's "open in new tab" button — used by the write screen to reassure that draft content survives the tab switch. */
-    extraNote?: string;
-  }
->(function ArticleViewer({ url, extraNote }, iframeRef) {
-  if (isIframeUnsupported(url)) {
-    return (
-      <div className="flex h-full items-center justify-center px-5 py-6">
-        <div className="w-full rounded-2xl border border-border-subtle bg-background p-5 text-center">
-          <p className="text-[13.5px] font-semibold text-foreground">
-            원문은 새 탭에서 열어 확인해주세요
-          </p>
-          <p className="mt-1.5 truncate text-[12px] text-muted">{url}</p>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackClick("external_open_new_tab")}
-            className="mt-4 inline-block w-full rounded-xl bg-point py-3 text-[14px] font-semibold text-white active:bg-point-dark"
-          >
-            원문 새 탭에서 열기
-          </a>
-          {extraNote ? <p className="mt-3 text-[12px] text-muted">{extraNote}</p> : null}
-        </div>
-      </div>
-    );
+const LOAD_TIMEOUT_MS = 15000;
+
+/**
+ * Renders an article URL as a plain <iframe> with loading / timeout-retry
+ * overlays.
+ *
+ * Does NOT decide iframe-support itself — that decision (and what to show
+ * instead for a confirmed-unsupported domain) belongs to the caller, via
+ * src/lib/iframe-support.ts's isIframeUnsupported(). Callers only mount
+ * this component once they've already decided the URL should be attempted
+ * as an iframe; it's never conditionally rendered internally, so a
+ * confirmed-unsupported URL's iframe is simply never mounted at all.
+ *
+ * Forwards a ref to the <iframe> itself — callers use it to tell whether
+ * focus has moved into the iframe, since cross-origin content never
+ * reports clicks/scrolls directly.
+ *
+ * Retry: "다시 불러오기" remounts the <iframe> (via a `key` bump) instead
+ * of just reassigning the same `src`, so a reload is guaranteed even for
+ * the identical URL — and because the old iframe element is torn down
+ * entirely, there's no stale in-flight load left to race with the new
+ * attempt or resurrect an old `onLoad`/timeout after a retry.
+ *
+ * No persistent "can't see it?" affordance floats over the article while
+ * things are going normally — that was distracting during a successful
+ * read. The timeout/retry card (for when loading genuinely stalls) and the
+ * header's separate "브라우저에서 원문 열기" link (added by the caller,
+ * outside this component) are the two ways out instead.
+ */
+const ArticleViewer = forwardRef<HTMLIFrameElement, { url: string }>(function ArticleViewer(
+  { url },
+  iframeRef,
+) {
+  const [retryCount, setRetryCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setHasTimedOut(false);
+    timeoutRef.current = setTimeout(() => setHasTimedOut(true), LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timeoutRef.current);
+  }, [url, retryCount]);
+
+  function handleLoad() {
+    clearTimeout(timeoutRef.current);
+    setIsLoading(false);
+    setHasTimedOut(false);
   }
 
-  return <iframe ref={iframeRef} src={url} title="원문 기사" className="h-full w-full border-0" />;
+  // Best-effort fast path only — iframe `error` events are not reliable
+  // for navigation-level failures (X-Frame-Options/CSP blocks typically
+  // don't fire one at all), so this never substitutes for the timeout
+  // above; it just lets a failure that *does* raise one surface sooner.
+  function handleError() {
+    setHasTimedOut(true);
+  }
+
+  function handleRetry() {
+    trackClick("article_retry_load");
+    setRetryCount((n) => n + 1);
+  }
+
+  return (
+    <div className="relative h-full w-full">
+      <iframe
+        key={retryCount}
+        ref={iframeRef}
+        src={url}
+        title="원문 기사"
+        className="h-full w-full border-0"
+        onLoad={handleLoad}
+        onError={handleError}
+      />
+
+      <div
+        aria-hidden={!isLoading}
+        className={`absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background px-6 text-center transition-opacity duration-300 ${
+          isLoading ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        {hasTimedOut ? (
+          <>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" className="text-muted">
+              <path
+                d="M3 12a9 9 0 0 1 15-6.7M21 12a9 9 0 0 1-15 6.7M21 3v6h-6M3 21v-6h6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <p className="text-[14px] font-semibold text-foreground">
+              뉴스를 불러오지 못했어요
+            </p>
+            <p className="text-[13px] text-muted">뉴스를 다시 불러올까요?</p>
+            <div className="mt-1 flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="rounded-full bg-point px-5 py-2.5 text-[13px] font-semibold text-white active:bg-point-dark"
+              >
+                다시 불러오기
+              </button>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackClick("external_open_new_tab")}
+                className="text-[12.5px] font-medium text-point"
+              >
+                새 탭에서 원문 보기 ↗
+              </a>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-border-subtle border-t-point" />
+            <p className="text-[13px] text-muted">뉴스를 불러오는 중이에요</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
 });
 
 export default ArticleViewer;

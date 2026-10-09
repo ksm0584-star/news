@@ -18,6 +18,7 @@ const RESULT_LABEL: Record<Reflection["result"], string> = {
   same: "생각이 같아요",
   changed: "생각이 달라졌어요",
   unsure: "아직 모르겠어요",
+  hard_to_compare: "비교하기 어려워요",
 };
 
 function RecordDetailInner() {
@@ -158,9 +159,20 @@ function RecordDetailInner() {
                         {formatDate(reflection.createdAt)}
                       </span>
                     </div>
-                    <span className="mt-1 inline-block text-[12.5px] font-semibold text-point">
-                      {RESULT_LABEL[reflection.result]}
-                    </span>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <span className="text-[12.5px] font-semibold text-point">
+                        {RESULT_LABEL[reflection.result]}
+                      </span>
+                      <Link
+                        href={`/record/${record.id}/reflection/${reflection.id}`}
+                        onClick={() =>
+                          trackClick("reflection_edit_cta", { reflection_id: reflection.id })
+                        }
+                        className="text-[12px] font-medium text-point"
+                      >
+                        수정
+                      </Link>
+                    </div>
                   </div>
                 );
               })}
