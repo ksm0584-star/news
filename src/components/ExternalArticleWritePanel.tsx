@@ -58,6 +58,7 @@ const ExternalArticleWritePanel = forwardRef<
       ariaLabel="기록 작성"
       minimizedLabel="기록하기"
       showBackButton={false}
+      showExpandButton={false}
       minimizedVariant={minimizedVariant}
       onOpen={onOpen}
       onCollapse={onCollapse}

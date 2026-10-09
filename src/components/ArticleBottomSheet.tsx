@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
   type FocusEvent,
@@ -72,6 +73,7 @@ export default function ArticleBottomSheet({
   minimizedLabel,
   showBackButton = true,
   minimizedVariant = "handle",
+  showExpandButton = true,
   onOpen,
   onCollapse,
   onToggleExpand,
@@ -91,6 +93,16 @@ export default function ArticleBottomSheet({
    * drag-to-open mechanics either way, just the visual treatment differs.
    */
   minimizedVariant?: "handle" | "cta";
+  /**
+   * true (default): the open-state header row keeps its explicit "크게
+   * 보기"/"작게 보기" text button, and a plain tap elsewhere on that row
+   * collapses the sheet — the original behavior, unchanged for any caller
+   * that doesn't pass this.
+   * false: no separate button — the handle itself becomes the
+   * expand/collapse toggle (tap it, or Enter/Space when focused), since
+   * there's nothing else in that row to tap once the button's gone.
+   */
+  showExpandButton?: boolean;
   onOpen: () => void;
   onCollapse: () => void;
   onToggleExpand: () => void;
@@ -117,12 +129,8 @@ export default function ArticleBottomSheet({
   const viewportHeight = useVisualViewportHeight();
   const keyboardInsetPx = useKeyboardInsetPx();
 
-  function handleContentFocus(event: FocusEvent<HTMLDivElement>) {
+  function handleContentFocus() {
     setIsInputFocused(true);
-    const target = event.target as HTMLElement;
-    requestAnimationFrame(() => {
-      target.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    });
   }
 
   function handleContentBlur(event: FocusEvent<HTMLDivElement>) {
@@ -130,6 +138,22 @@ export default function ArticleBottomSheet({
       setIsInputFocused(false);
     }
   }
+
+  // Re-asserts (not just a one-time nudge on the initial focus event) that
+  // the focused field is visible, every time the keyboard-aware geometry
+  // actually changes — the keyboard animates open over ~250ms and the
+  // sheet's own height/position catch up to it across several
+  // resize/scroll events, not instantly, so a single scrollIntoView call
+  // made at the moment of focus tends to run against stale geometry and
+  // land the field behind the footer. Re-running on every settle keeps it
+  // correct through the whole transition.
+  useEffect(() => {
+    if (!isInputFocused) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) {
+      active.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [isInputFocused, viewportHeight, keyboardInsetPx]);
 
   function beginDrag(event: PointerEvent<HTMLElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -173,6 +197,11 @@ export default function ArticleBottomSheet({
     const movedUp = drag.startY - event.clientY; // positive = dragged up
     if (Math.abs(movedUp) <= TAP_MAX_MOVEMENT_PX) {
       if (state === "minimized") onOpen();
+      // With no separate "크게 보기" button (showExpandButton={false}),
+      // nothing else in this row is tappable besides the back button
+      // (which stops propagation and handles its own tap), so the row's
+      // own tap takes over that button's job instead of collapsing.
+      else if (!showExpandButton) onToggleExpand();
       else onCollapse();
       return;
     }
@@ -199,6 +228,16 @@ export default function ArticleBottomSheet({
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onOpen();
+    }
+  }
+
+  // The handle row's expand/collapse toggle is otherwise only reachable by
+  // pointer (tap/drag) — this keeps it keyboard-operable too, the same way
+  // the minimized button already is.
+  function handleHandleRowKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onToggleExpand();
     }
   }
 
@@ -236,14 +275,27 @@ export default function ArticleBottomSheet({
     >
       {isOpen ? (
         <>
-          {/* Handle + expand control share one row: drag-enabled (so
-              dragging from here also works), but pointerdown on the
-              button(s) stops propagation so their own onClick — not the
-              row's drag/tap logic — handles taps. The handle is positioned
-              absolutely so it stays centered on the sheet's full width no
-              matter how wide the button(s) next to it are. */}
+          {/* Drag-enabled (dragging from here resizes the sheet, same as
+              before). Pointerdown on the button(s) stops propagation so
+              their own onClick — not the row's drag/tap logic — handles
+              taps. The handle is positioned absolutely so it stays
+              centered on the sheet's full width no matter how wide the
+              button(s) next to it are.
+              With showExpandButton={false}, there's no separate "크게
+              보기" button left to tap, so the row itself (effectively
+              just the handle) becomes the expand/collapse toggle — see
+              endDrag's tap handling — and gets the button semantics/
+              keyboard support that button would otherwise have provided. */}
           <div
             {...dragHandlers}
+            {...(!showExpandButton
+              ? {
+                  role: "button" as const,
+                  tabIndex: 0,
+                  "aria-label": state === "expanded" ? "작게 보기" : "크게 보기",
+                  onKeyDown: handleHandleRowKeyDown,
+                }
+              : {})}
             className="relative flex shrink-0 touch-none items-center px-4 py-3"
           >
             <span className="pointer-events-none absolute left-1/2 top-1/2 h-1 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-border-subtle" />
@@ -257,14 +309,16 @@ export default function ArticleBottomSheet({
                 ← 기사로 돌아가기
               </button>
             ) : null}
-            <button
-              type="button"
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={onToggleExpand}
-              className="ml-auto rounded-full px-3 py-1.5 text-[12.5px] font-medium text-point active:bg-background"
-            >
-              {state === "expanded" ? "작게 보기" : "크게 보기"}
-            </button>
+            {showExpandButton ? (
+              <button
+                type="button"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={onToggleExpand}
+                className="ml-auto rounded-full px-3 py-1.5 text-[12.5px] font-medium text-point active:bg-background"
+              >
+                {state === "expanded" ? "작게 보기" : "크게 보기"}
+              </button>
+            ) : null}
           </div>
 
           <div

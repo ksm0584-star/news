@@ -43,6 +43,13 @@ function ExternalArticleView() {
   const editId = searchParams.get("editId");
   const from = searchParams.get("from");
   const isEditMode = Boolean(editId);
+  // Edit mode lands on a plain full-page form first (see the
+  // isEditMode && !showArticleView branch below) — "원문 보기" on that
+  // page is what opts into the iframe+sheet view for an iframe-supported
+  // article. This is a query param (not local state) specifically so the
+  // back button returns from the article view to the form, and so a
+  // reload while on either one keeps showing the same one.
+  const showArticleView = searchParams.get("view") === "article";
   const { record: editingRecord, loading: editingRecordLoading } = useRecord(editId ?? "");
 
   // Create mode takes the URL from the query string; edit mode takes it
@@ -375,6 +382,71 @@ function ExternalArticleView() {
                   : isEditMode
                     ? "수정 완료"
                     : "저장"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Edit mode's default landing: a plain full-page form, no iframe —
+  // editing a record doesn't need the article visible to be useful, so it
+  // isn't shown until the user explicitly asks via "원문 보기" (which pushes
+  // `view=article` below, landing on the iframe+sheet branch at the end of
+  // this function). Never reached from the create flow, which still goes
+  // straight to that branch as before.
+  if (isEditMode && !showArticleView) {
+    return (
+      <div style={{ paddingBottom: `calc(7rem + ${keyboardInsetPx}px)` }}>
+        <BackHeader title="기록 수정" />
+
+        <div className="flex items-center gap-2 px-4 pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              const query = new URLSearchParams({ editId: editId ?? "", view: "article" });
+              if (from) query.set("from", from);
+              router.push(`/record/new/external?${query.toString()}`);
+            }}
+            className="flex items-center gap-1.5 rounded-full bg-point px-4 py-2 text-[13px] font-semibold text-white active:bg-point-dark"
+          >
+            원문 보기
+          </button>
+        </div>
+
+        {authLoading ? null : !user ? (
+          <div className="px-5 pt-4">
+            <LoginPrompt />
+          </div>
+        ) : (
+          <>
+            <div className="px-5 pt-4">
+              <ExternalRecordFields
+                ref={articleSummaryRef}
+                title={draft.title}
+                onTitleChange={draft.setTitle}
+                sector={draft.sector}
+                onSectorChange={draft.setSector}
+                articleSummary={draft.articleSummary}
+                onArticleSummaryChange={draft.setArticleSummary}
+                investmentNote={draft.investmentNote}
+                onInvestmentNoteChange={draft.setInvestmentNote}
+                error={error}
+              />
+            </div>
+
+            <div
+              style={{ bottom: keyboardInsetPx }}
+              className="fixed inset-x-0 z-40 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3"
+            >
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
+              >
+                {submitting ? "수정 중..." : "수정 완료"}
               </button>
             </div>
           </>

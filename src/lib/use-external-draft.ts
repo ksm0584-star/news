@@ -65,6 +65,22 @@ function removeDraft(storageKey: string): void {
 }
 
 /**
+ * A draft with nothing in any field is never meaningfully "a draft to
+ * restore" — treating it as one is exactly how an edit session that
+ * mounts before its record has finished loading can end up overwriting
+ * real saved content with blanks: the write effect below persists
+ * whatever's in state ~300ms after mount, which is still EMPTY_DRAFT if
+ * the record fetch hasn't resolved yet, and a later visit to the same
+ * edit session would then see "a draft exists" and skip reseeding from
+ * the record entirely. Treating an all-empty draft as equivalent to no
+ * draft at all — on both read and write — closes that race and also
+ * self-heals any such empty entry a past visit already left behind.
+ */
+function isEmptyDraft(draft: ExternalDraft): boolean {
+  return !draft.title && !draft.sector && !draft.articleSummary && !draft.investmentNote;
+}
+
+/**
  * Persists the external-article write form to localStorage, keyed by
  * `storageKey` — the article URL for a new record (so a different article
  * URL starts blank), or something caller-chosen and distinct for other
@@ -93,15 +109,22 @@ export function useExternalDraft(storageKey: string, enabled = true) {
     // derivable state — it can only happen after mount (no `window` during
     // SSR), so there's no render-time alternative to this effect.
     const stored = readDraft(storageKey);
+    const hasContent = stored !== null && !isEmptyDraft(stored);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft(stored ?? EMPTY_DRAFT);
-    setRestoredDraft(Boolean(stored));
+    setDraft(hasContent ? stored : EMPTY_DRAFT);
+    setRestoredDraft(hasContent);
     loadedRef.current = true;
   }, [storageKey, enabled]);
 
   useEffect(() => {
     if (!enabled || !loadedRef.current) return;
-    const timeout = setTimeout(() => writeDraft(storageKey, draft), 300);
+    const timeout = setTimeout(() => {
+      if (isEmptyDraft(draft)) {
+        removeDraft(storageKey);
+      } else {
+        writeDraft(storageKey, draft);
+      }
+    }, 300);
     return () => clearTimeout(timeout);
   }, [storageKey, draft, enabled]);
 

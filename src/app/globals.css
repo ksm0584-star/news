@@ -21,6 +21,17 @@
   --font-sans: var(--font-noto-sans-kr);
 }
 
+html,
+body {
+  /* Stops iOS Safari/Chrome from rubber-band-scrolling the whole page —
+     which can otherwise happen when the on-screen keyboard's own
+     focused-input auto-scroll reaches past our intentionally
+     non-scrolling screens — while leaving each scrollable area's own
+     `overscroll-behavior: contain` (e.g. the bottom sheet's content) free
+     to handle its own bounce. */
+  overscroll-behavior-y: none;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
