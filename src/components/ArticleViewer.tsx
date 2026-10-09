@@ -39,11 +39,16 @@ const LOAD_TIMEOUT_MS = 15000;
  * read. The timeout/retry card (for when loading genuinely stalls) and the
  * header's separate "브라우저에서 원문 열기" link (added by the caller,
  * outside this component) are the two ways out instead.
+ *
+ * `bottomInsetPx` (default 0): how much of the bottom of this component's
+ * box a caller-rendered overlay (e.g. a bottom sheet) currently covers.
+ * The loading/retry overlay centers itself within the space above that
+ * inset instead of the full box, so it isn't hidden behind the sheet.
  */
-const ArticleViewer = forwardRef<HTMLIFrameElement, { url: string }>(function ArticleViewer(
-  { url },
-  iframeRef,
-) {
+const ArticleViewer = forwardRef<
+  HTMLIFrameElement,
+  { url: string; bottomInsetPx?: number }
+>(function ArticleViewer({ url, bottomInsetPx = 0 }, iframeRef) {
   const [retryCount, setRetryCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasTimedOut, setHasTimedOut] = useState(false);
@@ -89,7 +94,8 @@ const ArticleViewer = forwardRef<HTMLIFrameElement, { url: string }>(function Ar
 
       <div
         aria-hidden={!isLoading}
-        className={`absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background px-6 text-center transition-opacity duration-300 ${
+        style={{ paddingBottom: bottomInsetPx }}
+        className={`absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background px-6 text-center transition-[padding,opacity] duration-300 ${
           isLoading ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >

@@ -264,7 +264,9 @@ function ExternalArticleView() {
         }}
         className="relative flex-1 overflow-hidden bg-background"
       >
-        {native ? null : <ArticleViewer ref={iframeRef} url={rawUrl} />}
+        {native ? null : (
+          <ArticleViewer ref={iframeRef} url={rawUrl} bottomInsetPx={panelHeightPx} />
+        )}
       </div>
 
       <ExternalArticleWritePanel
