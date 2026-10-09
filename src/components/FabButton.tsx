@@ -8,7 +8,10 @@ export default function FabButton({
   onRequireLogin?: () => boolean;
 }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40">
+    <div
+      className="pointer-events-none fixed inset-x-0 z-40"
+      style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+    >
       <div className="relative mx-auto max-w-[430px] px-5">
         <Link
           href="/record/new"

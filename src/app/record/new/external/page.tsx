@@ -23,7 +23,7 @@ import { useCollapseSheetOnArticleActivity } from "@/lib/use-collapse-sheet-on-a
 import { useNativeArticleWebView } from "@/lib/native/use-native-article-webview";
 import { isNativePlatform } from "@/lib/platform";
 import { isIframeUnsupported } from "@/lib/iframe-support";
-import { resolveCategoryForSector } from "@/lib/news-categories";
+import { resolveCategoryForSector, WRITABLE_CATEGORIES } from "@/lib/news-categories";
 import { combineExternalContent, splitExternalContent } from "@/lib/external-record-content";
 import { isMemoValid } from "@/lib/validate-memo";
 import { track, trackClick } from "@/lib/mixpanel";
@@ -83,6 +83,26 @@ function ExternalArticleView() {
     setEditDraftApplied(true);
   }, [isEditMode, editingRecord, editDraftApplied, draft]);
 
+  // Create mode only: a caller (e.g. the home screen's news list) can pass
+  // ?title=&sector= to pre-fill the form for a specific article. Same
+  // restoredDraft-gated pattern as edit mode above — never overwrites a
+  // draft the user already started for this exact URL.
+  const titleParam = searchParams.get("title");
+  const sectorParam = searchParams.get("sector");
+  const [prefillApplied, setPrefillApplied] = useState(isEditMode);
+  useEffect(() => {
+    if (isEditMode || prefillApplied) return;
+    if (draft.restoredDraft === null) return; // wait for the initial read
+    if (!draft.restoredDraft) {
+      if (titleParam) draft.setTitle(titleParam);
+      if (sectorParam && (WRITABLE_CATEGORIES as readonly string[]).includes(sectorParam)) {
+        draft.setSector(sectorParam as (typeof WRITABLE_CATEGORIES)[number]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPrefillApplied(true);
+  }, [isEditMode, prefillApplied, draft, titleParam, sectorParam]);
+
   const [panelState, setPanelState] = useState<WritePanelState>("minimized");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -112,16 +132,19 @@ function ExternalArticleView() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  // This is the write screen, so the record form should already be visible
-  // on entry rather than needing a tap first — but only once we know the
-  // user is actually logged in (same gate openPanel already applies), and
-  // only if nothing has changed panelState in the meantime.
+  // Edit mode only: the record already has content worth seeing right
+  // away, so its form opens by itself once we know the user is logged in
+  // (same gate openPanel already applies), as long as nothing's changed
+  // panelState in the meantime. A brand-new record has nothing to show
+  // yet, so create mode stays minimized until the user taps the
+  // "기록하기" CTA — see minimizedVariant on ExternalArticleWritePanel
+  // below — so reading the article isn't immediately covered.
   const autoOpenedRef = useRef(false);
   useEffect(() => {
-    if (autoOpenedRef.current || authLoading || !user) return;
+    if (!isEditMode || autoOpenedRef.current || authLoading || !user) return;
     autoOpenedRef.current = true;
     setPanelState((current) => (current === "minimized" ? "peek" : current));
-  }, [authLoading, user]);
+  }, [isEditMode, authLoading, user]);
 
   // Brief grace window before the blur-based "user tapped the article"
   // signal (see the hook below) is allowed to collapse the sheet. Without
@@ -363,7 +386,7 @@ function ExternalArticleView() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <BackHeader
-        title={isEditMode ? "기사 보며 수정하기" : "기사 보며 기록하기"}
+        title={isEditMode ? "기사 보며 수정하기" : ""}
         right={native ? undefined : <OpenInBrowserLink url={rawUrl} />}
       />
 
@@ -400,6 +423,7 @@ function ExternalArticleView() {
         onSubmit={handleSubmit}
         submitLabel={isEditMode ? "수정 완료" : "저장"}
         submitPendingLabel={isEditMode ? "수정 중..." : "저장 중..."}
+        minimizedVariant={isEditMode ? "handle" : "cta"}
       />
 
       {showLoginModal ? (
@@ -411,7 +435,7 @@ function ExternalArticleView() {
 
 export default function ExternalArticlePage() {
   return (
-    <Suspense fallback={<BackHeader title="기사 보며 기록하기" />}>
+    <Suspense fallback={<BackHeader title="" />}>
       <ExternalArticleView />
     </Suspense>
   );

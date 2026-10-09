@@ -27,6 +27,7 @@ const ExternalArticleWritePanel = forwardRef<
     onSubmit: () => void;
     submitLabel?: string;
     submitPendingLabel?: string;
+    minimizedVariant?: "handle" | "cta";
   }
 >(function ExternalArticleWritePanel(
   {
@@ -47,6 +48,7 @@ const ExternalArticleWritePanel = forwardRef<
     onSubmit,
     submitLabel = "저장",
     submitPendingLabel = "저장 중...",
+    minimizedVariant = "handle",
   },
   articleSummaryRef,
 ) {
@@ -56,6 +58,7 @@ const ExternalArticleWritePanel = forwardRef<
       ariaLabel="기록 작성"
       minimizedLabel="기록하기"
       showBackButton={false}
+      minimizedVariant={minimizedVariant}
       onOpen={onOpen}
       onCollapse={onCollapse}
       onToggleExpand={onToggleExpand}

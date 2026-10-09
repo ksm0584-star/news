@@ -71,6 +71,7 @@ export default function ArticleBottomSheet({
   ariaLabel,
   minimizedLabel,
   showBackButton = true,
+  minimizedVariant = "handle",
   onOpen,
   onCollapse,
   onToggleExpand,
@@ -81,6 +82,15 @@ export default function ArticleBottomSheet({
   ariaLabel: string;
   minimizedLabel: string;
   showBackButton?: boolean;
+  /**
+   * "handle" (default): the slim drag-handle-only bar every caller has
+   * always used. "cta": a full-width primary-colored button showing
+   * `minimizedLabel` as visible text instead — for a screen that isn't
+   * open by default and needs an obvious "start writing" entry point
+   * rather than a discoverable-by-dragging handle. Same tap-to-open/
+   * drag-to-open mechanics either way, just the visual treatment differs.
+   */
+  minimizedVariant?: "handle" | "cta";
   onOpen: () => void;
   onCollapse: () => void;
   onToggleExpand: () => void;
@@ -273,9 +283,17 @@ export default function ArticleBottomSheet({
           {...dragHandlers}
           onKeyDown={handleMinimizedKeyDown}
           aria-label={minimizedLabel}
-          className="flex h-12 w-full touch-none items-center justify-center px-5"
+          className={
+            minimizedVariant === "cta"
+              ? "flex h-12 w-full touch-none items-center justify-center rounded-t-3xl bg-point text-[15px] font-semibold text-white"
+              : "flex h-12 w-full touch-none items-center justify-center px-5"
+          }
         >
-          <span className="h-1 w-10 shrink-0 rounded-full bg-border-subtle" />
+          {minimizedVariant === "cta" ? (
+            minimizedLabel
+          ) : (
+            <span className="h-1 w-10 shrink-0 rounded-full bg-border-subtle" />
+          )}
         </button>
       )}
     </div>

@@ -14,6 +14,19 @@ import { trackClick } from "@/lib/mixpanel";
 const LOAD_TIMEOUT_MS = 15000;
 
 /**
+ * Some WebKit-based browsers fire the iframe's `load` event almost
+ * instantly for the frame's own initial empty document — a separate event
+ * from the real external navigation finishing — which looks indistinguishable
+ * from a genuine load from here. No real external article page can finish
+ * loading this fast over an actual network, so an `onload` firing before
+ * this much time has passed is treated as that spurious event rather than
+ * "loaded successfully," so the loading UI doesn't disappear onto a blank
+ * frame before the real content (or the timeout/retry card) has a chance to
+ * show up.
+ */
+const SPURIOUS_LOAD_THRESHOLD_MS = 200;
+
+/**
  * Renders an article URL as a plain <iframe> with loading / timeout-retry
  * overlays.
  *
@@ -53,8 +66,10 @@ const ArticleViewer = forwardRef<
   const [isLoading, setIsLoading] = useState(true);
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const loadStartRef = useRef(0);
 
   useEffect(() => {
+    loadStartRef.current = performance.now();
     setIsLoading(true);
     setHasTimedOut(false);
     timeoutRef.current = setTimeout(() => setHasTimedOut(true), LOAD_TIMEOUT_MS);
@@ -62,6 +77,7 @@ const ArticleViewer = forwardRef<
   }, [url, retryCount]);
 
   function handleLoad() {
+    if (performance.now() - loadStartRef.current < SPURIOUS_LOAD_THRESHOLD_MS) return;
     clearTimeout(timeoutRef.current);
     setIsLoading(false);
     setHasTimedOut(false);
