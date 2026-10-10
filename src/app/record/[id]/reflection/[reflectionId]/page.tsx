@@ -9,7 +9,7 @@ import { updateReflection } from "@/lib/records";
 import { useRecord, useReflectionsForRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
-import { trackClick } from "@/lib/mixpanel";
+import { track, trackClick } from "@/lib/mixpanel";
 import type { ReflectionResult } from "@/lib/types";
 
 const OPTIONS: { value: ReflectionResult; label: string }[] = [
@@ -93,12 +93,23 @@ export default function ReflectionEditPage() {
     if (saving || currentSelection === reflection!.result) return;
     setSaving(true);
     setSaveError(null);
-    trackClick("reflection_edit_save", {
-      reflection_id: reflection!.id,
-      result: currentSelection,
-    });
     try {
       await updateReflection(reflection!.id, currentSelection);
+      // Moved after the save succeeds — this event's name promises a
+      // completed save, unlike the click-intent "complete_reflection_selected"
+      // event on the initial-reflection screen, so it shouldn't fire for a
+      // save that then fails.
+      trackClick("reflection_edit_save", {
+        reflection_id: reflection!.id,
+        result: currentSelection,
+      });
+      track("reflection_saved", {
+        record_id: params.id,
+        compared_record_id: otherId,
+        reflection_id: reflection!.id,
+        result: currentSelection,
+        entry_point: "edit",
+      });
       goBack();
     } catch (err) {
       console.error("updateReflection failed:", err);

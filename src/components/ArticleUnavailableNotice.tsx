@@ -1,6 +1,7 @@
 "use client";
 
-import { trackClick } from "@/lib/mixpanel";
+import { useEffect, useRef } from "react";
+import { track, trackClick } from "@/lib/mixpanel";
 
 /**
  * Guidance shown in place of the iframe — either because the URL is on
@@ -11,6 +12,17 @@ import { trackClick } from "@/lib/mixpanel";
  * how much room it takes.
  */
 export default function ArticleUnavailableNotice({ url }: { url: string }) {
+  // Every current caller only mounts this for a domain iframe-support.ts
+  // has *confirmed* blocks framing — this is the one "load failure" signal
+  // in the codebase accurate enough to report, unlike ArticleViewer's own
+  // timeout/onError (explicitly not a confirmed failure; see its comments).
+  const trackedRef = useRef(false);
+  useEffect(() => {
+    if (trackedRef.current) return;
+    trackedRef.current = true;
+    track("article_load_failed", { reason: "iframe_blocked" });
+  }, []);
+
   return (
     <div className="rounded-2xl border border-border-subtle bg-background p-5 text-center">
       <p className="text-[14px] font-semibold text-foreground">원문을 불러올 수 없어요</p>

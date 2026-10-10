@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { trackClick } from "@/lib/mixpanel";
+import { track, trackClick } from "@/lib/mixpanel";
 
 const INFO_POPOVER_ID = "article-open-external-info";
 
@@ -21,6 +21,17 @@ const INFO_POPOVER_ID = "article-open-external-info";
 export default function ArticleOpenExternalBar({ url }: { url: string }) {
   const [infoOpen, setInfoOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // The only caller mounts this for a domain iframe-support.ts has
+  // *confirmed* blocks framing — see the matching comment in
+  // ArticleUnavailableNotice.tsx, which covers the same case for the
+  // other screen this can appear on.
+  const trackedRef = useRef(false);
+  useEffect(() => {
+    if (trackedRef.current) return;
+    trackedRef.current = true;
+    track("article_load_failed", { reason: "iframe_blocked" });
+  }, []);
 
   useEffect(() => {
     if (!infoOpen) return;
@@ -83,7 +94,7 @@ export default function ArticleOpenExternalBar({ url }: { url: string }) {
         >
           <p>
             일부 뉴스 사이트는 보안 정책에 따라 앱 내부에서 원문 표시가
-            제한될 수 있어요. 외부에서 기사를 읽은 뒤에도 NewsNote에서
+            제한될 수 있어요. 외부에서 기사를 읽은 뒤에도 모아요에서
             기록을 계속할 수 있어요.
           </p>
           <button

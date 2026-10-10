@@ -10,7 +10,7 @@ import { saveReflection } from "@/lib/records";
 import { useRecord, usePastRecordWithThought } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
-import { trackClick } from "@/lib/mixpanel";
+import { track, trackClick } from "@/lib/mixpanel";
 import type { ReflectionResult } from "@/lib/types";
 
 const OPTIONS: { value: ReflectionResult; label: string }[] = [
@@ -69,12 +69,22 @@ export default function CompareRecordPage() {
 
   async function handleSelect(result: ReflectionResult) {
     if (!past || saving) return;
+    // Click-intent event: fires at the moment the user picks an option,
+    // regardless of whether the save below succeeds — kept at click time
+    // since its name ("selected") already describes intent, not a
+    // completed save. "reflection_saved" below is the success-only signal.
     trackClick("complete_reflection_selected", { record_id: record!.id, result });
     setPendingResult(result);
     setSaving(true);
     setSaveError(null);
     try {
       await saveReflection({ recordId: record!.id, comparedRecordId: past.id, result });
+      track("reflection_saved", {
+        record_id: record!.id,
+        compared_record_id: past.id,
+        result,
+        entry_point: "initial",
+      });
       setSelected(result);
     } catch (err) {
       console.error("saveReflection failed:", err);

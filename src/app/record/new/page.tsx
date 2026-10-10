@@ -76,6 +76,38 @@ function NewRecordForm() {
       ? "internal"
       : "external";
 
+  // Fires once per mount: the true start of a *new* record's funnel. Bare
+  // /record/new (no articleId) is only ever reached from BottomNav's
+  // center "기록하기" tab; a URL-paste on this screen then redirects to
+  // /record/new/external, which recognizes that continuation (no
+  // title/sector params) and does not fire its own record_started.
+  const trackedStartRef = useRef(false);
+  useEffect(() => {
+    if (isEditMode || authLoading || !user || trackedStartRef.current) return;
+    trackedStartRef.current = true;
+    track("record_started", {
+      entry_point: article ? "article_detail" : "bottom_nav",
+      source_type: sourceType,
+      ...(sector ? { sector } : {}),
+    });
+  }, [isEditMode, authLoading, user, article, sourceType, sector]);
+
+  // Fires once the edit target has actually loaded and settled onto this
+  // screen — editingRecord.url records redirect to /record/new/external
+  // instead (see the effect above), so this only fires for the URL-less
+  // records this plain form actually edits.
+  const trackedEditStartRef = useRef(false);
+  useEffect(() => {
+    if (!isEditMode || trackedEditStartRef.current) return;
+    if (editingRecordLoading || !editingRecord || editingRecord.url || !editApplied) return;
+    trackedEditStartRef.current = true;
+    track("record_edit_started", {
+      record_id: editingRecord.id,
+      sector: editingRecord.sector,
+      entry_point: from ?? "unknown",
+    });
+  }, [isEditMode, editingRecordLoading, editingRecord, editApplied, from]);
+
   function handleContinueToArticle() {
     const trimmedUrl = url.trim();
     if (!trimmedUrl) {

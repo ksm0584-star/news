@@ -13,6 +13,11 @@ function ensureInit(): boolean {
       track_pageview: false,
       persistence: "localStorage",
     });
+    // Dev and Production currently share one Mixpanel token/project (no
+    // per-environment token split exists yet) — tag every event with the
+    // build environment so dev-origin events can at least be filtered out
+    // of Production dashboards instead of being indistinguishable.
+    mixpanel.register({ environment: process.env.NODE_ENV });
     initialized = true;
   }
   return true;
@@ -32,4 +37,16 @@ export function trackPageView(path: string): void {
 /** Fires a "button_click" event for a named CTA, for funnel/engagement tracking. */
 export function trackClick(label: string, props?: Record<string, unknown>): void {
   track("button_click", { label, ...props });
+}
+
+/** Ties subsequent events to a stable identity after login. Pass only the Supabase user id — never an email or other PII. */
+export function identify(userId: string): void {
+  if (!ensureInit()) return;
+  mixpanel.identify(userId);
+}
+
+/** Clears the identified user on sign-out so the next session starts anonymous instead of inheriting the previous user's identity. */
+export function resetIdentity(): void {
+  if (!ensureInit()) return;
+  mixpanel.reset();
 }

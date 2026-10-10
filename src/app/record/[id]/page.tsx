@@ -36,6 +36,7 @@ function RecordDetailInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const duplicate = searchParams.get("duplicate") === "1";
+  const justSaved = searchParams.get("saved") === "1";
 
   const { user, loading: authLoading } = useAuth();
   const { record, loading: recordLoading } = useRecord(params.id);
@@ -47,6 +48,21 @@ function RecordDetailInner() {
   const [deleting, setDeleting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fires once per mount, distinguishing a genuine revisit from the
+  // immediate landing right after this exact record was just saved/deduped
+  // — both of those come from a redirect carrying a query param, so neither
+  // one represents the user coming back later to re-read their own record.
+  const trackedViewRef = useRef(false);
+  useEffect(() => {
+    if (!record || trackedViewRef.current) return;
+    trackedViewRef.current = true;
+    track("record_viewed", {
+      record_id: record.id,
+      sector: record.sector,
+      entry_point: duplicate ? "duplicate_redirect" : justSaved ? "post_save" : "direct",
+    });
+  }, [record, duplicate, justSaved]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -94,9 +110,9 @@ function RecordDetailInner() {
 
   async function handleConfirmDelete() {
     setDeleting(true);
-    track("record_deleted", { record_id: record!.id, sector: record!.sector });
     try {
       await deleteRecord(record!.id);
+      track("record_deleted", { record_id: record!.id, sector: record!.sector });
       router.replace("/");
     } catch {
       setDeleting(false);

@@ -15,6 +15,7 @@ import { useRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { useCollapseSheetOnArticleActivity } from "@/lib/use-collapse-sheet-on-article-activity";
 import { isIframeUnsupported } from "@/lib/iframe-support";
+import { track } from "@/lib/mixpanel";
 
 /**
  * Read-only "원문 보기" screen reached from the record detail page: the
@@ -67,6 +68,19 @@ export default function RecordArticlePage() {
   // Closes the sheet when the user goes back to reading — see the hook's
   // own comment for what it can and can't detect across the iframe boundary.
   useCollapseSheetOnArticleActivity(panelState !== "minimized", iframeRef, collapsePanel);
+
+  // Fires once per mount, once the saved record (and its article URL) has
+  // loaded — this screen is only reached from the record detail page.
+  const trackedArticleOpenRef = useRef(false);
+  useEffect(() => {
+    if (!record?.url || trackedArticleOpenRef.current) return;
+    trackedArticleOpenRef.current = true;
+    track("article_opened", {
+      record_id: record.id,
+      sector: record.sector,
+      entry_point: "record_detail",
+    });
+  }, [record]);
 
   if (authLoading || (user && recordLoading)) return null;
 

@@ -153,6 +153,75 @@ function ExternalArticleView() {
     setPanelState((current) => (current === "minimized" ? "peek" : current));
   }, [isEditMode, authLoading, user]);
 
+  // Fires once per mount: the true start of a new record's funnel, but
+  // only for sessions landing here directly from the home news list
+  // (title+sector params present). A session that arrived via the plain
+  // /record/new URL-paste trampoline already fired record_started there —
+  // firing again here would double-count a single funnel start.
+  const trackedStartRef = useRef(false);
+  useEffect(() => {
+    if (isEditMode || authLoading || !user || trackedStartRef.current) return;
+    if (!urlIsValid || !titleParam || !sectorParam) return;
+    trackedStartRef.current = true;
+    track("record_started", {
+      entry_point: "home_news_list",
+      source_type: "external",
+      ...(sectorParam ? { sector: sectorParam } : {}),
+    });
+  }, [isEditMode, authLoading, user, urlIsValid, titleParam, sectorParam]);
+
+  // Fires once per mount, when the attached URL is confirmed usable —
+  // distinct from merely typing/pasting a URL (which can still be
+  // malformed; see the "올바른 기사 주소가 아니에요" branch below).
+  const trackedAttachRef = useRef(false);
+  useEffect(() => {
+    if (isEditMode || trackedAttachRef.current || !urlIsValid) return;
+    trackedAttachRef.current = true;
+    track("record_article_attached", {
+      source_type: "external",
+      ...(sectorParam ? { sector: sectorParam } : {}),
+    });
+  }, [isEditMode, urlIsValid, sectorParam]);
+
+  // Fires once the edit target has fully loaded (record + any restored
+  // draft) and settled onto this screen.
+  const trackedEditStartRef = useRef(false);
+  useEffect(() => {
+    if (!isEditMode || trackedEditStartRef.current) return;
+    if (editingRecordLoading || !editingRecord || !editDraftApplied) return;
+    trackedEditStartRef.current = true;
+    track("record_edit_started", {
+      record_id: editingRecord.id,
+      sector: editingRecord.sector,
+      entry_point: from ?? "unknown",
+    });
+  }, [isEditMode, editingRecordLoading, editingRecord, editDraftApplied, from]);
+
+  // Fires once per mount when the article is actually shown — in create
+  // mode that's immediately (iframe or the confirmed-unsupported fallback
+  // both count as "opened"); in edit mode only once the user explicitly
+  // taps "원문 보기" (showArticleView), since the edit screen's default
+  // landing shows no article at all.
+  const trackedArticleOpenRef = useRef(false);
+  useEffect(() => {
+    if (trackedArticleOpenRef.current || !urlIsValid) return;
+    if (isEditMode && (!showArticleView || !editingRecord || editingRecordLoading)) return;
+    trackedArticleOpenRef.current = true;
+    track("article_opened", {
+      source_type: "external",
+      entry_point: isEditMode
+        ? "record_edit"
+        : titleParam && sectorParam
+          ? "home_news_list"
+          : "manual_url",
+      ...(isEditMode && editingRecord
+        ? { record_id: editingRecord.id, sector: editingRecord.sector }
+        : sectorParam
+          ? { sector: sectorParam }
+          : {}),
+    });
+  }, [urlIsValid, isEditMode, showArticleView, editingRecord, editingRecordLoading, titleParam, sectorParam]);
+
   // Brief grace window before the blur-based "user tapped the article"
   // signal (see the hook below) is allowed to collapse the sheet. Without
   // it, any stray focus shift around initial mount/layout — before the

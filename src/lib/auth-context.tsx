@@ -10,6 +10,7 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase/client";
 import { isNativePlatform, NATIVE_AUTH_CALLBACK_URL } from "./platform";
+import { identify, resetIdentity } from "./mixpanel";
 
 const CONFIG_ERROR = "Supabase가 설정되지 않았어요. 환경변수를 확인해주세요.";
 
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ({ data }) => {
         setUser(data.user ?? null);
         setLoading(false);
+        if (data.user) identify(data.user.id);
       },
       (err) => {
         console.error("AuthProvider: failed to fetch user", err);
@@ -54,6 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        identify(session.user.id);
+      } else {
+        resetIdentity();
+      }
     });
 
     return () => listener.subscription.unsubscribe();
