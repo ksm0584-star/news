@@ -9,6 +9,8 @@ import LoginRequiredModal from "@/components/LoginRequiredModal";
 import ArticleViewer from "@/components/ArticleViewer";
 import ArticleOpenExternalBar from "@/components/ArticleOpenExternalBar";
 import OpenInBrowserLink from "@/components/OpenInBrowserLink";
+import TermDictionaryButton from "@/components/TermDictionaryButton";
+import TermDictionarySheet from "@/components/TermDictionarySheet";
 import ExternalRecordFields from "@/components/ExternalRecordFields";
 import ExternalArticleWritePanel, {
   type WritePanelState,
@@ -114,6 +116,7 @@ function ExternalArticleView() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [dictionaryOpen, setDictionaryOpen] = useState(false);
 
   const panelHeightPx = useSheetHeightPx(panelState);
   const keyboardInsetPx = useKeyboardInsetPx();
@@ -122,6 +125,25 @@ function ExternalArticleView() {
   const articleSummaryRef = useRef<HTMLTextAreaElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   useNativeArticleWebView(rawUrl, urlIsValid, articleAreaRef, panelHeightPx);
+
+  // Measures the actual rendered mobile content column (this page's own
+  // root div, which fills RootLayout's centered `max-w-[430px]` wrapper)
+  // so the dictionary button's `right` offset can be computed from that
+  // column's real right edge instead of the raw browser viewport edge —
+  // see TermDictionaryButton's own comment for why that distinction
+  // matters on a wide desktop window.
+  const pageRootRef = useRef<HTMLDivElement>(null);
+  const [dictionaryButtonRightPx, setDictionaryButtonRightPx] = useState(16);
+  useEffect(() => {
+    function updateOffset() {
+      const rect = pageRootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setDictionaryButtonRightPx(Math.max(16, Math.round(window.innerWidth - rect.right) + 16));
+    }
+    updateOffset();
+    window.addEventListener("resize", updateOffset);
+    return () => window.removeEventListener("resize", updateOffset);
+  }, []);
 
   // Mobile back-button UX: while the panel is open, back should collapse it
   // instead of leaving the screen. We push one history entry when it opens
@@ -525,7 +547,7 @@ function ExternalArticleView() {
   }
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
+    <div ref={pageRootRef} className="flex h-dvh flex-col overflow-hidden">
       <BackHeader
         title={isEditMode ? "기사 보며 수정하기" : ""}
         right={native ? undefined : <OpenInBrowserLink url={rawUrl} />}
@@ -569,6 +591,25 @@ function ExternalArticleView() {
 
       {showLoginModal ? (
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
+      ) : null}
+
+      {/* Hidden whenever the write sheet isn't minimized — both sheets are
+          fixed-bottom and must never show at once (see TermDictionarySheet's
+          own z-50 overlay, which also makes the write handle underneath
+          untappable while open, so this is mutually exclusive both ways).
+          Visible through both "minimized" and "peek" — "peek" is the
+          write sheet's normal reading-time state too (e.g. autoOpenedRef
+          in edit mode, or after tapping "기록하기"), not just an
+          already-writing state — and hidden only once "expanded" actually
+          takes over most of the screen. */}
+      <TermDictionaryButton
+        hidden={panelState === "expanded" || dictionaryOpen}
+        rightOffsetPx={dictionaryButtonRightPx}
+        bottomOffsetPx={panelHeightPx}
+        onClick={() => setDictionaryOpen(true)}
+      />
+      {dictionaryOpen ? (
+        <TermDictionarySheet onClose={() => setDictionaryOpen(false)} />
       ) : null}
     </div>
   );
