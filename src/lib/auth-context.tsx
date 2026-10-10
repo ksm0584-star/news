@@ -11,6 +11,7 @@ import type { User } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "./supabase/client";
 import { isNativePlatform, NATIVE_AUTH_CALLBACK_URL } from "./platform";
 import { identify, resetIdentity } from "./mixpanel";
+import { setOauthNextCookie } from "./oauth-next";
 
 const CONFIG_ERROR = "Supabase가 설정되지 않았어요. 환경변수를 확인해주세요.";
 
@@ -21,7 +22,7 @@ interface AuthResult {
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<AuthResult>;
+  signInWithGoogle: (next?: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
 }
 
@@ -40,19 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const supabase = getSupabaseBrowserClient();
 
-    supabase.auth.getUser().then(
-      ({ data }) => {
-        setUser(data.user ?? null);
-        setLoading(false);
-        if (data.user) identify(data.user.id);
-      },
-      (err) => {
-        console.error("AuthProvider: failed to fetch user", err);
-        setUser(null);
-        setLoading(false);
-      },
-    );
-
+    // onAuthStateChange fires once immediately (event "INITIAL_SESSION")
+    // with the session already in cookies, then again on every later auth
+    // change — this is the single source of truth for `user` below. A
+    // separate supabase.auth.getUser() call used to run alongside this and
+    // raced it: getUser() always makes an extra network round trip to
+    // GoTrue to re-validate the token, and whichever of the two resolved
+    // last won (both called setUser unconditionally). Right after a brand
+    // new sign-up that round trip is slowest, so getUser() would resolve
+    // after this listener's correct initial event and overwrite `user`
+    // back to null — existing users' sessions aren't new, so that extra
+    // call was consistently fast enough to never lose the race.
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -100,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function signInWithGoogle(): Promise<AuthResult> {
+  async function signInWithGoogle(next?: string): Promise<AuthResult> {
     if (!isSupabaseConfigured()) return { error: CONFIG_ERROR };
     const supabase = getSupabaseBrowserClient();
 
@@ -119,6 +118,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await openNativeOAuth(data.url);
       return { error: null };
     }
+
+    // redirectTo must stay a fixed, query-free URL — it has to match an
+    // entry in Supabase's Redirect URL allow-list exactly, and a `?next=`
+    // query string attached to it breaks that match (see oauth-next.ts).
+    // Where to return to afterwards is carried separately, via a cookie.
+    setOauthNextCookie(next);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
