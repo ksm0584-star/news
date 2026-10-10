@@ -89,6 +89,16 @@ export async function getRecords(): Promise<NewsRecord[]> {
   return (data ?? []).map(rowToRecord);
 }
 
+/** DB-side count (`head: true` fetches no rows) — used by the mypage activity summary. */
+export async function getRecordCount(): Promise<number> {
+  const supabase = getSupabaseBrowserClient();
+  const { count, error } = await supabase
+    .from("records")
+    .select("*", { count: "exact", head: true });
+  if (error) throw toError(error);
+  return count ?? 0;
+}
+
 export async function getRecord(id: string): Promise<NewsRecord | null> {
   const supabase = getSupabaseBrowserClient();
   const { data, error } = await supabase

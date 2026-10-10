@@ -5,6 +5,7 @@ import { useAuth } from "./auth-context";
 import {
   findPastRecordWithThought,
   getRecord,
+  getRecordCount,
   getRecords,
   getReflectionsForRecord,
   subscribe,
@@ -56,6 +57,42 @@ export function useRecords(): { records: NewsRecord[]; loading: boolean } {
   useEffect(() => subscribe(refetch), [refetch]);
 
   return { records, loading };
+}
+
+export function useRecordCount(): { count: number; loading: boolean } {
+  const { user, loading: authLoading } = useAuth();
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(async () => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+    if (!user) {
+      setCount(0);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      setCount(await getRecordCount());
+    } catch (err) {
+      console.error("useRecordCount: failed to fetch record count", err);
+      setCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see useRecords above
+    refetch();
+  }, [refetch]);
+
+  useEffect(() => subscribe(refetch), [refetch]);
+
+  return { count, loading };
 }
 
 export function useRecord(id: string): { record: NewsRecord | null; loading: boolean } {
