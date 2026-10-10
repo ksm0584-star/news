@@ -76,11 +76,12 @@ export default function LatestNewsList() {
           />
         ) : (
           <div className="flex flex-col gap-2.5">
-            {filtered.map((article) => (
+            {filtered.map((article, index) => (
               <Link
                 key={article.url}
                 href={`/record/new/external?url=${encodeURIComponent(article.url)}&title=${encodeURIComponent(article.title)}&sector=${encodeURIComponent(article.sector)}`}
                 onClick={() => trackClick("home_news_item_open", { sector: article.sector })}
+                data-onboarding-target={index === 0 ? "news-card-first" : undefined}
                 className="flex flex-col gap-1.5 rounded-2xl border border-border-subtle px-4 py-3.5 active:bg-background"
               >
                 <p className="text-[14.5px] font-semibold leading-snug text-foreground">

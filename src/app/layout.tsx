@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import AnalyticsPageView from "@/components/AnalyticsPageView";
 import BottomNav from "@/components/BottomNav";
+import OnboardingGuide from "@/components/OnboardingGuide";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </div>
           <BottomNav />
+          <OnboardingGuide />
         </AuthProvider>
       </body>
     </html>

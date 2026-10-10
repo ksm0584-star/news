@@ -90,6 +90,7 @@ export default function BottomNav() {
           <Link
             href="/record/new"
             onClick={handleWriteClick}
+            data-onboarding-target="write-nav"
             className="flex flex-1 flex-col items-center justify-center gap-0.5"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-point text-[18px] font-semibold leading-none text-white">
