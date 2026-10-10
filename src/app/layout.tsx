@@ -12,7 +12,7 @@ const notoSansKr = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-  title: "뉴스노트",
+  title: "모아요",
   description:
     "경제뉴스를 스크랩하고 내 생각을 기록하며, 과거와 현재의 생각을 비교해 관점의 변화를 돌아보는 앱",
 };

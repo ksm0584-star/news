@@ -19,7 +19,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
  */
 const config: CapacitorConfig = {
   appId: "com.newsnote.app",
-  appName: "뉴스노트",
+  appName: "모아요",
   webDir: "capacitor-shell",
   server: {
     // TEMPORARY while validating /webview-test on the iOS Simulator — there's

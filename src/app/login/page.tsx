@@ -57,7 +57,7 @@ function LoginInner() {
   return (
     <div className="flex flex-col items-center px-5 py-16 text-center">
       <p className="mb-2 text-[17px] font-bold text-foreground">
-        뉴스노트에 로그인하세요
+        모아요에 로그인하세요
       </p>
       <p className="mb-8 text-[13px] text-muted">구글 계정으로 간편하게 시작해요</p>
 
