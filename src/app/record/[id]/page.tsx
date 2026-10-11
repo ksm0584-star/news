@@ -102,8 +102,20 @@ function RecordDetailInner() {
     };
   }, [menuOpen]);
 
-  function goToHome() {
-    router.replace("/");
+  // The in-screen back button can't rely on router.back() alone — a direct
+  // URL load or a bfcache-restored tab may have no prior app history at
+  // all. So it routes explicitly based on how this screen was reached:
+  // just-saved/duplicate redirects (both router.replace, no write screen
+  // left in history) still collapse to home as before, and every other
+  // entry (내 기록 탭, a future home record-card link carrying
+  // `from=home`, or a direct URL with no `from`) returns to 내 기록 — the
+  // screen this detail view conceptually belongs to.
+  function goBack() {
+    if (justSaved || duplicate) {
+      router.replace("/");
+      return;
+    }
+    router.push(searchParams.get("from") === "home" ? "/" : "/records");
   }
 
   if (authLoading || recordLoading) return null;
@@ -111,7 +123,7 @@ function RecordDetailInner() {
   if (!record) {
     return (
       <div>
-        <BackHeader title="기록" onBack={goToHome} />
+        <BackHeader title="기록" onBack={goBack} />
         <div className="px-5 py-10 text-center text-sm text-muted">
           기록을 찾을 수 없어요.
         </div>
@@ -133,7 +145,7 @@ function RecordDetailInner() {
 
   return (
     <div className="pb-10">
-      <BackHeader title="기록" onBack={goToHome} />
+      <BackHeader title="기록" onBack={goBack} />
       {duplicate ? (
         <div className="mx-5 mt-3 rounded-xl bg-background px-4 py-2.5 text-center text-[13px] font-medium text-muted">
           이미 스크랩한 기사예요
