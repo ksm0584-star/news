@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { track } from "@/lib/mixpanel";
 
 const TABS = [
   {
     href: "/",
     label: "뉴스",
+    tab: "news",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <rect x="3" y="4" width="14" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
@@ -29,6 +31,7 @@ const TABS = [
   {
     href: "/records",
     label: "내 기록",
+    tab: "records",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
@@ -44,6 +47,7 @@ const TABS = [
   {
     href: "/mypage",
     label: "마이페이지",
+    tab: "mypage",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
@@ -67,9 +71,10 @@ const TABS = [
  * every screen to hide on.
  *
  * The old center "기록하기" item is gone — that entry point is now the
- * floating RecordFab (see layout.tsx), shown only on the two screens where
- * writing a new record makes sense (`/`, `/records`), independent of this
- * nav's own three tabs.
+ * floating RecordFab (mounted directly by src/app/page.tsx and
+ * src/app/records/page.tsx), shown only on the two screens where writing a
+ * new record makes sense (`/`, `/records`), independent of this nav's own
+ * three tabs.
  */
 export default function BottomNav() {
   const pathname = usePathname();
@@ -83,6 +88,7 @@ export default function BottomNav() {
           <Link
             key={tab.href}
             href={tab.href}
+            onClick={() => track("bottom_nav_clicked", { tab: tab.tab })}
             aria-current={pathname === tab.href ? "page" : undefined}
             data-onboarding-target={tab.onboardingTarget}
             className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${

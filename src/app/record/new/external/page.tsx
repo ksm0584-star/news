@@ -45,6 +45,10 @@ function ExternalArticleView() {
   const editId = searchParams.get("editId");
   const from = searchParams.get("from");
   const isEditMode = Boolean(editId);
+  // Set only by the return banner's onRecord (see use-article-return-banner.ts)
+  // — distinguishes that path from a (hypothetical) direct home-news-list
+  // entry landing here with the same title/sector/url shape, for record_started.
+  const entryParam = searchParams.get("entry");
   const { record: editingRecord, loading: editingRecordLoading } = useRecord(editId ?? "");
 
   // Create mode takes the URL from the query string; edit mode takes it
@@ -161,21 +165,23 @@ function ExternalArticleView() {
   }
 
   // Fires once per mount: the true start of a new record's funnel, but
-  // only for sessions landing here directly from the home news list
-  // (title+sector params present). A session that arrived via the plain
-  // /record/new URL-paste trampoline already fired record_started there —
-  // firing again here would double-count a single funnel start.
+  // only for sessions landing here with title+sector params — currently
+  // that's only ever the return banner's onRecord (entryParam set), kept as
+  // a fallback to "home_news_list" for any other caller that might reach
+  // here the same way. A session that arrived via the plain /record/new
+  // URL-paste trampoline already fired record_started there — firing again
+  // here would double-count a single funnel start.
   const trackedStartRef = useRef(false);
   useEffect(() => {
     if (isEditMode || authLoading || trackedStartRef.current) return;
     if (!urlIsValid || !titleParam || !sectorParam) return;
     trackedStartRef.current = true;
     track("record_started", {
-      entry_point: "home_news_list",
+      entry_point: entryParam === "article_return_prompt" ? "article_return_prompt" : "home_news_list",
       source_type: "external",
       ...(sectorParam ? { sector: sectorParam } : {}),
     });
-  }, [isEditMode, authLoading, urlIsValid, titleParam, sectorParam]);
+  }, [isEditMode, authLoading, urlIsValid, titleParam, sectorParam, entryParam]);
 
   // Fires once per mount, when the attached URL is confirmed usable —
   // distinct from merely typing/pasting a URL (which can still be
@@ -334,6 +340,7 @@ function ExternalArticleView() {
         sector: record.sector,
         source_type: record.sourceType,
         has_thought: Boolean(record.thought),
+        auth_status: user ? "logged_in" : "guest",
       });
 
       // Only ever true for an anonymous save — see shouldOfferFirstRecordLoginPrompt.

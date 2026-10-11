@@ -71,7 +71,16 @@ export function useArticleReturnBanner(): {
     });
     clearPendingArticleReturn();
     setInfo(null);
-    const query = new URLSearchParams({ url: info.url, title: info.title, sector: info.sector });
+    // `entry` tells the destination screen's own record_started this came
+    // from the return banner specifically, not a (currently hypothetical)
+    // direct home-news-list entry that might also land there with the
+    // same title/sector/url shape — see record/new/external/page.tsx.
+    const query = new URLSearchParams({
+      url: info.url,
+      title: info.title,
+      sector: info.sector,
+      entry: "article_return_prompt",
+    });
     router.push(`/record/new/external?${query.toString()}`);
   }, [info, router]);
 

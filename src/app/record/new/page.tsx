@@ -78,16 +78,16 @@ function NewRecordForm() {
       : "external";
 
   // Fires once per mount: the true start of a *new* record's funnel. Bare
-  // /record/new (no articleId) is only ever reached from BottomNav's
-  // center "기록하기" tab; a URL-paste on this screen then redirects to
-  // /record/new/external, which recognizes that continuation (no
-  // title/sector params) and does not fire its own record_started.
+  // /record/new (no articleId) is only ever reached from RecordFab; a
+  // URL-paste on this screen then redirects to /record/new/external,
+  // which recognizes that continuation (no title/sector params) and does
+  // not fire its own record_started.
   const trackedStartRef = useRef(false);
   useEffect(() => {
     if (isEditMode || authLoading || trackedStartRef.current) return;
     trackedStartRef.current = true;
     track("record_started", {
-      entry_point: article ? "article_detail" : "bottom_nav",
+      entry_point: article ? "article_detail" : "fab",
       source_type: sourceType,
       ...(sector ? { sector } : {}),
     });
@@ -178,6 +178,7 @@ function NewRecordForm() {
         sector: record.sector,
         source_type: record.sourceType,
         has_thought: Boolean(record.thought),
+        auth_status: user ? "logged_in" : "guest",
       });
 
       // Only ever true for an anonymous save — see shouldOfferFirstRecordLoginPrompt.

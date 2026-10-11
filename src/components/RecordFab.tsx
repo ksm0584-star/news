@@ -39,7 +39,7 @@ export default function RecordFab({ hidden = false }: { hidden?: boolean }) {
       <div className="flex justify-end">
         <Link
           href="/record/new"
-          onClick={() => trackClick("write_nav_center")}
+          onClick={() => trackClick("write_fab")}
           data-onboarding-target="write-nav"
           aria-label="기록하기"
           className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-point text-white shadow-lg shadow-black/25 active:bg-point-dark"
