@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import LatestNewsList from "@/components/LatestNewsList";
 import ArticleReturnBanner from "@/components/ArticleReturnBanner";
@@ -11,7 +11,13 @@ import { track } from "@/lib/mixpanel";
 export default function HomePage() {
   const { info: articleReturnInfo, onRecord, onDismiss } = useArticleReturnBanner();
 
+  // Guards against React Strict Mode's dev-only double effect invoke,
+  // which would otherwise double-count every home_viewed in development
+  // (see record_viewed/dictionary_history_open for the same pattern).
+  const trackedViewRef = useRef(false);
   useEffect(() => {
+    if (trackedViewRef.current) return;
+    trackedViewRef.current = true;
     track("home_viewed");
   }, []);
 

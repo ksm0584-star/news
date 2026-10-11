@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import RecordCard from "@/components/RecordCard";
 import EmptyState from "@/components/EmptyState";
 import RecordFab from "@/components/RecordFab";
@@ -12,7 +12,14 @@ export default function RecordsPage() {
   const { loading: authLoading } = useAuth();
   const { records, loading: recordsLoading } = useRecords();
 
+  // Guards against React Strict Mode's dev-only double effect invoke,
+  // which would otherwise double-count every records_viewed in
+  // development (see record_viewed/dictionary_history_open for the same
+  // pattern).
+  const trackedViewRef = useRef(false);
   useEffect(() => {
+    if (trackedViewRef.current) return;
+    trackedViewRef.current = true;
     track("records_viewed");
   }, []);
 
