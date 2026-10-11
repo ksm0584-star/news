@@ -6,13 +6,15 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
-import LoginPrompt from "@/components/LoginPrompt";
-import { deleteRecord } from "@/lib/records";
+import FirstRecordLoginPromptSheet from "@/components/FirstRecordLoginPromptSheet";
+import RatingPromptSheet from "@/components/RatingPromptSheet";
+import { deleteRecord } from "@/lib/record-store";
 import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
-import { isIframeUnsupported } from "@/lib/iframe-support";
+import { hasSeenLoginPrompt } from "@/lib/login-prompt";
+import { hasSeenRatingPrompt } from "@/lib/rating-prompt";
 import type { Reflection } from "@/lib/types";
 
 const RESULT_LABEL: Record<Reflection["result"], string> = {
@@ -37,6 +39,18 @@ function RecordDetailInner() {
   const searchParams = useSearchParams();
   const duplicate = searchParams.get("duplicate") === "1";
   const justSaved = searchParams.get("saved") === "1";
+  // Set by the write screen right after a qualifying first-ever anonymous
+  // save (see record/new/page.tsx and record/new/external/page.tsx).
+  // showLoginPrompt below re-checks hasSeenLoginPrompt() at mount time
+  // regardless of this param, so refreshing this same URL after the sheet
+  // already showed once correctly does not show it again.
+  const firstLocal = searchParams.get("firstLocal") === "1";
+  // Set right after a user's 2nd successful new record save (see
+  // record/new/page.tsx and record/new/external/page.tsx) — mutually
+  // exclusive with firstLocal by construction (a save can't be both the
+  // 1st and 2nd), but showRatingPrompt below re-checks hasSeenRatingPrompt()
+  // at mount time regardless, same reasoning as showLoginPrompt.
+  const showRatingParam = searchParams.get("rating") === "1";
 
   const { user, loading: authLoading } = useAuth();
   const { record, loading: recordLoading } = useRecord(params.id);
@@ -48,6 +62,12 @@ function RecordDetailInner() {
   const [deleting, setDeleting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(
+    () => !user && firstLocal && !hasSeenLoginPrompt(),
+  );
+  const [showRatingPrompt, setShowRatingPrompt] = useState(
+    () => showRatingParam && !hasSeenRatingPrompt(),
+  );
 
   // Fires once per mount, distinguishing a genuine revisit from the
   // immediate landing right after this exact record was just saved/deduped
@@ -86,16 +106,7 @@ function RecordDetailInner() {
     router.replace("/");
   }
 
-  if (authLoading || (user && recordLoading)) return null;
-
-  if (!user) {
-    return (
-      <div>
-        <BackHeader title="기록" onBack={goToHome} />
-        <LoginPrompt />
-      </div>
-    );
-  }
+  if (authLoading || recordLoading) return null;
 
   if (!record) {
     return (
@@ -111,7 +122,7 @@ function RecordDetailInner() {
   async function handleConfirmDelete() {
     setDeleting(true);
     try {
-      await deleteRecord(record!.id);
+      await deleteRecord(user, record!.id);
       track("record_deleted", { record_id: record!.id, sector: record!.sector });
       router.replace("/");
     } catch {
@@ -195,29 +206,33 @@ function RecordDetailInner() {
           {record.title}
         </h1>
         {record.url && isHttpUrl(record.url) ? (
-          isIframeUnsupported(record.url) ? (
-            // This domain is confirmed to block framing — the internal
-            // /article viewer can't show it either, so sending the user
-            // there would just land them on its "원문을 불러올 수 없어요"
-            // notice. Open the real article directly instead, in the same
-            // tab (no target="_blank") so the browser's own back button
-            // returns here.
-            <a
-              href={record.url}
-              rel="noopener noreferrer"
-              onClick={() => trackClick("external_open_new_tab")}
-              className="mt-1 inline-block truncate text-[12.5px] text-point"
-            >
-              원문 보기 ↗
-            </a>
-          ) : (
-            <Link
-              href={`/record/${record.id}/article`}
-              className="mt-1 inline-block truncate text-[12.5px] text-point"
-            >
-              원문 보기
-            </Link>
-          )
+          // Always the real article URL, same tab (no target="_blank") so
+          // the browser's own back button returns here — unified with the
+          // record-writing screen's "원문 보기" (뉴스 열람 구조 개편 3차).
+          // No more iframe-support branch: /record/[id]/article (the old
+          // iframe viewer for "supported" domains) is gone.
+          <a
+            href={record.url}
+            rel="noopener noreferrer"
+            onClick={() => {
+              trackClick("external_open_new_tab");
+              // Distinct entry_point from the write/edit screen's — this
+              // is "reread a saved record's original article," not
+              // "attaching/editing a record" (뉴스 열람 구조 개편 3차:
+              // /record/[id]/article's old iframe-mount article_opened
+              // moves here, to the actual 원문 보기 click, since that
+              // route no longer renders an article at all).
+              track("article_opened", {
+                source_type: "external",
+                entry_point: "record_detail",
+                record_id: record.id,
+                sector: record.sector,
+              });
+            }}
+            className="mt-1 inline-block truncate text-[12.5px] text-point"
+          >
+            원문 보기 ↗
+          </a>
         ) : null}
 
         <div className="mt-6">
@@ -307,6 +322,12 @@ function RecordDetailInner() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {showLoginPrompt ? (
+        <FirstRecordLoginPromptSheet onClose={() => setShowLoginPrompt(false)} />
+      ) : showRatingPrompt ? (
+        <RatingPromptSheet autoTriggered onClose={() => setShowRatingPrompt(false)} />
       ) : null}
     </div>
   );

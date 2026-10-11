@@ -3,9 +3,14 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import LatestNewsList from "@/components/LatestNewsList";
+import ArticleReturnBanner from "@/components/ArticleReturnBanner";
+import RecordFab from "@/components/RecordFab";
+import { useArticleReturnBanner } from "@/lib/use-article-return-banner";
 import { track } from "@/lib/mixpanel";
 
 export default function HomePage() {
+  const { info: articleReturnInfo, onRecord, onDismiss } = useArticleReturnBanner();
+
   useEffect(() => {
     track("home_viewed");
   }, []);
@@ -32,6 +37,15 @@ export default function HomePage() {
       </header>
 
       <LatestNewsList />
+
+      {articleReturnInfo ? (
+        <ArticleReturnBanner onRecord={onRecord} onDismiss={onDismiss} />
+      ) : null}
+
+      {/* Both CTAs write a record, so only one shows at a time — driven by
+          the same articleReturnInfo the banner above uses, not a separate
+          check. */}
+      <RecordFab hidden={Boolean(articleReturnInfo)} />
     </div>
   );
 }

@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
-import LoginPrompt from "@/components/LoginPrompt";
-import { saveReflection } from "@/lib/records";
+import FirstRecordLoginPromptSheet from "@/components/FirstRecordLoginPromptSheet";
+import RatingPromptSheet from "@/components/RatingPromptSheet";
+import { saveReflection } from "@/lib/record-store";
 import { useRecord, usePastRecordWithThought } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
+import { hasSeenLoginPrompt } from "@/lib/login-prompt";
+import { hasSeenRatingPrompt } from "@/lib/rating-prompt";
 import type { ReflectionResult } from "@/lib/types";
 
 const OPTIONS: { value: ReflectionResult; label: string }[] = [
@@ -20,14 +23,23 @@ const OPTIONS: { value: ReflectionResult; label: string }[] = [
   { value: "hard_to_compare", label: "비교하기 어려워요" },
 ];
 
-export default function CompareRecordPage() {
+function CompareRecordView() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const firstLocal = searchParams.get("firstLocal") === "1";
+  const showRatingParam = searchParams.get("rating") === "1";
 
   const { user, loading: authLoading } = useAuth();
   const { record, loading: recordLoading } = useRecord(params.id);
   const { past, loading: pastLoading } = usePastRecordWithThought(record?.sector, record?.id);
   const [selected, setSelected] = useState<ReflectionResult | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(
+    () => !user && firstLocal && !hasSeenLoginPrompt(),
+  );
+  const [showRatingPrompt, setShowRatingPrompt] = useState(
+    () => showRatingParam && !hasSeenRatingPrompt(),
+  );
   // Shown as a highlighted-but-not-yet-confirmed state while a save is in
   // flight — `selected` itself only updates once the save actually
   // succeeds (see handleSelect), so a failed save leaves the last
@@ -40,16 +52,7 @@ export default function CompareRecordPage() {
     router.replace("/");
   }
 
-  if (authLoading || (user && (recordLoading || (record && pastLoading)))) return null;
-
-  if (!user) {
-    return (
-      <div>
-        <BackHeader title="저장 완료" onBack={goToHome} />
-        <LoginPrompt />
-      </div>
-    );
-  }
+  if (authLoading || recordLoading || (record && pastLoading)) return null;
 
   if (!record) {
     return (
@@ -78,7 +81,7 @@ export default function CompareRecordPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await saveReflection({ recordId: record!.id, comparedRecordId: past.id, result });
+      await saveReflection(user, { recordId: record!.id, comparedRecordId: past.id, result });
       track("reflection_saved", {
         record_id: record!.id,
         compared_record_id: past.id,
@@ -121,6 +124,11 @@ export default function CompareRecordPage() {
             내용 수정하기
           </Link>
         </div>
+        {showLoginPrompt ? (
+          <FirstRecordLoginPromptSheet onClose={() => setShowLoginPrompt(false)} />
+        ) : showRatingPrompt ? (
+          <RatingPromptSheet autoTriggered onClose={() => setShowRatingPrompt(false)} />
+        ) : null}
       </div>
     );
   }
@@ -218,6 +226,20 @@ export default function CompareRecordPage() {
           </button>
         )}
       </div>
+
+      {showLoginPrompt ? (
+        <FirstRecordLoginPromptSheet onClose={() => setShowLoginPrompt(false)} />
+      ) : showRatingPrompt ? (
+        <RatingPromptSheet autoTriggered onClose={() => setShowRatingPrompt(false)} />
+      ) : null}
     </div>
+  );
+}
+
+export default function CompareRecordPage() {
+  return (
+    <Suspense fallback={null}>
+      <CompareRecordView />
+    </Suspense>
   );
 }

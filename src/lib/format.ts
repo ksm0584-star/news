@@ -13,6 +13,12 @@ export function formatDateTime(iso: string): string {
   return `${formatDate(iso)} ${hh}:${min}`;
 }
 
+/** Whole days elapsed since `iso`, floored at 0 to absorb clock skew — never negative. */
+export function daysSince(iso: string): number {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  return Math.max(0, Math.floor(diffMs / 86_400_000));
+}
+
 export function extractDomain(url: string): string {
   try {
     const { hostname } = new URL(url);

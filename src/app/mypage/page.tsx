@@ -5,9 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
+import { resetOnboardingGuide } from "@/components/OnboardingGuide";
+import RatingPromptSheet from "@/components/RatingPromptSheet";
 import { useAuth } from "@/lib/auth-context";
 import { useRecordCount } from "@/lib/use-records-store";
 import { deleteAccount } from "@/lib/account";
+import { trackClick } from "@/lib/mixpanel";
 
 function DefaultAvatar() {
   return (
@@ -59,6 +62,7 @@ export default function MyPage() {
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [showRatingSheet, setShowRatingSheet] = useState(false);
 
   // Auth state isn't known yet — rendering either branch here would flash
   // the wrong one for a moment once it resolves, so show nothing until then.
@@ -89,6 +93,17 @@ export default function MyPage() {
     // On success the browser is redirected to Google — nothing else to do here.
   }
 
+  function handleReplayGuide() {
+    trackClick("mypage_replay_guide");
+    resetOnboardingGuide();
+    router.push("/");
+  }
+
+  function handleOpenRating() {
+    trackClick("mypage_rate_service");
+    setShowRatingSheet(true);
+  }
+
   async function handleLogout() {
     await signOut();
     router.replace("/");
@@ -113,7 +128,7 @@ export default function MyPage() {
   }
 
   return (
-    <div className="pb-10">
+    <div style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}>
       <BackHeader title="마이페이지" />
 
       {user ? (
@@ -138,7 +153,10 @@ export default function MyPage() {
         <div className="flex flex-col items-center gap-3 px-5 py-10 text-center">
           <DefaultAvatar />
           <p className="text-[14.5px] font-semibold text-foreground">
-            로그인하고 나의 생각을 모아보세요
+            나의 생각을 안전하게 보관해 보세요
+          </p>
+          <p className="text-[13px] text-muted">
+            로그인하면 다른 기기에서도 기록을 확인할 수 있어요.
           </p>
           {loginError ? <p className="text-[13px] text-red-500">{loginError}</p> : null}
           <button
@@ -152,6 +170,24 @@ export default function MyPage() {
           </button>
         </div>
       )}
+
+      <section className="px-5 py-3">
+        <h2 className="text-[14px] font-bold text-foreground">도움말</h2>
+        <button
+          type="button"
+          onClick={handleReplayGuide}
+          className="mt-2.5 block w-full rounded-2xl border border-border-subtle px-4 py-3.5 text-left text-[14px] font-medium text-foreground active:bg-background"
+        >
+          앱 사용 가이드 다시보기
+        </button>
+        <button
+          type="button"
+          onClick={handleOpenRating}
+          className="mt-2.5 block w-full rounded-2xl border border-border-subtle px-4 py-3.5 text-left text-[14px] font-medium text-foreground active:bg-background"
+        >
+          서비스 평가하기
+        </button>
+      </section>
 
       {user ? (
         <>
@@ -229,6 +265,10 @@ export default function MyPage() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {showRatingSheet ? (
+        <RatingPromptSheet autoTriggered={false} onClose={() => setShowRatingSheet(false)} />
       ) : null}
     </div>
   );

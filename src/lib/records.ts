@@ -69,7 +69,8 @@ function rowToReflection(row: ReflectionRow): Reflection {
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
-function emitChange(): void {
+/** Exported for local-records.ts, so an anonymous write also refetches every use-records-store.ts hook. */
+export function emitChange(): void {
   listeners.forEach((listener) => listener());
 }
 

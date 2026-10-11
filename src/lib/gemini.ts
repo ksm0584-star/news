@@ -57,11 +57,7 @@ function getClient(): GoogleGenAI | null {
  * model can still be tricked into *saying* something it shouldn't, and
  * validation is what actually stops a bad response from reaching the UI.
  */
-function buildPrompt(term: string, previousTooLong?: string): string {
-  const retryNote = previousTooLong
-    ? `\n\n이전 설명이 너무 길었습니다(${previousTooLong.length}자). 의미는 유지하면서 아래 글자 수 제한에 맞게 다시 작성하세요:\n"${previousTooLong}"`
-    : "";
-
+function buildPrompt(term: string): string {
   return `당신은 경제 지식이 부족한 입문자를 위한 "경제용어사전" 설명가입니다.
 
 아래 [사용자 입력]은 사전에서 찾고자 하는 경제 용어 "하나"입니다.
@@ -72,10 +68,13 @@ function buildPrompt(term: string, previousTooLong?: string): string {
 - [사용자 입력]이 실제로 존재하는 경제·금융·투자·시장 관련 용어가 아니라면 is_economic_term을 false로 설정하세요.
 - is_economic_term이 true일 때만 term과 description을 의미 있게 채우세요.
 - description은 한국어, 해요체로 작성하세요.
-- description은 공백 포함 최대 ${MAX_DESCRIPTION_LENGTH}자, 하나의 문단으로, 서론·결론 없이 핵심만 설명하세요.
+- description은 공백 포함 최대 ${MAX_DESCRIPTION_LENGTH}자, 2~3문장으로 자연스럽게 작성하세요.
+- 용어의 의미와 그것이 실제 경제에 미치는 영향을 함께 설명하세요.
+- 불필요한 서론이나 같은 말의 반복 없이 핵심만 설명하세요.
+- 다른 전문 용어를 써야 한다면 그 자리에서 쉽게 풀어서 설명하세요.
 - 투자 권유나 개인화된 금융 조언은 포함하지 마세요.
 - 확인되지 않은 사실을 만들어내지 마세요.
-- 반드시 JSON으로만 응답하세요: {"is_economic_term": boolean, "term": string, "description": string}${retryNote}
+- 반드시 JSON으로만 응답하세요: {"is_economic_term": boolean, "term": string, "description": string}
 
 [사용자 입력]
 """
@@ -106,22 +105,17 @@ function parseRawResult(text: string): RawResult | null {
   };
 }
 
-async function callGemini(
-  ai: GoogleGenAI,
-  term: string,
-  previousTooLong?: string,
-): Promise<RawResult | null> {
+async function callGemini(ai: GoogleGenAI, term: string): Promise<RawResult | null> {
   const response = await ai.models.generateContent({
     model: MODEL,
-    contents: buildPrompt(term, previousTooLong),
+    contents: buildPrompt(term),
     config: {
       responseMimeType: "application/json",
-      // Defense-in-depth against a runaway-length response triggering the
-      // retry path below unnecessarily — the real length rule is still
-      // the prompt instruction + server-side validation, this just caps
-      // the worst case. ~220 tokens comfortably fits the JSON wrapper
-      // plus a 100-Korean-character description with room to spare.
-      maxOutputTokens: 220,
+      // Bounds the worst case (cost/latency), not the real length rule —
+      // that's the prompt instruction + safelyShorten below. ~400 tokens
+      // comfortably fits the JSON wrapper plus a 200-Korean-character,
+      // 2-3 sentence description with room to spare.
+      maxOutputTokens: 400,
     },
   });
   // Confirmed via @google/genai's type defs (`get text(): string |
@@ -132,11 +126,28 @@ async function callGemini(
   return parseRawResult(text);
 }
 
-/** Final safety net only — the retry above already tries to get a coherent short rewrite first. */
+/**
+ * No second Gemini call for an over-length response — this trims locally
+ * instead, preferring the end of the last complete sentence within the
+ * limit (Korean sentences end in "요." "다." "죠." or plain "."), so the
+ * result never stops mid-sentence. Falls back to a clean word boundary
+ * if no sentence end is close enough to the limit. Always ≤ `maxLength`.
+ */
 function safelyShorten(text: string, maxLength: number): string {
   const trimmed = text.trim();
   if (trimmed.length <= maxLength) return trimmed;
-  return `${trimmed.slice(0, maxLength - 1)}…`;
+
+  const truncated = trimmed.slice(0, maxLength);
+  const lastSentenceEnd = truncated.lastIndexOf(".");
+  if (lastSentenceEnd > maxLength * 0.5) {
+    return truncated.slice(0, lastSentenceEnd + 1).trim();
+  }
+
+  const lastSpace = truncated.lastIndexOf(" ");
+  if (lastSpace > maxLength * 0.5) {
+    return `${truncated.slice(0, lastSpace).trim()}…`;
+  }
+  return `${truncated.trim()}…`;
 }
 
 export async function lookupEconomicTerm(rawTerm: string): Promise<TermLookupOutcome> {
@@ -158,21 +169,14 @@ export async function lookupEconomicTerm(rawTerm: string): Promise<TermLookupOut
       return { ok: true, term: first.term, description: first.description };
     }
 
-    // Capped at exactly one retry — keeps worst-case cost/latency bounded
-    // (spec explicitly asks to limit re-requests), with a local-truncation
-    // fallback below if even the retry comes back too long.
-    const retryCallStart = Date.now();
-    const retry = await callGemini(ai, term, first.description);
-    console.log(`gemini: retry call (too-long description) ${Date.now() - retryCallStart}ms`);
-    if (retry?.is_economic_term && retry.description && retry.description.length <= MAX_DESCRIPTION_LENGTH) {
-      return { ok: true, term: retry.term || first.term, description: retry.description };
-    }
-
-    const fallbackDescription = retry?.description || first.description;
+    // No second Gemini call for an over-length response anymore — that
+    // previously doubled latency on every overflow for no real benefit.
+    // safelyShorten trims locally at a sentence boundary instead, which
+    // is both faster and still never cuts mid-sentence.
     return {
       ok: true,
       term: first.term,
-      description: safelyShorten(fallbackDescription, MAX_DESCRIPTION_LENGTH),
+      description: safelyShorten(first.description, MAX_DESCRIPTION_LENGTH),
     };
   } catch (err) {
     console.error("gemini: lookupEconomicTerm failed", err);

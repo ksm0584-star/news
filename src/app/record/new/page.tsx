@@ -4,14 +4,15 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import BackHeader from "@/components/BackHeader";
-import LoginPrompt from "@/components/LoginPrompt";
 import { getArticleById } from "@/lib/mock-news";
 import { resolveCategoryForSector, type NewsCategory } from "@/lib/news-categories";
-import { createRecord, findPastRecordWithThought, updateRecord } from "@/lib/records";
+import { createRecord, findPastRecordWithThought, updateRecord } from "@/lib/record-store";
 import { useRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { track, trackClick } from "@/lib/mixpanel";
 import { isMemoValid, MEMO_REQUIRED_ERROR } from "@/lib/validate-memo";
+import { shouldOfferFirstRecordLoginPrompt } from "@/lib/login-prompt";
+import { incrementNewSaveCount, shouldOfferRatingPrompt } from "@/lib/rating-prompt";
 import RecordFormFields from "@/components/RecordFormFields";
 
 function NewRecordForm() {
@@ -83,14 +84,14 @@ function NewRecordForm() {
   // title/sector params) and does not fire its own record_started.
   const trackedStartRef = useRef(false);
   useEffect(() => {
-    if (isEditMode || authLoading || !user || trackedStartRef.current) return;
+    if (isEditMode || authLoading || trackedStartRef.current) return;
     trackedStartRef.current = true;
     track("record_started", {
       entry_point: article ? "article_detail" : "bottom_nav",
       source_type: sourceType,
       ...(sector ? { sector } : {}),
     });
-  }, [isEditMode, authLoading, user, article, sourceType, sector]);
+  }, [isEditMode, authLoading, article, sourceType, sector]);
 
   // Fires once the edit target has actually loaded and settled onto this
   // screen — editingRecord.url records redirect to /record/new/external
@@ -138,7 +139,7 @@ function NewRecordForm() {
 
     try {
       if (isEditMode && editingRecord) {
-        await updateRecord(editingRecord.id, {
+        await updateRecord(user, editingRecord.id, {
           title: title.trim(),
           sector,
           imageUrl,
@@ -157,7 +158,7 @@ function NewRecordForm() {
         return;
       }
 
-      const { record, duplicate } = await createRecord({
+      const { record, duplicate } = await createRecord(user, {
         title: title.trim(),
         sector,
         imageUrl,
@@ -179,14 +180,26 @@ function NewRecordForm() {
         has_thought: Boolean(record.thought),
       });
 
+      // Only ever true for an anonymous save — see shouldOfferFirstRecordLoginPrompt.
+      const firstLocal = !user && (await shouldOfferFirstRecordLoginPrompt());
+      // Counts only a genuine new save reaching this point (never an edit,
+      // a deduped repeat, or migrate-local-records.ts's own direct calls).
+      const newSaveCount = incrementNewSaveCount();
+      const showRating = shouldOfferRatingPrompt(newSaveCount);
+
+      const extraParams: string[] = [];
+      if (firstLocal) extraParams.push("firstLocal=1");
+      if (showRating) extraParams.push("rating=1");
+      const extraQuery = extraParams.join("&");
+
       if (record.thought) {
-        const past = await findPastRecordWithThought(record.sector, record.id);
+        const past = await findPastRecordWithThought(user, record.sector, record.id);
         if (past) {
-          router.replace(`/record/complete/${record.id}`);
+          router.replace(`/record/complete/${record.id}${extraQuery ? `?${extraQuery}` : ""}`);
           return;
         }
       }
-      router.push(`/record/${record.id}?saved=1`);
+      router.push(`/record/${record.id}?saved=1${extraQuery ? `&${extraQuery}` : ""}`);
     } catch (err) {
       const cause = err instanceof Error ? err.cause : undefined;
       const c = cause as { message?: string; code?: string; details?: string } | undefined;
@@ -202,10 +215,6 @@ function NewRecordForm() {
   }
 
   if (authLoading) return null;
-
-  if (!user) {
-    return <LoginPrompt />;
-  }
 
   if (isEditMode && (editingRecordLoading || editingRecord?.url || !editApplied)) {
     return (

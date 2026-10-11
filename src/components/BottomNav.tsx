@@ -1,13 +1,9 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import LoginRequiredModal from "./LoginRequiredModal";
-import { useAuth } from "@/lib/auth-context";
-import { trackClick } from "@/lib/mixpanel";
 
-const SIDE_TABS = [
+const TABS = [
   {
     href: "/",
     label: "뉴스",
@@ -28,6 +24,7 @@ const SIDE_TABS = [
         />
       </svg>
     ),
+    onboardingTarget: undefined,
   },
   {
     href: "/records",
@@ -42,79 +39,61 @@ const SIDE_TABS = [
         />
       </svg>
     ),
+    onboardingTarget: "records-nav",
   },
-];
+  {
+    href: "/mypage",
+    label: "마이페이지",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
+        <path
+          d="M5 20c1.2-3.5 4-5.5 7-5.5s5.8 2 7 5.5"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+    onboardingTarget: undefined,
+  },
+] as const;
 
 /**
- * Only shown on the two top-level tab screens (`/`, `/records`) — every
- * other route (article reading/writing, record detail/edit, login, etc.)
- * keeps its own BackHeader and back-button flow instead, so this checks an
- * allowlist rather than trying to enumerate every screen to hide on.
+ * Only shown on the three top-level tab screens (`/`, `/records`,
+ * `/mypage`) — every other route (article reading/writing, record
+ * detail/edit, login, etc.) keeps its own BackHeader and back-button flow
+ * instead, so this checks an allowlist rather than trying to enumerate
+ * every screen to hide on.
  *
- * The center "기록하기" item reuses the exact same destination and
- * login-gate behavior FabButton used to provide (that component is no
- * longer mounted anywhere — see the home page) — /record/new and
- * everything downstream of it (URL input, write form, save) is completely
- * unchanged, this is only a different entry point into it.
+ * The old center "기록하기" item is gone — that entry point is now the
+ * floating RecordFab (see layout.tsx), shown only on the two screens where
+ * writing a new record makes sense (`/`, `/records`), independent of this
+ * nav's own three tabs.
  */
 export default function BottomNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  if (pathname !== "/" && pathname !== "/records") return null;
-
-  function handleWriteClick(event: MouseEvent<HTMLAnchorElement>) {
-    trackClick("write_nav_center");
-    if (!user) {
-      event.preventDefault();
-      setShowLoginModal(true);
-    }
-  }
+  if (!TABS.some((tab) => tab.href === pathname)) return null;
 
   return (
-    <>
-      <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface pb-[env(safe-area-inset-bottom)]">
-        <div className="flex h-14">
+    <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface pb-[env(safe-area-inset-bottom)]">
+      <div className="flex h-14">
+        {TABS.map((tab) => (
           <Link
-            href={SIDE_TABS[0].href}
-            aria-current={pathname === SIDE_TABS[0].href ? "page" : undefined}
+            key={tab.href}
+            href={tab.href}
+            aria-current={pathname === tab.href ? "page" : undefined}
+            data-onboarding-target={tab.onboardingTarget}
             className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${
-              pathname === SIDE_TABS[0].href ? "text-point" : "text-muted"
+              pathname === tab.href ? "text-point" : "text-muted"
             }`}
           >
-            {SIDE_TABS[0].icon}
-            {SIDE_TABS[0].label}
+            {tab.icon}
+            {tab.label}
           </Link>
-
-          <Link
-            href="/record/new"
-            onClick={handleWriteClick}
-            data-onboarding-target="write-nav"
-            className="flex flex-1 flex-col items-center justify-center gap-0.5"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-point text-[18px] font-semibold leading-none text-white">
-              +
-            </span>
-            <span className="text-[11px] font-medium text-point">기록하기</span>
-          </Link>
-
-          <Link
-            href={SIDE_TABS[1].href}
-            aria-current={pathname === SIDE_TABS[1].href ? "page" : undefined}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${
-              pathname === SIDE_TABS[1].href ? "text-point" : "text-muted"
-            }`}
-          >
-            {SIDE_TABS[1].icon}
-            {SIDE_TABS[1].label}
-          </Link>
-        </div>
-      </nav>
-
-      {showLoginModal ? (
-        <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
-      ) : null}
-    </>
+        ))}
+      </div>
+    </nav>
   );
 }

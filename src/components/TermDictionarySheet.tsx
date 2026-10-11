@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useKeyboardInsetPx } from "@/lib/use-keyboard-inset";
+import { useAuth } from "@/lib/auth-context";
 import { searchEconomicTerm } from "@/lib/economic-terms";
 import { MAX_TERM_LENGTH } from "@/lib/economic-term-format";
+import { track } from "@/lib/mixpanel";
 
 type SearchState =
   | { status: "idle" }
@@ -20,6 +22,7 @@ type SearchState =
  * needing an effect to reset it.
  */
 export default function TermDictionarySheet({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [state, setState] = useState<SearchState>({ status: "idle" });
   // Guards a response landing after this sheet unmounted (closed) or after
@@ -36,11 +39,22 @@ export default function TermDictionarySheet({ onClose }: { onClose: () => void }
 
   async function handleSearch() {
     const term = query.trim();
+    // Both guards below (empty term, already-loading) are also exactly
+    // what keeps dictionary_search from over-firing — tracking happens
+    // only once a request is actually about to go out.
     if (!term || state.status === "loading") return;
     const requestId = ++requestRef.current;
+    const isLoggedIn = Boolean(user);
+    const startedAt = Date.now();
+    track("dictionary_search", {
+      term_length: term.length,
+      is_logged_in: isLoggedIn,
+      source: "dictionary_sheet",
+    });
     setState({ status: "loading" });
     const result = await searchEconomicTerm(term);
     if (requestRef.current !== requestId) return;
+    const responseTimeMs = Date.now() - startedAt;
     if (result.ok) {
       setState({
         status: "success",
@@ -48,10 +62,27 @@ export default function TermDictionarySheet({ onClose }: { onClose: () => void }
         description: result.description,
         saved: result.saved,
       });
+      // Search succeeding and the personal-history save succeeding are
+      // deliberately different things — this fires purely on the former,
+      // regardless of `result.saved`.
+      track("dictionary_search_success", {
+        response_time_ms: responseTimeMs,
+        cache_hit: result.cached,
+        is_logged_in: isLoggedIn,
+        source: "dictionary_sheet",
+      });
     } else if (result.reason === "not_found") {
+      // Not a failure — a legitimate "no match" — so neither success nor
+      // fail fires here (error_type has no slot for this case either).
       setState({ status: "not_found" });
     } else {
       setState({ status: "error", message: result.message });
+      track("dictionary_search_fail", {
+        error_type: result.errorType,
+        response_time_ms: responseTimeMs,
+        is_logged_in: isLoggedIn,
+        source: "dictionary_sheet",
+      });
     }
   }
 

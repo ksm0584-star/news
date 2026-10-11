@@ -2,33 +2,23 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
-import LoginPrompt from "@/components/LoginPrompt";
-import LoginRequiredModal from "@/components/LoginRequiredModal";
-import ArticleViewer from "@/components/ArticleViewer";
 import ArticleOpenExternalBar from "@/components/ArticleOpenExternalBar";
-import OpenInBrowserLink from "@/components/OpenInBrowserLink";
 import TermDictionaryButton from "@/components/TermDictionaryButton";
 import TermDictionarySheet from "@/components/TermDictionarySheet";
 import ExternalRecordFields from "@/components/ExternalRecordFields";
-import ExternalArticleWritePanel, {
-  type WritePanelState,
-} from "@/components/ExternalArticleWritePanel";
 import { useAuth } from "@/lib/auth-context";
-import { createRecord, findPastRecordWithThought, updateRecord } from "@/lib/records";
+import { createRecord, findPastRecordWithThought, updateRecord } from "@/lib/record-store";
 import { useRecord } from "@/lib/use-records-store";
 import { useExternalDraft } from "@/lib/use-external-draft";
-import { useSheetHeightPx } from "@/lib/use-sheet-height";
 import { useKeyboardInsetPx } from "@/lib/use-keyboard-inset";
-import { useCollapseSheetOnArticleActivity } from "@/lib/use-collapse-sheet-on-article-activity";
-import { useNativeArticleWebView } from "@/lib/native/use-native-article-webview";
-import { isNativePlatform } from "@/lib/platform";
-import { isIframeUnsupported } from "@/lib/iframe-support";
 import { resolveCategoryForSector, WRITABLE_CATEGORIES } from "@/lib/news-categories";
 import { combineExternalContent, splitExternalContent } from "@/lib/external-record-content";
 import { isMemoValid } from "@/lib/validate-memo";
-import { track, trackClick } from "@/lib/mixpanel";
+import { shouldOfferFirstRecordLoginPrompt } from "@/lib/login-prompt";
+import { incrementNewSaveCount, shouldOfferRatingPrompt } from "@/lib/rating-prompt";
+import { track } from "@/lib/mixpanel";
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -39,19 +29,22 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
+/**
+ * The record-writing screen for an external article — one common UI for
+ * every article now (this used to branch between an iframe+bottom-sheet
+ * view and this plain scrolling form depending on iframe support; the
+ * iframe branch was removed, this is now the only one, per the "뉴스 열람
+ * 구조 개편" 1차 작업). "원문 보기" always opens the real article in the
+ * same browser tab (ArticleOpenExternalBar) instead of rendering it inside
+ * the app.
+ */
 function ExternalArticleView() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const editId = searchParams.get("editId");
   const from = searchParams.get("from");
   const isEditMode = Boolean(editId);
-  // Edit mode lands on a plain full-page form first (see the
-  // isEditMode && !showArticleView branch below) — "원문 보기" on that
-  // page is what opts into the iframe+sheet view for an iframe-supported
-  // article. This is a query param (not local state) specifically so the
-  // back button returns from the article view to the form, and so a
-  // reload while on either one keeps showing the same one.
-  const showArticleView = searchParams.get("view") === "article";
   const { record: editingRecord, loading: editingRecordLoading } = useRecord(editId ?? "");
 
   // Create mode takes the URL from the query string; edit mode takes it
@@ -112,19 +105,12 @@ function ExternalArticleView() {
     setPrefillApplied(true);
   }, [isEditMode, prefillApplied, draft, titleParam, sectorParam]);
 
-  const [panelState, setPanelState] = useState<WritePanelState>("minimized");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
 
-  const panelHeightPx = useSheetHeightPx(panelState);
   const keyboardInsetPx = useKeyboardInsetPx();
-
-  const articleAreaRef = useRef<HTMLDivElement>(null);
   const articleSummaryRef = useRef<HTMLTextAreaElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  useNativeArticleWebView(rawUrl, urlIsValid, articleAreaRef, panelHeightPx);
 
   // Measures the actual rendered mobile content column (this page's own
   // root div, which fills RootLayout's centered `max-w-[430px]` wrapper)
@@ -133,47 +119,46 @@ function ExternalArticleView() {
   // see TermDictionaryButton's own comment for why that distinction
   // matters on a wide desktop window.
   const pageRootRef = useRef<HTMLDivElement>(null);
-  const [dictionaryButtonRightPx, setDictionaryButtonRightPx] = useState(16);
+  const [dictionaryRightPx, setDictionaryRightPx] = useState(16);
   useEffect(() => {
     function updateOffset() {
       const rect = pageRootRef.current?.getBoundingClientRect();
       if (!rect) return;
-      setDictionaryButtonRightPx(Math.max(16, Math.round(window.innerWidth - rect.right) + 16));
+      setDictionaryRightPx(Math.max(16, Math.round(window.innerWidth - rect.right) + 16));
     }
     updateOffset();
     window.addEventListener("resize", updateOffset);
     return () => window.removeEventListener("resize", updateOffset);
   }, []);
 
-  // Mobile back-button UX: while the panel is open, back should collapse it
-  // instead of leaving the screen. We push one history entry when it opens
-  // and consume it on close, so a second back press behaves normally.
-  const pushedHistoryRef = useRef(false);
-
+  // Same measurement approach as the right offset above, but against the
+  // fixed save-button footer's own live top edge — this already reflects
+  // its current keyboard-aware position (it's pinned at `bottom:
+  // keyboardInsetPx`) and safe-area padding, so re-measuring whenever
+  // keyboardInsetPx changes keeps the dictionary button just above it,
+  // keyboard up or down, without double-counting either inset itself
+  // (see TermDictionaryButton's comment on why it no longer adds its own).
+  const footerRef = useRef<HTMLDivElement>(null);
+  const [dictionaryBottomPx, setDictionaryBottomPx] = useState(76);
   useEffect(() => {
-    function onPopState() {
-      if (pushedHistoryRef.current) {
-        pushedHistoryRef.current = false;
-        setPanelState("minimized");
-      }
+    function updateOffset() {
+      const rect = footerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setDictionaryBottomPx(Math.max(0, Math.round(window.innerHeight - rect.top) + 12));
     }
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []);
+    updateOffset();
+    window.addEventListener("resize", updateOffset);
+    return () => window.removeEventListener("resize", updateOffset);
+  }, [keyboardInsetPx]);
 
-  // Edit mode only: the record already has content worth seeing right
-  // away, so its form opens by itself once we know the user is logged in
-  // (same gate openPanel already applies), as long as nothing's changed
-  // panelState in the meantime. A brand-new record has nothing to show
-  // yet, so create mode stays minimized until the user taps the
-  // "기록하기" CTA — see minimizedVariant on ExternalArticleWritePanel
-  // below — so reading the article isn't immediately covered.
-  const autoOpenedRef = useRef(false);
-  useEffect(() => {
-    if (!isEditMode || autoOpenedRef.current || authLoading || !user) return;
-    autoOpenedRef.current = true;
-    setPanelState((current) => (current === "minimized" ? "peek" : current));
-  }, [isEditMode, authLoading, user]);
+  function openDictionary() {
+    track("dictionary_open", {
+      source: "article_view",
+      page: pathname,
+      is_logged_in: Boolean(user),
+    });
+    setDictionaryOpen(true);
+  }
 
   // Fires once per mount: the true start of a new record's funnel, but
   // only for sessions landing here directly from the home news list
@@ -182,7 +167,7 @@ function ExternalArticleView() {
   // firing again here would double-count a single funnel start.
   const trackedStartRef = useRef(false);
   useEffect(() => {
-    if (isEditMode || authLoading || !user || trackedStartRef.current) return;
+    if (isEditMode || authLoading || trackedStartRef.current) return;
     if (!urlIsValid || !titleParam || !sectorParam) return;
     trackedStartRef.current = true;
     track("record_started", {
@@ -190,7 +175,7 @@ function ExternalArticleView() {
       source_type: "external",
       ...(sectorParam ? { sector: sectorParam } : {}),
     });
-  }, [isEditMode, authLoading, user, urlIsValid, titleParam, sectorParam]);
+  }, [isEditMode, authLoading, urlIsValid, titleParam, sectorParam]);
 
   // Fires once per mount, when the attached URL is confirmed usable —
   // distinct from merely typing/pasting a URL (which can still be
@@ -219,73 +204,30 @@ function ExternalArticleView() {
     });
   }, [isEditMode, editingRecordLoading, editingRecord, editDraftApplied, from]);
 
-  // Fires once per mount when the article is actually shown — in create
-  // mode that's immediately (iframe or the confirmed-unsupported fallback
-  // both count as "opened"); in edit mode only once the user explicitly
-  // taps "원문 보기" (showArticleView), since the edit screen's default
-  // landing shows no article at all.
-  const trackedArticleOpenRef = useRef(false);
-  useEffect(() => {
-    if (trackedArticleOpenRef.current || !urlIsValid) return;
-    if (isEditMode && (!showArticleView || !editingRecord || editingRecordLoading)) return;
-    trackedArticleOpenRef.current = true;
+  // article_opened means "the user actually opened the original article,"
+  // not "this screen (which merely offers a 원문 보기 link) loaded" — a
+  // mount-based fire used to conflate those two (every edit-screen visit
+  // counted as an "open" even if 원문 보기 was never tapped). Fired instead
+  // from ArticleOpenExternalBar's onOpenArticle, at the actual click (뉴스
+  // 열람 구조 개편 3차) — see handleOpenArticle below.
+  //
+  // "home_news_list" is skipped here: that open is already counted at the
+  // moment the home news card is tapped (see LatestNewsList.tsx's
+  // handleArticleOpen), before Safari even leaves for the article —
+  // counting it again if the user re-opens 원문 보기 from this screen
+  // would double-count the same funnel step. A `external_open_new_tab`
+  // button_click still fires for that re-open either way.
+  function handleOpenArticle() {
     track("article_opened", {
       source_type: "external",
-      entry_point: isEditMode
-        ? "record_edit"
-        : titleParam && sectorParam
-          ? "home_news_list"
-          : "manual_url",
+      entry_point: isEditMode ? "record_edit" : "manual_url",
       ...(isEditMode && editingRecord
         ? { record_id: editingRecord.id, sector: editingRecord.sector }
         : sectorParam
           ? { sector: sectorParam }
           : {}),
     });
-  }, [urlIsValid, isEditMode, showArticleView, editingRecord, editingRecordLoading, titleParam, sectorParam]);
-
-  // Brief grace window before the blur-based "user tapped the article"
-  // signal (see the hook below) is allowed to collapse the sheet. Without
-  // it, any stray focus shift around initial mount/layout — before the
-  // user has had a chance to even see the screen — could instantly
-  // collapse a sheet that's now open by default. A direct tap on the
-  // non-iframe article area (the pointerdown handler below) isn't gated by
-  // this — only the ambiguous blur signal is.
-  const [autoCollapseArmed, setAutoCollapseArmed] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setAutoCollapseArmed(true), 600);
-    return () => clearTimeout(timer);
-  }, []);
-
-  function openPanel() {
-    if (authLoading) return;
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-    if (!pushedHistoryRef.current) {
-      window.history.pushState({ newsnoteWritePanel: true }, "");
-      pushedHistoryRef.current = true;
-    }
-    trackClick("external_write_open");
-    setPanelState("peek");
   }
-
-  function collapsePanel() {
-    if (pushedHistoryRef.current) {
-      pushedHistoryRef.current = false;
-      window.history.back();
-    }
-    setPanelState("minimized");
-  }
-
-  // Closes the sheet when the user goes back to reading — see the hook's
-  // own comment for what it can and can't detect across the iframe boundary.
-  useCollapseSheetOnArticleActivity(
-    panelState !== "minimized" && autoCollapseArmed,
-    iframeRef,
-    collapsePanel,
-  );
 
   if (isEditMode && editingRecordLoading) {
     return (
@@ -355,7 +297,7 @@ function ExternalArticleView() {
 
     try {
       if (isEditMode && editingRecord) {
-        const updated = await updateRecord(editingRecord.id, {
+        const updated = await updateRecord(user, editingRecord.id, {
           title: draft.title.trim(),
           sector: draft.sector,
           thought: combineExternalContent(draft.articleSummary, draft.investmentNote),
@@ -372,7 +314,7 @@ function ExternalArticleView() {
         return;
       }
 
-      const { record, duplicate } = await createRecord({
+      const { record, duplicate } = await createRecord(user, {
         title: draft.title.trim(),
         sector: draft.sector,
         sourceType: "external",
@@ -394,14 +336,26 @@ function ExternalArticleView() {
         has_thought: Boolean(record.thought),
       });
 
+      // Only ever true for an anonymous save — see shouldOfferFirstRecordLoginPrompt.
+      const firstLocal = !user && (await shouldOfferFirstRecordLoginPrompt());
+      // Counts only a genuine new save reaching this point (never an edit,
+      // a deduped repeat, or migrate-local-records.ts's own direct calls).
+      const newSaveCount = incrementNewSaveCount();
+      const showRating = shouldOfferRatingPrompt(newSaveCount);
+
+      const extraParams: string[] = [];
+      if (firstLocal) extraParams.push("firstLocal=1");
+      if (showRating) extraParams.push("rating=1");
+      const extraQuery = extraParams.join("&");
+
       if (record.thought) {
-        const past = await findPastRecordWithThought(record.sector, record.id);
+        const past = await findPastRecordWithThought(user, record.sector, record.id);
         if (past) {
-          router.replace(`/record/complete/${record.id}`);
+          router.replace(`/record/complete/${record.id}${extraQuery ? `?${extraQuery}` : ""}`);
           return;
         }
       }
-      router.push(`/record/${record.id}?saved=1`);
+      router.push(`/record/${record.id}?saved=1${extraQuery ? `&${extraQuery}` : ""}`);
     } catch (err) {
       const cause = err instanceof Error ? err.cause : undefined;
       const c = cause as { code?: string; details?: string } | undefined;
@@ -416,197 +370,66 @@ function ExternalArticleView() {
     }
   }
 
-  const native = isNativePlatform();
-  // Native shows a real native WebView (not an iframe), so this never
-  // applies there — only the web iframe path can be blocked by a site's
-  // X-Frame-Options/CSP. Only a domain src/lib/iframe-support.ts has
-  // actually confirmed blocks framing gets this treatment — never a guess
-  // based on how the current load attempt is going.
-  const isConfirmedUnsupported = !native && isIframeUnsupported(rawUrl);
-
-  // A blocked domain can't show the article and the write form side by
-  // side, so there's nothing for a bottom sheet to sit over — this is a
-  // plain scrolling page instead, reusing the same draft/fields/submit
-  // logic as the sheet below. The fixed footer rides above the keyboard
-  // the same way ArticleBottomSheet's footer does (see useKeyboardInsetPx).
-  if (isConfirmedUnsupported) {
-    return (
-      <div style={{ paddingBottom: `calc(7rem + ${keyboardInsetPx}px)` }}>
-        <BackHeader title={isEditMode ? "기록 수정" : "기록하기"} />
-        <ArticleOpenExternalBar url={rawUrl} />
-
-        {authLoading ? null : !user ? (
-          <div className="px-5 pt-4">
-            <LoginPrompt />
-          </div>
-        ) : (
-          <>
-            <div className="px-5 pt-4">
-              <ExternalRecordFields
-                ref={articleSummaryRef}
-                title={draft.title}
-                onTitleChange={draft.setTitle}
-                sector={draft.sector}
-                onSectorChange={draft.setSector}
-                articleSummary={draft.articleSummary}
-                onArticleSummaryChange={draft.setArticleSummary}
-                investmentNote={draft.investmentNote}
-                onInvestmentNoteChange={draft.setInvestmentNote}
-                error={error}
-              />
-            </div>
-
-            <div
-              style={{ bottom: keyboardInsetPx }}
-              className="fixed inset-x-0 z-40 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3"
-            >
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
-              >
-                {submitting
-                  ? isEditMode
-                    ? "수정 중..."
-                    : "저장 중..."
-                  : isEditMode
-                    ? "수정 완료"
-                    : "저장"}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  // Edit mode's default landing: a plain full-page form, no iframe —
-  // editing a record doesn't need the article visible to be useful, so it
-  // isn't shown until the user explicitly asks via "원문 보기" (which pushes
-  // `view=article` below, landing on the iframe+sheet branch at the end of
-  // this function). Never reached from the create flow, which still goes
-  // straight to that branch as before.
-  if (isEditMode && !showArticleView) {
-    return (
-      <div style={{ paddingBottom: `calc(7rem + ${keyboardInsetPx}px)` }}>
-        <BackHeader title="기록 수정" />
-
-        <div className="flex items-center gap-2 px-4 pt-4">
-          <button
-            type="button"
-            onClick={() => {
-              const query = new URLSearchParams({ editId: editId ?? "", view: "article" });
-              if (from) query.set("from", from);
-              router.push(`/record/new/external?${query.toString()}`);
-            }}
-            className="flex items-center gap-1.5 rounded-full bg-point px-4 py-2 text-[13px] font-semibold text-white active:bg-point-dark"
-          >
-            원문 보기
-          </button>
-        </div>
-
-        {authLoading ? null : !user ? (
-          <div className="px-5 pt-4">
-            <LoginPrompt />
-          </div>
-        ) : (
-          <>
-            <div className="px-5 pt-4">
-              <ExternalRecordFields
-                ref={articleSummaryRef}
-                title={draft.title}
-                onTitleChange={draft.setTitle}
-                sector={draft.sector}
-                onSectorChange={draft.setSector}
-                articleSummary={draft.articleSummary}
-                onArticleSummaryChange={draft.setArticleSummary}
-                investmentNote={draft.investmentNote}
-                onInvestmentNoteChange={draft.setInvestmentNote}
-                error={error}
-              />
-            </div>
-
-            <div
-              style={{ bottom: keyboardInsetPx }}
-              className="fixed inset-x-0 z-40 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3"
-            >
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
-              >
-                {submitting ? "수정 중..." : "수정 완료"}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div ref={pageRootRef} className="flex h-dvh flex-col overflow-hidden">
-      <BackHeader
-        title={isEditMode ? "기사 보며 수정하기" : ""}
-        right={native ? undefined : <OpenInBrowserLink url={rawUrl} />}
+    <div
+      ref={pageRootRef}
+      style={{ paddingBottom: `calc(7rem + ${keyboardInsetPx}px)` }}
+    >
+      <BackHeader title={isEditMode ? "기록 수정" : "기록하기"} />
+      <ArticleOpenExternalBar
+        url={rawUrl}
+        onOpenArticle={!isEditMode && titleParam && sectorParam ? undefined : handleOpenArticle}
       />
 
-      <div
-        ref={articleAreaRef}
-        onPointerDown={() => {
-          if (panelState !== "minimized") collapsePanel();
-        }}
-        className="relative flex-1 overflow-hidden bg-background"
-      >
-        {native ? null : (
-          <ArticleViewer ref={iframeRef} url={rawUrl} bottomInsetPx={panelHeightPx} />
-        )}
-      </div>
+      {authLoading ? null : (
+        <>
+          <div className="px-5 pt-4">
+            <ExternalRecordFields
+              ref={articleSummaryRef}
+              title={draft.title}
+              onTitleChange={draft.setTitle}
+              sector={draft.sector}
+              onSectorChange={draft.setSector}
+              articleSummary={draft.articleSummary}
+              onArticleSummaryChange={draft.setArticleSummary}
+              investmentNote={draft.investmentNote}
+              onInvestmentNoteChange={draft.setInvestmentNote}
+              error={error}
+            />
+          </div>
 
-      <ExternalArticleWritePanel
-        ref={articleSummaryRef}
-        panelState={panelState}
-        onOpen={openPanel}
-        onCollapse={collapsePanel}
-        onToggleExpand={() =>
-          setPanelState((current) => (current === "expanded" ? "peek" : "expanded"))
-        }
-        title={draft.title}
-        onTitleChange={draft.setTitle}
-        sector={draft.sector}
-        onSectorChange={draft.setSector}
-        articleSummary={draft.articleSummary}
-        onArticleSummaryChange={draft.setArticleSummary}
-        investmentNote={draft.investmentNote}
-        onInvestmentNoteChange={draft.setInvestmentNote}
-        error={error}
-        submitting={submitting}
-        onSubmit={handleSubmit}
-        submitLabel={isEditMode ? "수정 완료" : "저장"}
-        submitPendingLabel={isEditMode ? "수정 중..." : "저장 중..."}
-        minimizedVariant={isEditMode ? "handle" : "cta"}
-      />
+          <div
+            ref={footerRef}
+            style={{ bottom: keyboardInsetPx }}
+            className="fixed inset-x-0 z-40 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3"
+          >
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
+            >
+              {submitting
+                ? isEditMode
+                  ? "수정 중..."
+                  : "저장 중..."
+                : isEditMode
+                  ? "수정 완료"
+                  : "저장"}
+            </button>
+          </div>
+        </>
+      )}
 
-      {showLoginModal ? (
-        <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
-      ) : null}
-
-      {/* Hidden whenever the write sheet isn't minimized — both sheets are
-          fixed-bottom and must never show at once (see TermDictionarySheet's
-          own z-50 overlay, which also makes the write handle underneath
-          untappable while open, so this is mutually exclusive both ways).
-          Visible through both "minimized" and "peek" — "peek" is the
-          write sheet's normal reading-time state too (e.g. autoOpenedRef
-          in edit mode, or after tapping "기록하기"), not just an
-          already-writing state — and hidden only once "expanded" actually
-          takes over most of the screen. */}
+      {/* Independent of login state — dictionary lookup works whether
+          signed in or not, same as before. Hidden only while its own
+          sheet is open; there's no write bottom-sheet anymore to also
+          check against. */}
       <TermDictionaryButton
-        hidden={panelState === "expanded" || dictionaryOpen}
-        rightOffsetPx={dictionaryButtonRightPx}
-        bottomOffsetPx={panelHeightPx}
-        onClick={() => setDictionaryOpen(true)}
+        hidden={dictionaryOpen}
+        rightOffsetPx={dictionaryRightPx}
+        bottomOffsetPx={dictionaryBottomPx}
+        onClick={openDictionary}
       />
       {dictionaryOpen ? (
         <TermDictionarySheet onClose={() => setDictionaryOpen(false)} />

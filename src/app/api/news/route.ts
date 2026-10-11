@@ -15,7 +15,7 @@ async function fetchSource(source: (typeof NEWS_SOURCES)[number]): Promise<Lates
   });
   if (!response.ok) throw new Error(`${source.press}: ${response.status}`);
   const xml = await response.text();
-  return parseRssFeed(xml, source.press);
+  return parseRssFeed(xml, source.press, source.allowThumbnail);
 }
 
 /**

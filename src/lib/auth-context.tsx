@@ -52,11 +52,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // after this listener's correct initial event and overwrite `user`
     // back to null — existing users' sessions aren't new, so that extra
     // call was consistently fast enough to never lose the race.
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
       if (session?.user) {
         identify(session.user.id);
+        // Fires on a genuine sign-in and also on every "already signed in"
+        // app load (INITIAL_SESSION) — the latter is what lets a previous
+        // partial-migration failure retry on a later visit instead of only
+        // on the next fresh login. migrateLocalRecordsToAccount() itself is
+        // a no-op when there's nothing local left to migrate, so this is
+        // cheap on the common case. Dynamically imported so its code isn't
+        // pulled into the auth bundle for users who never have local
+        // records to begin with.
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          import("./migrate-local-records").then(({ migrateLocalRecordsToAccount }) => {
+            migrateLocalRecordsToAccount().catch((err) => {
+              console.error("AuthProvider: local record migration failed", err);
+            });
+          });
+        }
       } else {
         resetIdentity();
       }

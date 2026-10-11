@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BackHeader from "@/components/BackHeader";
 import LoginPrompt from "@/components/LoginPrompt";
 import EmptyState from "@/components/EmptyState";
+import EconomicTermHistoryCard from "@/components/EconomicTermHistoryCard";
 import { useAuth } from "@/lib/auth-context";
 import { deleteTermSearch, getTermSearches, type TermSearch } from "@/lib/economic-terms";
-import { formatDate } from "@/lib/format";
+import { track } from "@/lib/mixpanel";
 
 export default function SearchedTermsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -29,6 +30,20 @@ export default function SearchedTermsPage() {
       cancelled = true;
     };
   }, [authLoading, user]);
+
+  // Fires once per page visit, only after the real count has loaded — not
+  // on every re-render (e.g. the delete-confirm dialog opening/closing
+  // also re-renders this component, which must not re-fire this).
+  const trackedHistoryOpenRef = useRef(false);
+  useEffect(() => {
+    if (terms === null || trackedHistoryOpenRef.current) return;
+    trackedHistoryOpenRef.current = true;
+    track("dictionary_history_open", {
+      source: "mypage",
+      history_count: terms.length,
+      is_logged_in: Boolean(user),
+    });
+  }, [terms, user]);
 
   if (authLoading) return null;
 
@@ -69,27 +84,16 @@ export default function SearchedTermsPage() {
         <>
           <p className="px-5 pt-4 text-[13px] text-muted">총 {terms.length}개</p>
           <div className="mt-2 flex flex-col gap-2.5 px-5 py-3">
-            {terms.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-border-subtle px-4 py-3.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[14.5px] font-semibold text-foreground">{t.term}</p>
-                    <p className="mt-1 text-[13px] leading-6 text-foreground/80">
-                      {t.description}
-                    </p>
-                    <p className="mt-1.5 text-[11.5px] text-muted">
-                      {formatDate(t.lastSearchedAt)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingId(t.id)}
-                    className="shrink-0 rounded-full px-2 py-1 text-[12px] font-medium text-red-500 active:bg-background"
-                  >
-                    삭제
-                  </button>
-                </div>
-              </div>
+            {terms.map((t, index) => (
+              <EconomicTermHistoryCard
+                key={t.id}
+                term={t.term}
+                description={t.description}
+                lastSearchedAt={t.lastSearchedAt}
+                position={index + 1}
+                historyCount={terms.length}
+                onRequestDelete={() => setConfirmingId(t.id)}
+              />
             ))}
           </div>
         </>

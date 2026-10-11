@@ -1,14 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import SectorBadge from "./SectorBadge";
 import CategoryTabs from "./CategoryTabs";
 import EmptyState from "./EmptyState";
 import { ALL_CATEGORY, type NewsCategory } from "@/lib/news-categories";
 import { formatDate } from "@/lib/format";
-import { trackClick } from "@/lib/mixpanel";
+import { track, trackClick } from "@/lib/mixpanel";
+import { isHttpUrl, saveArticleReturnInfo } from "@/lib/article-return";
 import type { LatestNewsItem } from "@/lib/news-rss";
+
+/**
+ * Square thumbnail for a card whose article has `imageUrl` (only ever the
+ * source feed's own media:content — see news-rss.ts). Hides itself (and
+ * nothing else about the card) if the image actually fails to load —
+ * `imageUrl` being present just means the feed listed one, not that it's
+ * guaranteed to still resolve.
+ */
+function NewsThumbnail({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-background">
+      <Image
+        src={src}
+        alt=""
+        fill
+        sizes="56px"
+        className="object-cover"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
 
 /**
  * Replaces NewsCarousel on the home screen with a vertical list backed by
@@ -44,6 +70,26 @@ export default function LatestNewsList() {
     (article) => category === ALL_CATEGORY || article.sector === category,
   );
 
+  // Fired at the moment the user leaves for the original article — moved
+  // here from the record-writing screen's own mount effect, which used to
+  // fire this same event once the screen (reached via this exact click)
+  // loaded; that screen now skips it for this entry_point specifically so
+  // the two don't double-count the same open (see its own comment).
+  function handleArticleOpen(article: LatestNewsItem) {
+    trackClick("home_news_item_open", { sector: article.sector });
+    track("article_opened", {
+      source_type: "external",
+      entry_point: "home_news_list",
+      sector: article.sector,
+    });
+    saveArticleReturnInfo({
+      url: article.url,
+      title: article.title,
+      sector: article.sector,
+      fromPath: "/",
+    });
+  }
+
   return (
     <section className="pt-5">
       <h2 className="px-5 text-[15px] font-bold text-foreground">최신 경제뉴스</h2>
@@ -76,25 +122,56 @@ export default function LatestNewsList() {
           />
         ) : (
           <div className="flex flex-col gap-2.5">
-            {filtered.map((article, index) => (
-              <Link
-                key={article.url}
-                href={`/record/new/external?url=${encodeURIComponent(article.url)}&title=${encodeURIComponent(article.title)}&sector=${encodeURIComponent(article.sector)}`}
-                onClick={() => trackClick("home_news_item_open", { sector: article.sector })}
-                data-onboarding-target={index === 0 ? "news-card-first" : undefined}
-                className="flex flex-col gap-1.5 rounded-2xl border border-border-subtle px-4 py-3.5 active:bg-background"
-              >
-                <p className="text-[14.5px] font-semibold leading-snug text-foreground">
-                  {article.title}
-                </p>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-                  <span>{article.press}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{formatDate(article.publishedAt)}</span>
-                  <SectorBadge sector={article.sector} />
-                </div>
-              </Link>
-            ))}
+            {filtered.map((article, index) => {
+              const cardClassName =
+                "flex items-center gap-3 rounded-2xl border border-border-subtle px-4 py-3.5 active:bg-background";
+              const cardBody = (
+                <>
+                  {article.imageUrl ? <NewsThumbnail src={article.imageUrl} /> : null}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <p className="text-[14.5px] font-semibold leading-snug text-foreground">
+                      {article.title}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <span>{article.press}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{formatDate(article.publishedAt)}</span>
+                      <SectorBadge sector={article.sector} />
+                    </div>
+                  </div>
+                </>
+              );
+
+              // Safe fallback for a feed entry with no usable URL — falls
+              // back to the existing internal write-flow entry point
+              // (which already handles a missing/invalid URL gracefully
+              // with its own "올바른 기사 주소가 아니에요" message) instead
+              // of ever navigating to a broken link.
+              if (!isHttpUrl(article.url)) {
+                return (
+                  <Link
+                    key={`${article.title}-${article.publishedAt}`}
+                    href={`/record/new/external?title=${encodeURIComponent(article.title)}&sector=${encodeURIComponent(article.sector)}`}
+                    data-onboarding-target={index === 0 ? "news-card-first" : undefined}
+                    className={cardClassName}
+                  >
+                    {cardBody}
+                  </Link>
+                );
+              }
+
+              return (
+                <a
+                  key={article.url}
+                  href={article.url}
+                  onClick={() => handleArticleOpen(article)}
+                  data-onboarding-target={index === 0 ? "news-card-first" : undefined}
+                  className={cardClassName}
+                >
+                  {cardBody}
+                </a>
+              );
+            })}
           </div>
         )}
       </div>

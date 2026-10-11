@@ -7,11 +7,37 @@ export interface LatestNewsItem {
   /** ISO 8601 */
   publishedAt: string;
   sector: NewsCategory;
+  /**
+   * Only ever the feed's own <media:content> url, and only for a source
+   * with allowThumbnail: true below — never fetched by crawling the
+   * article page itself. Absent whenever the feed has no media:content
+   * for that item, or the source isn't allowlisted.
+   */
+  imageUrl?: string;
 }
 
 export interface NewsSource {
   press: string;
   feedUrl: string;
+  /**
+   * Whether a thumbnail extracted from this feed's own <media:content> is
+   * actually shown — a separate, explicit decision from "can we technically
+   * extract one." A feed exposing <media:content> at all is a reasonably
+   * standard aggregator-facing signal (that's what the tag is for), but
+   * isn't a substitute for actually-confirmed image reuse terms. Checked at
+   * the time this was added:
+   *  - 매일경제: true — media:content present on ~98% of sampled items, and
+   *    nothing in this project's own RSS-terms research flags this source
+   *    as unclear.
+   *  - 조선일보: false — media:content IS present (~74% of sampled items),
+   *    but this project's own research (see NEWS_SOURCES below) already
+   *    flagged 조선일보's feed as carrying no copyright/terms line at all,
+   *    the least clear of any source checked — not layering image reuse on
+   *    top of that without an explicit decision to accept it.
+   * 이데일리/아시아경제 don't need an entry either way — their feeds have no
+   * media:content at all, so this flag has nothing to gate.
+   */
+  allowThumbnail: boolean;
 }
 
 /**
@@ -42,12 +68,17 @@ export interface NewsSource {
  * iframe-blocked via X-Frame-Options/CSP headers).
  */
 export const NEWS_SOURCES: NewsSource[] = [
-  { press: "매일경제", feedUrl: "https://www.mk.co.kr/rss/30100041/" },
-  { press: "이데일리", feedUrl: "https://rss.edaily.co.kr/economy_news.xml" },
-  { press: "아시아경제", feedUrl: "https://www.asiae.co.kr/news/rss/asia_rss.htm" },
+  { press: "매일경제", feedUrl: "https://www.mk.co.kr/rss/30100041/", allowThumbnail: true },
+  { press: "이데일리", feedUrl: "https://rss.edaily.co.kr/economy_news.xml", allowThumbnail: false },
+  {
+    press: "아시아경제",
+    feedUrl: "https://www.asiae.co.kr/news/rss/asia_rss.htm",
+    allowThumbnail: false,
+  },
   {
     press: "조선일보",
     feedUrl: "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
+    allowThumbnail: false,
   },
 ];
 
@@ -106,6 +137,13 @@ function extractField(itemXml: string, tag: string): string | null {
   return null;
 }
 
+/** The feed's own <media:content url="..."/> — matches either self-closing or open/close form, since only the url attribute is needed. */
+function extractMediaContentImageUrl(itemXml: string): string | null {
+  const match = itemXml.match(/<media:content\b[^>]*\burl="([^"]*)"/);
+  if (!match) return null;
+  return decodeXmlEntities(match[1]);
+}
+
 function isHttpUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
@@ -127,7 +165,11 @@ function isHttpUrl(value: string): boolean {
  * An item missing a required field, with a non-http(s) URL, or with an
  * unparseable pubDate is skipped rather than producing a broken entry.
  */
-export function parseRssFeed(xml: string, press: string): LatestNewsItem[] {
+export function parseRssFeed(
+  xml: string,
+  press: string,
+  allowThumbnail: boolean,
+): LatestNewsItem[] {
   const itemBlocks = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
   const items: LatestNewsItem[] = [];
 
@@ -140,12 +182,18 @@ export function parseRssFeed(xml: string, press: string): LatestNewsItem[] {
     const published = new Date(pubDateRaw);
     if (Number.isNaN(published.getTime())) continue;
 
+    // Extracted from the feed itself only — never a reason to fetch the
+    // article page. `allowThumbnail` gates whether a source's own
+    // media:content is actually used (see NEWS_SOURCES' own comment).
+    const imageUrl = allowThumbnail ? extractMediaContentImageUrl(block) : null;
+
     items.push({
       title,
       url,
       press,
       publishedAt: published.toISOString(),
       sector: classifySector(title),
+      ...(imageUrl && isHttpUrl(imageUrl) ? { imageUrl } : {}),
     });
   }
 

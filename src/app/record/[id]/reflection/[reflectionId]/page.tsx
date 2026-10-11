@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
-import LoginPrompt from "@/components/LoginPrompt";
 import SectorBadge from "@/components/SectorBadge";
-import { updateReflection } from "@/lib/records";
+import { updateReflection } from "@/lib/record-store";
 import { useRecord, useReflectionsForRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
@@ -48,16 +47,7 @@ export default function ReflectionEditPage() {
     router.replace(`/record/${params.id}`);
   }
 
-  if (authLoading || (user && (recordLoading || reflectionsLoading))) return null;
-
-  if (!user) {
-    return (
-      <div>
-        <BackHeader title="회고 수정" onBack={goBack} />
-        <LoginPrompt />
-      </div>
-    );
-  }
+  if (authLoading || recordLoading || reflectionsLoading) return null;
 
   if (!record || !reflection) {
     return (
@@ -94,7 +84,7 @@ export default function ReflectionEditPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateReflection(reflection!.id, currentSelection);
+      await updateReflection(user, reflection!.id, currentSelection);
       // Moved after the save succeeds — this event's name promises a
       // completed save, unlike the click-intent "complete_reflection_selected"
       // event on the initial-reflection screen, so it shouldn't fire for a

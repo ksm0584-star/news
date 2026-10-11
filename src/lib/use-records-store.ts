@@ -9,14 +9,20 @@ import {
   getRecords,
   getReflectionsForRecord,
   subscribe,
-} from "./records";
+} from "./record-store";
 import type { NewsRecord, Reflection } from "./types";
 
 /**
- * Async replacement for the old useSyncExternalStore-based hooks: Supabase
- * reads are network calls, not synchronous localStorage reads, so every hook
+ * Async data-fetching hooks backed by record-store.ts, which itself routes
+ * to Supabase (logged in) or localStorage (logged out) per call. Every hook
  * here fetches on mount/dependency change and refetches whenever a mutation
- * fires through records.ts's subscribe(), or the signed-in user changes.
+ * fires through records.ts's shared subscribe() channel (used by both
+ * backends), or the signed-in user changes.
+ *
+ * Only `authLoading` gates these — not `user` itself: an anonymous visitor
+ * has real (local) data to show, so there's no "no user → empty" branch
+ * here anymore. Each hook still passes `user` through to record-store.ts so
+ * it can pick the right backend.
  */
 
 export function useRecords(): { records: NewsRecord[]; loading: boolean } {
@@ -29,14 +35,9 @@ export function useRecords(): { records: NewsRecord[]; loading: boolean } {
       setLoading(true);
       return;
     }
-    if (!user) {
-      setRecords([]);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
-      setRecords(await getRecords());
+      setRecords(await getRecords(user));
     } catch (err) {
       console.error("useRecords: failed to fetch records", err);
       setRecords([]);
@@ -69,14 +70,9 @@ export function useRecordCount(): { count: number; loading: boolean } {
       setLoading(true);
       return;
     }
-    if (!user) {
-      setCount(0);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
-      setCount(await getRecordCount());
+      setCount(await getRecordCount(user));
     } catch (err) {
       console.error("useRecordCount: failed to fetch record count", err);
       setCount(0);
@@ -105,14 +101,14 @@ export function useRecord(id: string): { record: NewsRecord | null; loading: boo
       setLoading(true);
       return;
     }
-    if (!user || !id) {
+    if (!id) {
       setRecord(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      setRecord(await getRecord(id));
+      setRecord(await getRecord(user, id));
     } catch (err) {
       console.error("useRecord: failed to fetch record", err);
       setRecord(null);
@@ -143,14 +139,14 @@ export function useReflectionsForRecord(
       setLoading(true);
       return;
     }
-    if (!user || !id) {
+    if (!id) {
       setReflections([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      setReflections(await getReflectionsForRecord(id));
+      setReflections(await getReflectionsForRecord(user, id));
     } catch (err) {
       console.error("useReflectionsForRecord: failed to fetch reflections", err);
       setReflections([]);
@@ -182,14 +178,14 @@ export function usePastRecordWithThought(
       setLoading(true);
       return;
     }
-    if (!user || !sector || !excludeId) {
+    if (!sector || !excludeId) {
       setPast(null);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      setPast(await findPastRecordWithThought(sector, excludeId));
+      setPast(await findPastRecordWithThought(user, sector, excludeId));
     } catch (err) {
       console.error("usePastRecordWithThought: failed to fetch past record", err);
       setPast(null);
