@@ -45,8 +45,13 @@ export function identify(userId: string): void {
   mixpanel.identify(userId);
 }
 
-/** Clears the identified user on sign-out so the next session starts anonymous instead of inheriting the previous user's identity. */
+/** Clears a signed-in identity while preserving returning anonymous visitors. */
 export function resetIdentity(): void {
   if (!ensureInit()) return;
+  // Auth also reports a null INITIAL_SESSION on every anonymous app load.
+  // Resetting then would assign the returning visitor a new device ID.
+  if (!mixpanel.get_property("$user_id")) return;
   mixpanel.reset();
+  // reset() clears super properties along with identity.
+  mixpanel.register({ environment: process.env.NODE_ENV });
 }
