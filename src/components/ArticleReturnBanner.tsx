@@ -3,15 +3,18 @@
 /**
  * Home-only floating CTA banner — not a toast (no auto-dismiss timer) and
  * not a modal/bottom-sheet (doesn't block the rest of the screen). Sits
- * above BottomNav (h-14 + safe-area), using the same
+ * just above BottomNav (h-14 + safe-area + an 8px gap), using the same
  * `inset-x-0 mx-auto max-w-[430px]` centering BottomNav itself uses, so it
  * stays aligned with the app's mobile-width column on a wide desktop
  * window without needing a separate measured offset.
  *
- * This component only ever renders on the home screen, where RecordFab
- * (56px tall, floating just above BottomNav) is also always present —
- * raised an extra `56px + 0.75rem` above BottomNav so the two never
- * overlap, instead of RecordFab having to know anything about this banner.
+ * This component only ever renders on the home screen, where RecordFab is
+ * also only ever mounted — but whenever this banner is showing, the home
+ * page passes RecordFab `hidden={Boolean(articleReturnInfo)}`, so the two
+ * are never visible at the same time. No extra clearance for the FAB's own
+ * height is needed here (there used to be — removed, since it just left a
+ * large empty gap once the FAB started hiding behind this banner instead
+ * of sitting beside it).
  */
 export default function ArticleReturnBanner({
   onRecord,
@@ -22,9 +25,7 @@ export default function ArticleReturnBanner({
 }) {
   return (
     <div
-      style={{
-        bottom: "calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem + 56px + 0.75rem)",
-      }}
+      style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom) + 0.5rem)" }}
       className="fixed inset-x-0 z-20 mx-auto w-full max-w-[430px] px-4"
     >
       <div className="flex items-start gap-3 rounded-2xl border border-border-subtle bg-surface p-4 shadow-lg">
