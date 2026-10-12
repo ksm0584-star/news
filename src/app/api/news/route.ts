@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 import { NEWS_SOURCES, dedupeByUrl, parseRssFeed, type LatestNewsItem } from "@/lib/news-rss";
 
-export const dynamic = "force-dynamic";
+/**
+ * Previous (non-Cache-Components) caching model: Route Handler GET methods
+ * default to dynamic since Next 15, so `force-static` is required to get
+ * the whole response cached/ISR'd rather than re-running on every request.
+ * `revalidate` here (and on each fetch below) sets the shared 6h window —
+ * stale content is served instantly past that point while this re-runs in
+ * the background, so no visitor ever blocks on a slow upstream RSS feed.
+ */
+export const dynamic = "force-static";
+export const revalidate = 21600;
 
 interface NewsResponse {
   articles: LatestNewsItem[];
@@ -10,7 +19,7 @@ interface NewsResponse {
 
 async function fetchSource(source: (typeof NEWS_SOURCES)[number]): Promise<LatestNewsItem[]> {
   const response = await fetch(source.feedUrl, {
-    next: { revalidate: 600 },
+    next: { revalidate: 21600 },
     headers: { "User-Agent": "NewsNoteBot/1.0 (+https://github.com/ksm0584-star/news)" },
   });
   if (!response.ok) throw new Error(`${source.press}: ${response.status}`);
