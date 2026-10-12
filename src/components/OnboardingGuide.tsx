@@ -51,8 +51,8 @@ const STEP_COPY: Record<Step, { title: string; description: string; cta: string 
     cta: "다음",
   },
   2: {
-    title: "나만의 생각을 남겨보세요",
-    description: "뉴스 링크 없이도 자유롭게 기록할 수 있어요.",
+    title: "외부 뉴스도 기록할 수 있어요",
+    description: "다른 곳에서 발견한 뉴스 링크를 첨부해 기록해 보세요.",
     cta: "다음",
   },
   3: {
