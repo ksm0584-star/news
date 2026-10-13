@@ -10,6 +10,7 @@ import { ALL_CATEGORY, type NewsCategory } from "@/lib/news-categories";
 import { formatDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
 import { isHttpUrl, saveArticleReturnInfo } from "@/lib/article-return";
+import { getReadArticleUrls, markArticleRead } from "@/lib/read-articles";
 import type { LatestNewsItem } from "@/lib/news-rss";
 
 /**
@@ -19,7 +20,7 @@ import type { LatestNewsItem } from "@/lib/news-rss";
  * `imageUrl` being present just means the feed listed one, not that it's
  * guaranteed to still resolve.
  */
-function NewsThumbnail({ src }: { src: string }) {
+function NewsThumbnail({ src, read }: { src: string; read: boolean }) {
   const [failed, setFailed] = useState(false);
   if (failed) return null;
   return (
@@ -31,6 +32,11 @@ function NewsThumbnail({ src }: { src: string }) {
         sizes="56px"
         className="object-cover"
         onError={() => setFailed(true)}
+      />
+      <div
+        className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+          read ? "opacity-10" : "opacity-0"
+        }`}
       />
     </div>
   );
@@ -46,6 +52,12 @@ export default function LatestNewsList() {
   const [category, setCategory] = useState<NewsCategory>(ALL_CATEGORY);
   const [articles, setArticles] = useState<LatestNewsItem[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [readUrls, setReadUrls] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time external (localStorage) read with no render-time alternative, see use-article-return-banner.ts
+    setReadUrls(getReadArticleUrls());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +100,18 @@ export default function LatestNewsList() {
       sector: article.sector,
       fromPath: "/",
     });
+    handleArticleRead(article);
+  }
+
+  // Keyed by URL (see read-articles.ts) — the same article reads as read
+  // in every category tab it shows up in, regardless of which click path
+  // (external open or the no-URL fallback below) reached it first.
+  function handleArticleRead(article: LatestNewsItem) {
+    markArticleRead(article.url);
+    setReadUrls((prev) => {
+      if (prev.has(article.url)) return prev;
+      return new Set(prev).add(article.url);
+    });
   }
 
   return (
@@ -123,20 +147,27 @@ export default function LatestNewsList() {
         ) : (
           <div className="flex flex-col gap-2.5">
             {filtered.map((article, index) => {
+              const isRead = readUrls.has(article.url);
               const cardClassName =
                 "flex items-center gap-3 rounded-2xl border border-border-subtle px-4 py-3.5 active:bg-background";
               const cardBody = (
                 <>
-                  {article.imageUrl ? <NewsThumbnail src={article.imageUrl} /> : null}
+                  {article.imageUrl ? (
+                    <NewsThumbnail src={article.imageUrl} read={isRead} />
+                  ) : null}
                   <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <p className="text-[14.5px] font-semibold leading-snug text-foreground">
+                    <p
+                      className={`text-[14.5px] font-semibold leading-snug transition-colors duration-300 ${
+                        isRead ? "text-[#9CA3AF]" : "text-foreground"
+                      }`}
+                    >
                       {article.title}
                     </p>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
                       <span>{article.press}</span>
                       <span aria-hidden="true">·</span>
                       <span>{formatDate(article.publishedAt)}</span>
-                      <SectorBadge sector={article.sector} />
+                      <SectorBadge sector={article.sector} muted={isRead} />
                     </div>
                   </div>
                 </>
@@ -152,6 +183,7 @@ export default function LatestNewsList() {
                   <Link
                     key={`${article.title}-${article.publishedAt}`}
                     href={`/record/new/external?title=${encodeURIComponent(article.title)}&sector=${encodeURIComponent(article.sector)}`}
+                    onClick={() => handleArticleRead(article)}
                     data-onboarding-target={index === 0 ? "news-card-first" : undefined}
                     className={cardClassName}
                   >
