@@ -1,4 +1,5 @@
 import type { NewsCategory } from "./news-categories";
+import { classifySectorV2, evaluateNonEconomicFilter } from "./news-classification-v2";
 
 export interface LatestNewsItem {
   title: string;
@@ -82,44 +83,6 @@ export const NEWS_SOURCES: NewsSource[] = [
   },
 ];
 
-/**
- * Simple ordered keyword match — first category whose keyword appears in
- * the title wins. Deliberately crude (title-only, no ML/LLM call): good
- * enough to sort real estate from semiconductors, not a guarantee of
- * precise categorization. Anything unmatched falls to "기타", same as the
- * app's existing catch-all convention.
- */
-const SECTOR_KEYWORDS: [NewsCategory, string[]][] = [
-  ["반도체", ["반도체", "메모리", "파운드리", "웨이퍼", "낸드", "D램", "HBM"]],
-  ["바이오·헬스케어", ["바이오", "제약", "헬스케어", "임상", "병원", "의료", "백신"]],
-  ["자동차·모빌리티", ["자동차", "전기차", "현대차", "기아", "모빌리티", "완성차", "수소차"]],
-  [
-    "에너지",
-    ["에너지", "전력", "원전", "태양광", "석유", "가스", "탈탄소", "전기요금", "배터리"],
-  ],
-  ["부동산·건설", ["부동산", "아파트", "건설", "분양", "재건축", "전세"]],
-  [
-    "소비재·유통",
-    ["유통", "면세점", "백화점", "편의점", "패션", "화장품", "식품", "뷰티", "이커머스", "쿠팡"],
-  ],
-  [
-    "금융",
-    ["금리", "주가", "증시", "코스피", "코스닥", "은행", "금융", "채권", "환율", "한국은행", "펀드"],
-  ],
-  [
-    "AI·테크",
-    ["AI", "인공지능", "빅테크", "데이터센터", "소프트웨어", "플랫폼", "로봇", "통신", "주파수", "스타트업"],
-  ],
-  ["정책·거시경제", ["정부", "정책", "국회", "세금", "연금", "예산", "물가", "경제단체", "규제"]],
-];
-
-export function classifySector(title: string): NewsCategory {
-  for (const [category, keywords] of SECTOR_KEYWORDS) {
-    if (keywords.some((keyword) => title.includes(keyword))) return category;
-  }
-  return "기타";
-}
-
 function decodeXmlEntities(value: string): string {
   return value
     .replace(/&lt;/g, "<")
@@ -163,7 +126,9 @@ function isHttpUrl(value: string): boolean {
  * either way) — avoids a new dependency for four flat fields.
  *
  * An item missing a required field, with a non-http(s) URL, or with an
- * unparseable pubDate is skipped rather than producing a broken entry.
+ * unparseable pubDate is skipped rather than producing a broken entry. An
+ * item the non-economic filter flags (see news-classification-v2.ts) is
+ * also skipped entirely — it never reaches the feed, not even as "기타".
  */
 export function parseRssFeed(
   xml: string,
@@ -182,6 +147,9 @@ export function parseRssFeed(
     const published = new Date(pubDateRaw);
     if (Number.isNaN(published.getTime())) continue;
 
+    const classification = classifySectorV2(title);
+    if (evaluateNonEconomicFilter(title, classification.scores).excluded) continue;
+
     // Extracted from the feed itself only — never a reason to fetch the
     // article page. `allowThumbnail` gates whether a source's own
     // media:content is actually used (see NEWS_SOURCES' own comment).
@@ -192,7 +160,7 @@ export function parseRssFeed(
       url,
       press,
       publishedAt: published.toISOString(),
-      sector: classifySector(title),
+      sector: classification.sector,
       ...(imageUrl && isHttpUrl(imageUrl) ? { imageUrl } : {}),
     });
   }
