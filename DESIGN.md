@@ -241,9 +241,8 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 아이콘 라이브러리 없이 inline SVG를 씁니다. 공통 규칙은 `viewBox="0 0 24 24"`,
 `fill="none"`, `stroke="currentColor"`, round cap/join입니다. 크기는
 22px(하단 내비·사전 버튼), 24px(FAB), 20px(뒤로가기), 18/16px(닫기),
-32px(별점)이고 `strokeWidth`는 2(11회)가 기본, 1.8(4회),
-2.5, 1.5가 섞여 있습니다. 예외로 "원문 보기" 링크는 SVG 대신 텍스트 기호 `↗`를
-씁니다. 이미지는 `next/image`를 씁니다.
+18px(원문 보기 화살표), 32px(별점)이고 `strokeWidth`는 2(11회)가 기본,
+1.8(4회), 2.5(3회), 1.5가 섞여 있습니다. 이미지는 `next/image`를 씁니다.
 
 ## Components
 
@@ -260,7 +259,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | --- | --- | --- |
 | primary | `bg-point text-white rounded-xl font-semibold` | 기록 작성·완료·회고, 기사 상세, 시트 3종 |
 | primary-pill | `bg-point text-white rounded-full font-semibold` | ArticleReturnBanner, OnboardingGuide |
-| link | `text-[14px] text-point`, 배경·테두리 없음 | "원문 보기" (`ArticleOriginalLink`) |
+| link | `text-[14px] font-semibold text-point` + 18px 화살표 SVG, 배경·테두리 없음 | "원문 보기" (`ArticleOriginalLink`) |
 | outline | `border border-border-subtle rounded-xl` (+`bg-surface`) | Google 로그인, 다이얼로그 취소, 회고 취소, 다시 시도 |
 | ghost | `text-muted font-medium` 배경 없음 | 시트 "다음에 할게요", 완료 화면 보조 액션 |
 | destructive | `bg-red-500 text-white rounded-xl font-semibold` | 삭제·탈퇴 확인 다이얼로그 |
@@ -278,21 +277,27 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 #### 원문 보기 링크 — `ArticleOriginalLink` (공통)
 
-기사 원문(언론사 페이지)을 여는 링크. 기록 상세 화면의 기존 링크를 그대로
-공통 컴포넌트로 옮긴 것입니다.
+기사 원문(언론사 페이지)을 여는 링크. 기록 상세 화면의 기존 링크를 공통
+컴포넌트로 옮긴 뒤 크기(14px)·굵기(semibold)·아이콘(SVG)을 조정했습니다.
 
 | 항목 | 값 | 토큰 |
 | --- | --- | --- |
-| 문구 | `원문 보기 ↗` (컴포넌트 고정) | — |
-| 색상 | `text-point` (`#3182f6`) | `colors.primary` |
-| 서체 | `text-[14px]`, 굵기·행간 미지정(상속) | 크기만 `typography.body`와 같음(행간 24px은 미적용) |
-| 아이콘 | 텍스트 기호 `↗` (SVG 아님) | — |
+| 문구 | `원문 보기` + 화살표 아이콘 (컴포넌트 고정) | — |
+| 색상 | `text-point` (`#3182f6`), 아이콘도 `currentColor`로 같은 색 | `colors.primary` |
+| 서체 | `text-[14px] font-semibold`(600), 행간 미지정(상속) | 크기만 `typography.body`와 같음(행간 24px은 미적용) |
+| 실제 렌더링 굵기 | 600은 로드되지 않아 Noto Sans KR **Bold(700)** 인스턴스로 그려짐 (Chrome DevTools 확인) | — |
+| 아이콘 | inline SVG `width/height 18`, `viewBox 0 0 24 24`, path `M7 17 17 7M9 7h8v8`, `stroke="currentColor"`, `strokeWidth 2.5`, round cap/join, `aria-hidden` | — |
+| 아이콘 배치 | `ml-0.5 inline-block align-text-bottom` (글자와 세로 중심 차이 약 0.3px) | — |
 | 배경·테두리·radius·padding | 없음 | — |
 | 표시 | `inline-block truncate` | — |
 | 눌림 상태 | 없음 (`active:` 미지정) | — |
 
 - **동작**: `<a rel="noopener noreferrer">`, `target` 없음 → 같은 탭에서 열고
   브라우저 뒤로가기로 돌아옵니다. `href`와 클릭 추적은 호출하는 쪽이 넘깁니다.
+- **아이콘을 SVG로 쓰는 이유**: semibold 적용 후 텍스트 기호 `↗`의 획(약
+  1.4px)이 한글 획(약 2.0px)보다 눈에 띄게 얇았습니다. 18px·`strokeWidth 2.5`
+  SVG는 획 약 1.9px, 화살표 크기 약 9.5px로 기존 기호와 같은 크기를 유지합니다.
+- **접근성 이름**: 아이콘이 `aria-hidden`이라 링크 이름은 `원문 보기`입니다.
 - **사용법**: `className`에는 바깥 여백 같은 레이아웃만 넘깁니다(`mt-1` 등).
 
   ```tsx
@@ -510,8 +515,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 - **로드되지 않은 굵기 사용** — `font-semibold`(600, 46회)와
   `font-extrabold`(800, 2회)를 쓰지만 폰트는 400/500/700/900만 로드.
-  브라우저 폰트 매칭상 각각 700, 900으로 대체 렌더링될 가능성이 높음(실기기
-  확인 필요). 반대로 900은 로드만 되고 `font-black`으로는 쓰이지 않음.
+  브라우저 폰트 매칭상 각각 700, 900으로 대체 렌더링될 가능성이 높음. 원문
+  보기 링크의 semibold는 Chrome에서 Bold(700)로 그려지는 것을 확인함(실기기는
+  미확인). 반대로 900은 로드만 되고 `font-black`으로는 쓰이지 않음.
 - **0.5px 단위 크기** — 11.5 / 12.5 / 13.5 / 14.5px이 정수 단계와 뒤섞여 14단계.
 - **같은 크기의 두 가지 표기** — `text-xs`와 `text-[12px]`, `text-sm`과
   `text-[14px]`, `text-base`와 `text-[16px]`. Tailwind 프리셋은 행간까지
