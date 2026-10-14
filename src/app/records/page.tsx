@@ -7,10 +7,15 @@ import RecordFab from "@/components/RecordFab";
 import { useAuth } from "@/lib/auth-context";
 import { useRecords } from "@/lib/use-records-store";
 import { track } from "@/lib/mixpanel";
+import { usePendingToastRelease } from "@/lib/toast";
 
 export default function RecordsPage() {
   const { loading: authLoading } = useAuth();
-  const { records, loading: recordsLoading } = useRecords();
+  const { records, loading: recordsLoading, error: recordsError } = useRecords();
+
+  usePendingToastRelease(
+    authLoading || recordsLoading ? "loading" : recordsError ? "failed" : "ready",
+  );
 
   // Guards against React Strict Mode's dev-only double effect invoke,
   // which would otherwise double-count every records_viewed in

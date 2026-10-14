@@ -9,7 +9,7 @@ import SectorBadge from "@/components/SectorBadge";
 import FirstRecordLoginPromptSheet from "@/components/FirstRecordLoginPromptSheet";
 import RatingPromptSheet from "@/components/RatingPromptSheet";
 import { deleteRecord } from "@/lib/record-store";
-import { showToast } from "@/lib/toast";
+import { queueToast, usePendingToastRelease } from "@/lib/toast";
 import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
@@ -119,6 +119,10 @@ function RecordDetailInner() {
     router.push(searchParams.get("from") === "home" ? "/" : "/records");
   }
 
+  usePendingToastRelease(
+    authLoading || recordLoading ? "loading" : record ? "ready" : "failed",
+  );
+
   if (authLoading || recordLoading) return null;
 
   if (!record) {
@@ -137,7 +141,7 @@ function RecordDetailInner() {
     try {
       await deleteRecord(user, record!.id);
       track("record_deleted", { record_id: record!.id, sector: record!.sector });
-      showToast("기록이 삭제되었어요.");
+      queueToast("기록이 삭제되었어요.", { to: "/records" });
       router.replace("/records");
     } catch {
       setDeleting(false);

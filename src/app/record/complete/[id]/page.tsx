@@ -14,6 +14,7 @@ import { formatDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
 import { hasSeenLoginPrompt } from "@/lib/login-prompt";
 import { hasSeenRatingPrompt } from "@/lib/rating-prompt";
+import { usePendingToastRelease } from "@/lib/toast";
 import type { ReflectionResult } from "@/lib/types";
 
 const OPTIONS: { value: ReflectionResult; label: string }[] = [
@@ -51,6 +52,14 @@ function CompareRecordView() {
   function goToHome() {
     router.replace("/");
   }
+
+  usePendingToastRelease(
+    authLoading || recordLoading || (record && pastLoading)
+      ? "loading"
+      : record
+        ? "ready"
+        : "failed",
+  );
 
   if (authLoading || recordLoading || (record && pastLoading)) return null;
 

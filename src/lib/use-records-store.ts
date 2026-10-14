@@ -25,10 +25,13 @@ import type { NewsRecord, Reflection } from "./types";
  * it can pick the right backend.
  */
 
-export function useRecords(): { records: NewsRecord[]; loading: boolean } {
+export function useRecords(): { records: NewsRecord[]; loading: boolean; error: boolean } {
   const { user, loading: authLoading } = useAuth();
   const [records, setRecords] = useState<NewsRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  // A failed fetch still renders as an empty list; this lets a caller tell
+  // the two apart (e.g. not releasing a pending success toast).
+  const [error, setError] = useState(false);
 
   const refetch = useCallback(async () => {
     if (authLoading) {
@@ -38,9 +41,11 @@ export function useRecords(): { records: NewsRecord[]; loading: boolean } {
     setLoading(true);
     try {
       setRecords(await getRecords(user));
+      setError(false);
     } catch (err) {
       console.error("useRecords: failed to fetch records", err);
       setRecords([]);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -57,7 +62,7 @@ export function useRecords(): { records: NewsRecord[]; loading: boolean } {
 
   useEffect(() => subscribe(refetch), [refetch]);
 
-  return { records, loading };
+  return { records, loading, error };
 }
 
 export function useRecordCount(): { count: number; loading: boolean } {

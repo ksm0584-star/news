@@ -3,7 +3,13 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { isBottomNavPath } from "@/components/BottomNav";
-import { TOAST_DURATION_MS, dismissToast, getToast, subscribeToast } from "@/lib/toast";
+import {
+  TOAST_DURATION_MS,
+  dismissToast,
+  dropStalePendingToast,
+  getToast,
+  subscribeToast,
+} from "@/lib/toast";
 
 /**
  * Mounted once from the root layout so a toast outlives route changes (see
@@ -19,6 +25,10 @@ import { TOAST_DURATION_MS, dismissToast, getToast, subscribeToast } from "@/lib
 export default function Toaster() {
   const toast = useSyncExternalStore(subscribeToast, getToast, () => null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    dropStalePendingToast(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     if (!toast) return;
