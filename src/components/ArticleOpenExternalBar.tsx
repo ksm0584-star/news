@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { trackClick } from "@/lib/mixpanel";
+import ArticleOriginalLink from "@/components/ArticleOriginalLink";
 
 const INFO_POPOVER_ID = "article-open-external-info";
 
@@ -51,34 +52,14 @@ export default function ArticleOpenExternalBar({
 
   return (
     <div ref={containerRef} className="relative flex items-center gap-1 px-4 pt-4">
-      <a
+      <ArticleOriginalLink
         href={url}
-        rel="noopener noreferrer"
         onPointerDown={(event) => event.stopPropagation()}
         onClick={() => {
           trackClick("external_open_new_tab");
           onOpenArticle?.();
         }}
-        className="flex items-center gap-1.5 rounded-full bg-point px-4 py-2 text-[13px] font-semibold text-white active:bg-point-dark"
-      >
-        원문 보기
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M15 3h6v6M10 14 21 3"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </a>
+      />
 
       <button
         type="button"

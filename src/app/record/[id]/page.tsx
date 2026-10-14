@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import ArticleOriginalLink from "@/components/ArticleOriginalLink";
 import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
 import FirstRecordLoginPromptSheet from "@/components/FirstRecordLoginPromptSheet";
@@ -229,9 +230,8 @@ function RecordDetailInner() {
           // record-writing screen's "원문 보기" (뉴스 열람 구조 개편 3차).
           // No more iframe-support branch: /record/[id]/article (the old
           // iframe viewer for "supported" domains) is gone.
-          <a
+          <ArticleOriginalLink
             href={record.url}
-            rel="noopener noreferrer"
             onClick={() => {
               trackClick("external_open_new_tab");
               // Distinct entry_point from the write/edit screen's — this
@@ -247,10 +247,8 @@ function RecordDetailInner() {
                 sector: record.sector,
               });
             }}
-            className="mt-1 inline-block truncate text-[12.5px] text-point"
-          >
-            원문 보기 ↗
-          </a>
+            className="mt-1"
+          />
         ) : null}
 
         <div className="mt-6">
