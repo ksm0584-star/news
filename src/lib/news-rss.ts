@@ -83,6 +83,17 @@ export const NEWS_SOURCES: NewsSource[] = [
   },
 ];
 
+/**
+ * Individual articles kept out of the feed by exact URL — e.g. a link the
+ * publisher has since taken down. Only hides the feed entry: records a user
+ * already saved for the same URL are separate rows (url is plain text, no
+ * relation to the feed) and are left untouched.
+ *  - asiae 2026101415554159471: 원문이 "페이지를 찾을 수 없습니다"(404).
+ */
+const EXCLUDED_ARTICLE_URLS = new Set<string>([
+  "https://view.asiae.co.kr/article/2026101415554159471",
+]);
+
 function decodeXmlEntities(value: string): string {
   return value
     .replace(/&lt;/g, "<")
@@ -126,7 +137,8 @@ function isHttpUrl(value: string): boolean {
  * either way) — avoids a new dependency for four flat fields.
  *
  * An item missing a required field, with a non-http(s) URL, or with an
- * unparseable pubDate is skipped rather than producing a broken entry. An
+ * unparseable pubDate is skipped rather than producing a broken entry, as is
+ * any URL in EXCLUDED_ARTICLE_URLS. An
  * item the non-economic filter flags (see news-classification-v2.ts) is
  * also skipped entirely — it never reaches the feed, not even as "기타".
  */
@@ -143,6 +155,7 @@ export function parseRssFeed(
     const url = extractField(block, "link");
     const pubDateRaw = extractField(block, "pubDate");
     if (!title || !url || !pubDateRaw || !isHttpUrl(url)) continue;
+    if (EXCLUDED_ARTICLE_URLS.has(url)) continue;
 
     const published = new Date(pubDateRaw);
     if (Number.isNaN(published.getTime())) continue;
