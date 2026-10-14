@@ -15,7 +15,7 @@ export default function ArticleOriginalLink({
     <a
       rel="noopener noreferrer"
       {...props}
-      className={`inline-block truncate text-[12.5px] text-point ${className}`}
+      className={`inline-block truncate text-[14px] text-point ${className}`}
     >
       원문 보기 ↗
     </a>

@@ -183,10 +183,10 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 | 16px (`text-base` 포함) | 4 | BackHeader 제목, 프로필 이름 — bold |
 | 15px | 21 | 큰 버튼(semibold), 다이얼로그·섹션 제목(bold) |
 | 14.5px | 5 | 뉴스 카드 제목, 용어 이름 — semibold |
-| 14px (`text-sm` 포함) | 39 | 본문, 입력값, 카드 제목, 섹션 제목 |
+| 14px (`text-sm` 포함) | 40 | 본문, 입력값, 카드 제목, 섹션 제목, 원문 보기 링크 |
 | 13.5px | 29 | 보조 버튼, 시트 본문 |
 | 13px | 46 | 라벨(semibold), 칩(medium), 설명, 에러 |
-| 12.5px | 15 | 캡션, 에러, 작은 링크 |
+| 12.5px | 14 | 캡션, 에러, 작은 링크 |
 | 12px (`text-xs` 포함) | 21 | 뱃지, 메타 정보(언론사·날짜) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
 | 11px | 3 | 하단 내비 라벨 — medium |
@@ -260,7 +260,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | --- | --- | --- |
 | primary | `bg-point text-white rounded-xl font-semibold` | 기록 작성·완료·회고, 기사 상세, 시트 3종 |
 | primary-pill | `bg-point text-white rounded-full font-semibold` | ArticleReturnBanner, OnboardingGuide |
-| link | `text-[12.5px] text-point`, 배경·테두리 없음 | "원문 보기" (`ArticleOriginalLink`) |
+| link | `text-[14px] text-point`, 배경·테두리 없음 | "원문 보기" (`ArticleOriginalLink`) |
 | outline | `border border-border-subtle rounded-xl` (+`bg-surface`) | Google 로그인, 다이얼로그 취소, 회고 취소, 다시 시도 |
 | ghost | `text-muted font-medium` 배경 없음 | 시트 "다음에 할게요", 완료 화면 보조 액션 |
 | destructive | `bg-red-500 text-white rounded-xl font-semibold` | 삭제·탈퇴 확인 다이얼로그 |
@@ -285,7 +285,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | --- | --- | --- |
 | 문구 | `원문 보기 ↗` (컴포넌트 고정) | — |
 | 색상 | `text-point` (`#3182f6`) | `colors.primary` |
-| 서체 | `text-[12.5px]`, 굵기·행간 미지정(상속) | `typography.caption` |
+| 서체 | `text-[14px]`, 굵기·행간 미지정(상속) | 크기만 `typography.body`와 같음(행간 24px은 미적용) |
 | 아이콘 | 텍스트 기호 `↗` (SVG 아님) | — |
 | 배경·테두리·radius·padding | 없음 | — |
 | 표시 | `inline-block truncate` | — |
