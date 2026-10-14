@@ -3,6 +3,7 @@ import { Noto_Sans_KR } from "next/font/google";
 import AnalyticsPageView from "@/components/AnalyticsPageView";
 import BottomNav from "@/components/BottomNav";
 import OnboardingGuide from "@/components/OnboardingGuide";
+import Toaster from "@/components/Toaster";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
           <BottomNav />
           <OnboardingGuide />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

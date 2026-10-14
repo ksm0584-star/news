@@ -7,6 +7,7 @@ import BackHeader from "@/components/BackHeader";
 import { getArticleById } from "@/lib/mock-news";
 import { resolveCategoryForSector, type NewsCategory } from "@/lib/news-categories";
 import { createRecord, findPastRecordWithThought, updateRecord } from "@/lib/record-store";
+import { showToast } from "@/lib/toast";
 import { useRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { track, trackClick } from "@/lib/mixpanel";
@@ -154,6 +155,7 @@ function NewRecordForm() {
           from === "complete"
             ? `/record/complete/${editingRecord.id}`
             : `/record/${editingRecord.id}`;
+        showToast("기록이 수정되었어요.");
         router.replace(destination);
         return;
       }

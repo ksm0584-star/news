@@ -10,6 +10,7 @@ import TermDictionarySheet from "@/components/TermDictionarySheet";
 import ExternalRecordFields from "@/components/ExternalRecordFields";
 import { useAuth } from "@/lib/auth-context";
 import { createRecord, findPastRecordWithThought, updateRecord } from "@/lib/record-store";
+import { showToast } from "@/lib/toast";
 import { useRecord } from "@/lib/use-records-store";
 import { useExternalDraft } from "@/lib/use-external-draft";
 import { useKeyboardInsetPx } from "@/lib/use-keyboard-inset";
@@ -316,6 +317,7 @@ function ExternalArticleView() {
         });
         const destination =
           from === "complete" ? `/record/complete/${updated.id}` : `/record/${updated.id}`;
+        showToast("기록이 수정되었어요.");
         router.replace(destination);
         return;
       }

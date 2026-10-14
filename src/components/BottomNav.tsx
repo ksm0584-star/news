@@ -63,6 +63,10 @@ const TABS = [
   },
 ] as const;
 
+export function isBottomNavPath(pathname: string) {
+  return TABS.some((tab) => tab.href === pathname);
+}
+
 /**
  * Only shown on the three top-level tab screens (`/`, `/records`,
  * `/mypage`) — every other route (article reading/writing, record
@@ -79,7 +83,7 @@ const TABS = [
 export default function BottomNav() {
   const pathname = usePathname();
 
-  if (!TABS.some((tab) => tab.href === pathname)) return null;
+  if (!isBottomNavPath(pathname)) return null;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface pb-[env(safe-area-inset-bottom)]">
