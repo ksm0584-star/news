@@ -138,7 +138,7 @@ function RecordDetailInner() {
       await deleteRecord(user, record!.id);
       track("record_deleted", { record_id: record!.id, sector: record!.sector });
       showToast("기록이 삭제되었어요.");
-      router.replace("/");
+      router.replace("/records");
     } catch {
       setDeleting(false);
       setConfirmingDelete(false);
