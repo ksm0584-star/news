@@ -58,6 +58,7 @@ spacing:
   card-padding-x: 16px # px-4
   card-padding-y: 14px # py-3.5
   stack-gap: 8px # gap-2
+  form-field-gap: 24px # Figma spacing/form-field-gap · globals.css --spacing-form-field-gap(--spacing×6) → mb-form-field-gap · 기록 폼 입력 항목 사이
   bar-height: 56px # h-14 · BackHeader, BottomNav
   dialog-max-width: 320px # max-w-[320px]
 shadows:
@@ -249,7 +250,8 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 
 ## Layout
 
-전역 spacing 토큰은 없고 Tailwind 기본 스케일(1 step = 4px)을 그대로 씁니다.
+spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 있는 간격 토큰은
+`form-field-gap`(24px) 하나입니다(아래 "입력 항목 간격").
 
 - **앱 컬럼**: `mx-auto max-w-[430px] bg-surface`. `fixed` 요소(내비, FAB,
   시트, 배너)도 같은 `inset-x-0 mx-auto max-w-[430px]`로 컬럼에 맞춥니다.
@@ -258,6 +260,21 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
   텍스트 버튼(`button-48`, 48px)과 한 줄 입력창(`h-[50px]`)은 세로 패딩 대신
   높이로 고정합니다.
 - **간격**: `gap-2`(8px)가 기본(35회). 그 외 `gap-3`, `gap-1.5`, `gap-2.5`.
+- **입력 항목 간격 (`form-field-gap`, 24px)**: 기록 작성·수정 화면(일반
+  `RecordFormFields`, 외부 기사 `ExternalRecordFields`)에서 한 입력 항목의 마지막
+  요소와 다음 항목 라벨 사이는 24px입니다.
+  - Figma `spacing/form-field-gap` = 코드 `--spacing-form-field-gap`
+    (`src/app/globals.css`의 `@theme inline`, 값 `calc(var(--spacing) * 6)`).
+    Tailwind가 이 토큰으로 `mb-form-field-gap`·`gap-form-field-gap` 등을 만듭니다.
+  - 사용: 각 항목의 마지막 요소(제목 입력창, 섹터 칩 묶음, 기사 정리 textarea)에
+    `mb-form-field-gap`. 숫자 클래스(`mb-4`, `mb-6`)로 다시 지정하지 않고, 값을
+    바꿀 때는 토큰 한 곳만 고칩니다. 부모 `gap`은 쓰지 않아 여백이 겹치지 않습니다.
+  - textarea처럼 기본이 inline인 요소가 항목 끝에 오면 `block`을 함께 줍니다
+    (없으면 줄 아래 여유 약 5px이 더해져 29px이 됨).
+  - 라벨 아래 8px(`mb-2`, 라벨 ↔ 자기 입력창·칩)과 구분합니다. 8px는 항목 안,
+    24px는 항목 사이입니다.
+  - 마지막 항목 아래(`mb-2`, 에러 문구)와 저장 버튼까지의 간격, 페이지 여백은
+    이 토큰과 무관하게 기존 값을 유지합니다.
 - **기록 상세 섹션**: 섹션 제목 `mb-2 text-[14px] font-bold` + filled 박스
   (본문 `whitespace-pre-line type-memo-body text-foreground/80`).
   제목·원문 보기 아래 첫 섹션 "뉴스 기록"은 `mt-6`(24px), 그 아래 "투자에
@@ -427,8 +444,19 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   `text-red-500` 문구로 표시. placeholder 색은 지정하지 않음(브라우저 기본).
 - **Label**: `mb-2 block text-[14px] font-semibold text-foreground`. 한 줄
   input·textarea 위 라벨(제목, 기사 정리, 투자에 적용하기, 나의 메모)에 씁니다.
-  **한 줄·여러 줄 입력창의 라벨 아래 간격은 8px**(`mb-2`, 부모 `gap` 없이 라벨
-  자체 여백으로 관리)입니다. "나의 메모"처럼 라벨과 입력창 사이에 안내문·칩이
+  - **라벨 아래 8px**: 라벨 ↔ 자기 입력창·칩. `mb-2`, 부모 `gap` 없이 라벨 자체
+    여백으로 관리합니다.
+  - **입력 항목 사이 24px**: 앞 항목 마지막 요소 ↔ 다음 라벨. `mb-form-field-gap`
+    (Figma `spacing/form-field-gap`, Layout → 입력 항목 간격).
+
+  ```tsx
+  <label className="mb-2 block text-[14px] font-semibold text-foreground">제목 *</label>
+  <input className="mb-form-field-gap w-full … h-[50px] px-4 type-input" />
+  <label className="mb-2 block type-section-title text-foreground">섹터 *</label>
+  <div className="mb-form-field-gap flex flex-wrap gap-2">{/* 칩 */}</div>
+  ```
+
+  "나의 메모"처럼 라벨과 입력창 사이에 안내문·칩이
   있으면 라벨 바로 아래만 8px이고, 그 아래 요소들의 기존 여백은 그대로 둡니다.
   라벨이 없는 입력창(URL, 용어 검색, 평가 의견)에는 라벨·여백을 추가하지 않습니다.
   크기만 14px이고 굵기·색·여백은 그대로이며, 행간은 지정하지 않아 상속됩니다

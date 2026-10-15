@@ -58,7 +58,7 @@ const RecordFormFields = forwardRef<
       <input
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
-        className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
+        className="mb-form-field-gap w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
       />
 
       <label className="mb-2 block type-section-title text-foreground">
@@ -69,7 +69,7 @@ const RecordFormFields = forwardRef<
           분야 체계가 바뀌었어요. 새 분야를 다시 선택해주세요
         </p>
       ) : null}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-form-field-gap flex flex-wrap gap-2">
         {WRITABLE_CATEGORIES.map((category) => (
           <button
             key={category}

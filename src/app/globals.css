@@ -19,6 +19,11 @@
   --color-muted: var(--muted);
   --color-border-subtle: var(--border-subtle);
   --font-sans: var(--font-noto-sans-kr);
+  /* Figma spacing/form-field-gap: vertical gap between record form fields
+     (the last element of one field → the next field's label). 24px, built
+     from Tailwind's own spacing step so it stays on the existing scale.
+     Generates mb-form-field-gap / gap-form-field-gap etc. */
+  --spacing-form-field-gap: calc(var(--spacing) * 6);
 }
 
 /* Typography roles (DESIGN.md Typography → 역할 스타일). Size and weight only,

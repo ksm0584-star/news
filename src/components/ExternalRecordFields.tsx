@@ -45,13 +45,13 @@ const ExternalRecordFields = forwardRef<
       <input
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
-        className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
+        className="mb-form-field-gap w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
       />
 
       <label className="mb-2 block type-section-title text-foreground">
         섹터 *
       </label>
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-form-field-gap flex flex-wrap gap-2">
         {WRITABLE_CATEGORIES.map((category) => (
           <button
             key={category}
@@ -77,7 +77,7 @@ const ExternalRecordFields = forwardRef<
         onChange={(e) => onArticleSummaryChange(e.target.value)}
         placeholder="무슨 일이 일어났나요? 왜 일어났나요? 구체적으로 어떤 내용인가요?"
         rows={5}
-        className="mb-4 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 type-input leading-6 text-foreground outline-none focus:border-point"
+        className="mb-form-field-gap block w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 type-input leading-6 text-foreground outline-none focus:border-point"
       />
 
       <label className="mb-2 block text-[14px] font-semibold text-foreground">
