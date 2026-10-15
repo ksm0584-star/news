@@ -194,7 +194,7 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 | --- | --- | --- | --- | --- | --- |
 | 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
-| 기록 카드 제목 | `type-record-card-title` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6) | 투자회고(회고 수정, `/record/[id]/reflection/[reflectionId]`) 화면의 과거·지금 기록 카드 제목 2곳. **한 줄 + 말줄임(…)** 을 역할에 포함(`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). 완료 화면 등 다른 화면의 기록 제목, 카드 본문·날짜·뱃지는 제외 |
+| 기록 카드 제목 | `type-record-card-title` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6) | ① 기록 상세(`/record/[id]`) "회고 기록" 목록 카드의 비교 기록 제목(날짜와 같은 flex 줄, `min-w-0 flex-1` + 날짜 `shrink-0`) ② 투자회고(회고 수정, `/record/[id]/reflection/[reflectionId]`) 화면의 과거·지금 기록 카드 제목 2곳. **한 줄 + 말줄임(…)** 을 역할에 포함(`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). 완료 화면 등 다른 화면의 기록 제목, 카드 본문·날짜·뱃지는 제외 |
 | 메모 본문 | `type-memo-body` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 기록 상세(`/record/[id]`)의 메모 본문: "뉴스 기록"(기존 '나의 메모') 상자와 "투자에 적용하기" 상자. 섹션 제목, 빈 메모 안내(13.5px muted), 작성·수정 화면 입력창은 제외 |
 | 입력창 내부 텍스트 | `type-input` | 16px | Medium 500 | textarea `leading-6`(24px), 한 줄 input·평가 의견 상속(1.5 → 24px) | 모든 제품 input·textarea의 입력값과 placeholder: URL, 기록 제목(2), 용어 검색, 나의 메모, 기사 정리, 투자에 적용하기, 평가 의견. `/webview-test` 제외 |
 
@@ -208,8 +208,10 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
   서로 바꿔 쓰지 않습니다.
 - **한 줄 말줄임 규칙**: `type-record-card-title`은 블록 요소에 써서 부모 폭에 맞춰
   잘리게 합니다. flex·grid의 자식으로 쓸 때는 그 자식(또는 감싸는 flex 자식)에
-  `min-w-0`을 함께 줘야 말줄임이 작동합니다. 투자회고 카드는 블록 카드 안의 `<p>`라
-  `min-w-0` 없이 작동함을 확인했습니다(320px·393px, 긴 한글·공백 없는 제목).
+  `min-w-0`을 함께 줘야 말줄임이 작동합니다. 기록 상세 회고 목록은 제목에
+  `min-w-0 flex-1`, 날짜에 `shrink-0`을 줘서 날짜 자리를 확보합니다. 투자회고
+  카드는 블록 카드 안의 `<p>`라 `min-w-0` 없이 작동합니다(320px·393px, 긴 한글·
+  공백 없는 제목으로 확인).
 - **역할 밖의 제목**: 기사 상세 `h1`(19px bold), 기록 상세 `h1`(18px bold)은 페이지
   제목이라, 완료 화면의 비교 카드 제목(13px semibold)은 메모를 보조하는
   문맥 표시라 이 역할에 넣지 않았습니다. 홈에서 쓰지 않는 `NewsCard`

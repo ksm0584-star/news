@@ -297,7 +297,7 @@ function RecordDetailInner() {
                     className="rounded-xl border border-border-subtle px-4 py-3"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[13px] font-medium text-foreground">
+                      <span className="min-w-0 flex-1 type-record-card-title text-foreground">
                         {other ? other.title : "삭제된 기록"}
                       </span>
                       <span className="shrink-0 text-[12px] text-muted">

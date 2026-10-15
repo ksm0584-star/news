@@ -31,8 +31,9 @@
   font-weight: var(--font-weight-semibold); /* 600 */
 }
 
-/* Title inside a record card on the reflection screen: 16px Medium,
-   24px line height, always one line with an ellipsis. Separate role from
+/* Title inside a record card (record detail's 회고 기록 list, reflection
+   edit screen): 16px Medium, 24px line height, always one line with an
+   ellipsis — inside a flex row, pair it with min-w-0. Separate role from
    type-input / type-memo-body even though the size and weight match. */
 @utility type-record-card-title {
   font-size: var(--text-base); /* 16px */
