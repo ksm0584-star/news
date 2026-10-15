@@ -60,7 +60,7 @@ export default function CategoryTabs({
             tabIndex={isSelected ? 0 : -1}
             onClick={() => onSelect(category)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium ${
+            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 type-chip ${
               isSelected ? "bg-point text-white" : "bg-background text-foreground/70"
             }`}
           >

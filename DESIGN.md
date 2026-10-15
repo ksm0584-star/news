@@ -30,6 +30,7 @@ typography:
   # 역할 스타일 — globals.css의 @utility, 크기·굵기만 지정(행간은 요소별 기존 값)
   article-title: { fontSize: 14px, fontWeight: semibold } # type-article-title = --text-sm + --font-weight-semibold
   input: { fontSize: 16px, fontWeight: medium } # type-input = --text-base + --font-weight-medium
+  chip: { fontSize: 14px, fontWeight: medium, lineHeight: 21px } # type-chip = Figma type-14-medium (--text-sm + --font-weight-medium + --spacing×5.25)
   record-card-title: { fontSize: 16px, fontWeight: medium, lineHeight: 24px, lines: 1 } # type-record-card-title, 한 줄 말줄임 포함
   memo-body: { fontSize: 16px, fontWeight: medium, lineHeight: 24px } # type-memo-body = --text-base + --font-weight-medium + --spacing×6
   page-title: { fontSize: 20px, fontWeight: extrabold } # text-xl
@@ -188,10 +189,12 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 참조하므로 새 크기 값을 만들지 않습니다. **행간은 지정하지 않습니다.** 요소에
 이미 있는 `leading-*` 또는 상속 행간이 그대로 유지됩니다(`text-sm`/`text-base`
 클래스를 직접 쓰면 프리셋 행간이 함께 바뀌므로 쓰지 않음). 예외로 `type-button`,
-`type-memo-body`, `type-record-card-title`은 규칙상 행간 24px을 역할에 포함합니다.
+`type-memo-body`, `type-record-card-title`은 규칙상 행간 24px을, `type-chip`은 21px을
+역할에 포함합니다.
 
 | 역할 | 클래스 | 크기 | 굵기 | 행간(기존 값 유지) | 사용 범위 |
 | --- | --- | --- | --- | --- | --- |
+| 칩 | `type-chip` (Figma `type-14-medium`) | 14px | Medium 500 | **21px 지정**(`--spacing` × 5.25) | 홈 분야 필터(`CategoryTabs`), 기록 작성·수정의 섹터 선택 칩(`RecordFormFields`, `ExternalRecordFields`) — 선택·미선택 공통. 메모 힌트 칩(12.5px), 뱃지, 버튼, 라벨은 제외 |
 | 섹션 제목 | `type-section-title` | 14px | Bold 700 | 지정 안 함(상속, 1.5 → 21px) | 기록 작성·수정 화면(일반 `RecordFormFields`, 외부 기사 `ExternalRecordFields`)의 "섹터 *" 라벨(`mb-2`, 아래 8px). DESIGN.md의 기존 `typography.section-title`을 코드로 옮긴 것 |
 | 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
@@ -231,9 +234,9 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 | 16px (`text-base` 포함) | 4 + 역할 37 | 텍스트 버튼(`type-button`, semibold, 29곳), 입력값·placeholder(`type-input`, medium, 8곳), BackHeader 제목, 프로필 이름 — bold |
 | 15px | 10 | 다이얼로그·섹션 제목(bold) |
 | 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
-| 14px (`text-sm` 포함) | 33 + 역할 4 | 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
+| 14px (`text-sm` 포함) | 33 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
 | 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
-| 13px | 37 | 칩(medium), 설명, 에러 |
+| 13px | 34 | 설명, 에러 |
 | 12.5px | 14 | 캡션, 에러, 작은 링크 |
 | 12px (`text-xs` 포함) | 21 | 뱃지, 메타 정보(언론사·날짜) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
@@ -461,17 +464,29 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   bg-background px-2.5 py-1 text-xs font-medium text-foreground/70`.
   Variant: 기본 / `muted`(`text-foreground/40`, 읽은 기사). 사용: 홈, 내 기록,
   기록 상세·완료·회고, 기사 상세.
-- **Chip** — 공통 컴포넌트 없음 (inline). 분야·메모 힌트 선택. `rounded-full
-  px-3 py-1.5 text-[13px] font-medium`. State: 선택 `bg-point text-white` /
-  비선택 `bg-background text-foreground/70`. 사용: CategoryTabs,
-  RecordFormFields(분야, 메모 힌트), ExternalRecordFields.
+- **Chip** — 공통 컴포넌트 없음 (inline), 글자는 공통 스타일 `type-chip`.
+  분야 선택. `rounded-full px-3 py-1.5 type-chip`.
+  - 글자: **14px / Medium 500 / 줄 높이 21px** — `type-chip` = Figma `type-14-medium`
+    (`--text-sm`, `--font-weight-medium`, `--spacing` × 5.25). 높이는 패딩 포함 33px.
+  - State: 선택 `bg-point text-white` / 비선택 `bg-background text-foreground/70`.
+    두 상태 모두 같은 `type-chip`을 쓰고 색만 다릅니다.
+  - 칩 사이 간격 `gap-2`(8px). 홈 필터는 한 줄 가로 스크롤(`whitespace-nowrap`),
+    섹터 칩은 `flex-wrap`으로 줄바꿈(393px 3줄, 320px 4줄).
+  - 사용: CategoryTabs(홈 분야 필터), RecordFormFields·ExternalRecordFields(섹터 선택).
+  - 예외: 메모 힌트 칩(RecordFormFields)은 `text-[12.5px] font-medium`으로 별도 유지.
+
+  ```tsx
+  <button className={`rounded-full px-3 py-1.5 type-chip ${
+    selected ? "bg-point text-white" : "bg-background text-foreground/70"
+  }`}>반도체</button>
+  ```
 - **토큰**: `background`, `foreground`, `primary`, `primary-foreground`, `rounded.full`.
 
 ### Tabs
 
 - `CategoryTabs` (공통). 홈 뉴스 목록의 분야 필터. `role="tablist"`, 방향키
   이동 지원, 가로 스크롤(`no-scrollbar`).
-- 시각 스타일은 Chip과 동일. Variant·Size 없음. State: 선택 / 비선택.
+- 시각 스타일은 Chip과 동일(`type-chip`, 14px Medium). Variant·Size 없음. State: 선택 / 비선택.
 - 사용 화면: 홈(LatestNewsList).
 
 ### Dialog / Bottom Sheet
@@ -648,7 +663,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   `button-48 type-button`으로 통일됨. 버튼 범위에서 뺀 작은 인라인 액션
   (용어 카드 "삭제" 12px, 안내 팝오버 "닫기"·완료 화면 링크형 12.5px, 온보딩
   "건너뛰기" 13px)은 각자 크기를 유지.
-- **Chip** — 같은 스타일이 4개 파일에 복제. 메모 힌트 칩만 12.5px.
+- **Chip** — 같은 스타일이 4개 파일에 복제(글자는 `type-chip`으로 통일). 메모 힌트 칩만 12.5px.
 - **Input** — 한 줄 input 높이는 `h-[50px]`로 통일됨. 좌우 패딩은 `px-4` /
   `px-3.5`(용어 검색) 2종, textarea 패딩은 `px-4 py-3` / `px-3.5 py-3` 2종.
 - **Card** — 패딩 3종(`p-3.5`, `px-4 py-3.5`, `p-4`). 마이페이지 "내 활동"

@@ -57,7 +57,7 @@ const ExternalRecordFields = forwardRef<
             key={category}
             type="button"
             onClick={() => onSectorChange(category)}
-            className={`rounded-full px-3 py-1.5 text-[13px] font-medium ${
+            className={`rounded-full px-3 py-1.5 type-chip ${
               sector === category
                 ? "bg-point text-white"
                 : "bg-background text-foreground/70"
