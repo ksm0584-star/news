@@ -241,6 +241,13 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
   텍스트 버튼(`button-48`, 48px)과 한 줄 입력창(`h-[50px]`)은 세로 패딩 대신
   높이로 고정합니다.
 - **간격**: `gap-2`(8px)가 기본(35회). 그 외 `gap-3`, `gap-1.5`, `gap-2.5`.
+- **기록 상세 섹션**: 섹션 제목 `mb-2 text-[14px] font-bold` + filled 박스.
+  제목·원문 보기 아래 첫 섹션 "뉴스 기록"은 `mt-6`(24px), 그 아래 "투자에
+  적용하기"는 `mt-8`(32px, `py-8`·`px-8`과 같은 기존 값)로 띄워 별도 섹션임을
+  드러냅니다. 카드·테두리는 추가하지 않습니다. 외부 기사 기록의 `thought`를
+  `splitExternalContent`로 나눠 표시만 분리하며(저장 형식은 그대로), 투자에
+  적용하기를 쓰지 않은 기록은 그 섹션을 숨깁니다. 일반 기록은 `thought` 전체가
+  "뉴스 기록"에 표시됩니다.
 - **고정 바**: BackHeader와 BottomNav 모두 `h-14`(56px).
 - **Safe area**: 하단 고정 요소는 `env(safe-area-inset-bottom)`을 더하고, 탭
   화면 본문은 `paddingBottom: calc(7rem + env(safe-area-inset-bottom))`을 inline
@@ -420,7 +427,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | Variant | 스타일 | 구현 | 사용 화면 |
 | --- | --- | --- | --- |
 | outlined | `rounded-2xl border border-border-subtle` | `RecordCard`, `EconomicTermHistoryCard`, LatestNewsList 항목(inline), 마이페이지 메뉴(inline) | 내 기록, 검색한 용어, 홈, 마이페이지 |
-| filled | `rounded-xl bg-background px-4 py-3.5` | inline | 기록 상세 메모, 용어 검색 결과 |
+| filled | `rounded-xl bg-background px-4 py-3.5` | inline | 기록 상세 "뉴스 기록"·"투자에 적용하기", 용어 검색 결과 |
 | highlighted | `rounded-2xl border border-point/30 bg-point/5 p-4` | inline | 완료·회고 화면의 "지금의 생각" |
 | dashed | `rounded-2xl border border-dashed border-border-subtle px-6 py-10` | `EmptyState` | 내 기록, 검색한 용어, 홈 |
 | floating | outlined + `bg-surface p-4 shadow-lg` | `ArticleReturnBanner` | 홈 |

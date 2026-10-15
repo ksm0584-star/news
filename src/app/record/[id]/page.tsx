@@ -14,6 +14,7 @@ import { queueToast, usePendingToastRelease } from "@/lib/toast";
 import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
+import { splitExternalContent } from "@/lib/external-record-content";
 import { track, trackClick } from "@/lib/mixpanel";
 import { hasSeenLoginPrompt } from "@/lib/login-prompt";
 import { hasSeenRatingPrompt } from "@/lib/rating-prompt";
@@ -137,6 +138,11 @@ function RecordDetailInner() {
     );
   }
 
+  // External records fold 기사 정리 + 투자에 적용하기 into the one `thought`
+  // column (see external-record-content.ts); split it back here for display
+  // only. Records without the marker show their whole `thought` as-is.
+  const { articleSummary, investmentNote } = splitExternalContent(record.thought);
+
   async function handleConfirmDelete() {
     setDeleting(true);
     try {
@@ -252,10 +258,10 @@ function RecordDetailInner() {
         ) : null}
 
         <div className="mt-6">
-          <h2 className="mb-2 text-[14px] font-bold text-foreground">나의 메모</h2>
-          {record.thought ? (
+          <h2 className="mb-2 text-[14px] font-bold text-foreground">뉴스 기록</h2>
+          {articleSummary ? (
             <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 text-[14px] leading-6 text-foreground/80">
-              {record.thought}
+              {articleSummary}
             </p>
           ) : (
             <p className="rounded-xl bg-background px-4 py-3.5 text-[13.5px] text-muted">
@@ -263,6 +269,15 @@ function RecordDetailInner() {
             </p>
           )}
         </div>
+
+        {investmentNote.trim() ? (
+          <div className="mt-8">
+            <h2 className="mb-2 text-[14px] font-bold text-foreground">투자에 적용하기</h2>
+            <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 text-[14px] leading-6 text-foreground/80">
+              {investmentNote}
+            </p>
+          </div>
+        ) : null}
 
         {reflections.length > 0 ? (
           <div className="mt-6">
