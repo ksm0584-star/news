@@ -36,11 +36,11 @@ typography:
   content-title: { fontSize: 18px, fontWeight: bold, lineHeight: snug }
   sheet-title: { fontSize: 17px, fontWeight: bold }
   header-title: { fontSize: 16px, fontWeight: bold }
-  section-title: { fontSize: 14px, fontWeight: bold }
+  section-title: { fontSize: 14px, fontWeight: bold } # type-section-title = --text-sm + --font-weight-bold · 섹터 라벨에 연결
   button: { fontSize: 16px, fontWeight: semibold, lineHeight: 24px } # type-button = Figma type-16-semibold
   body: { fontSize: 14px, fontWeight: normal, lineHeight: 24px } # leading-6
   body-sm: { fontSize: 13.5px }
-  label: { fontSize: 14px, fontWeight: semibold } # 입력창·textarea 라벨. 섹터 라벨은 13px
+  label: { fontSize: 14px, fontWeight: semibold } # 입력창·textarea 라벨. 섹터 라벨은 section-title(14px bold)
   caption: { fontSize: 12.5px }
   meta: { fontSize: 12px } # text-xs
   micro: { fontSize: 11.5px }
@@ -192,6 +192,7 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 
 | 역할 | 클래스 | 크기 | 굵기 | 행간(기존 값 유지) | 사용 범위 |
 | --- | --- | --- | --- | --- | --- |
+| 섹션 제목 | `type-section-title` | 14px | Bold 700 | 지정 안 함(상속, 1.5 → 21px) | 기록 작성·수정 화면(일반 `RecordFormFields`, 외부 기사 `ExternalRecordFields`)의 "섹터 *" 라벨(`mb-2`, 아래 8px). DESIGN.md의 기존 `typography.section-title`을 코드로 옮긴 것 |
 | 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
 | 기록 카드 제목 | `type-record-card-title` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6) | ① 기록 상세(`/record/[id]`) "회고 기록" 목록 카드의 비교 기록 제목(날짜와 같은 flex 줄, `min-w-0 flex-1` + 날짜 `shrink-0`) ② 투자회고(회고 수정, `/record/[id]/reflection/[reflectionId]`) 화면의 과거·지금 기록 카드 제목 2곳. **한 줄 + 말줄임(…)** 을 역할에 포함(`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). 완료 화면 등 다른 화면의 기록 제목, 카드 본문·날짜·뱃지는 제외 |
@@ -230,9 +231,9 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 | 16px (`text-base` 포함) | 4 + 역할 37 | 텍스트 버튼(`type-button`, semibold, 29곳), 입력값·placeholder(`type-input`, medium, 8곳), BackHeader 제목, 프로필 이름 — bold |
 | 15px | 10 | 다이얼로그·섹션 제목(bold) |
 | 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
-| 14px (`text-sm` 포함) | 33 + 역할 2 | 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 카드 제목, 섹션 제목, 원문 보기 링크 |
+| 14px (`text-sm` 포함) | 33 + 역할 4 | 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
 | 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
-| 13px | 39 | 섹터 라벨(semibold), 칩(medium), 설명, 에러 |
+| 13px | 37 | 칩(medium), 설명, 에러 |
 | 12.5px | 14 | 캡션, 에러, 작은 링크 |
 | 12px (`text-xs` 포함) | 21 | 뱃지, 메타 정보(언론사·날짜) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
@@ -428,8 +429,12 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   있으면 라벨 바로 아래만 8px이고, 그 아래 요소들의 기존 여백은 그대로 둡니다.
   라벨이 없는 입력창(URL, 용어 검색, 평가 의견)에는 라벨·여백을 추가하지 않습니다.
   크기만 14px이고 굵기·색·여백은 그대로이며, 행간은 지정하지 않아 상속됩니다
-  (`typography.body`의 `leading-6`은 적용하지 않음). 칩 그룹 위 "섹터 *" 라벨은
-  입력창 라벨이 아니므로 `mb-1.5 text-[13px]`(6px 간격)을 유지합니다.
+  (`typography.body`의 `leading-6`은 적용하지 않음).
+- **섹터 라벨**: 칩 그룹 위 "섹터 *" 라벨은 `mb-2 block type-section-title
+  text-foreground` — 14px Bold 700, 아래 간격 8px. 일반 기록·외부 기사 기록의
+  작성·수정 화면 모두 같습니다. 참조 스타일은 Typography의 `section-title`
+  (`type-section-title`)이며, 입력창 라벨(semibold)과 굵기만 다릅니다. 섹터 칩의
+  글자·크기·간격은 Chip 규칙 그대로입니다.
 - **토큰**: `background`, `foreground`, `border`, `primary`, `destructive`, `rounded.xl`.
 - **사용 화면**: RecordFormFields(`/record/new`), ExternalRecordFields
   (`/record/new/external`), TermDictionarySheet, RatingPromptSheet.
@@ -632,6 +637,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   지정하므로 결과도 미세하게 다름.
 - **콘텐츠 제목 크기** — 기사 상세 19px vs 기록 상세 18px.
 - **섹션 제목 크기** — 홈 "최신 경제뉴스" 15px vs 마이페이지·기록 상세 14px.
+- **섹션 제목 표기** — `type-section-title`은 섹터 라벨에만 연결돼 있고, 기록
+  상세·마이페이지의 14px Bold 섹션 제목은 아직 `text-[14px] font-bold`를 직접 씀
+  (결과는 같음).
 
 ### 컴포넌트
 

@@ -61,7 +61,7 @@ const RecordFormFields = forwardRef<
         className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
       />
 
-      <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+      <label className="mb-2 block type-section-title text-foreground">
         섹터 *
       </label>
       {sectorNeedsReselect ? (
