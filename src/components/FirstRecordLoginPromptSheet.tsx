@@ -48,7 +48,7 @@ export default function FirstRecordLoginPromptSheet({ onClose }: { onClose: () =
               trackClick("login_prompt_login", { source: "first_record_save" });
               onClose();
             }}
-            className="block w-full rounded-xl bg-point py-3.5 text-center text-[15px] font-semibold text-white active:bg-point-dark"
+            className="button-48 w-full rounded-xl bg-point type-button text-white active:bg-point-dark"
           >
             로그인하고 기록 보관하기
           </Link>
@@ -58,7 +58,7 @@ export default function FirstRecordLoginPromptSheet({ onClose }: { onClose: () =
               trackClick("login_prompt_dismiss", { source: "first_record_save" });
               onClose();
             }}
-            className="w-full rounded-xl py-3 text-center text-[13.5px] font-medium text-muted"
+            className="button-48 w-full rounded-xl type-button text-muted"
           >
             나중에 할게요
           </button>

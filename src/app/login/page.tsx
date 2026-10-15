@@ -67,7 +67,7 @@ function LoginInner() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={submitting}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border-subtle bg-surface py-3.5 text-[15px] font-semibold text-foreground disabled:opacity-60"
+        className="button-48 w-full gap-2 rounded-xl border border-border-subtle bg-surface type-button text-foreground disabled:opacity-60"
       >
         <GoogleIcon />
         {submitting ? "이동 중..." : "Google로 로그인"}

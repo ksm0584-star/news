@@ -131,7 +131,7 @@ export default function RatingPromptSheet({
               maxLength={MAX_COMMENT_LENGTH}
               placeholder="좋았던 점이나 아쉬운 점을 자유롭게 남겨주세요."
               rows={3}
-              className="mt-4 w-full resize-none rounded-xl border border-border-subtle bg-background px-3.5 py-3 text-[13.5px] text-foreground outline-none focus:border-point"
+              className="mt-4 w-full resize-none rounded-xl border border-border-subtle bg-background px-3.5 py-3 type-input text-foreground outline-none focus:border-point"
             />
             <p className="mt-1 text-right text-[11.5px] text-muted">
               {comment.length}/{MAX_COMMENT_LENGTH}
@@ -148,7 +148,7 @@ export default function RatingPromptSheet({
                 type="button"
                 onClick={handleSubmit}
                 disabled={rating === null || state === "submitting"}
-                className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
+                className="button-48 w-full rounded-xl bg-point type-button text-white disabled:opacity-60 active:bg-point-dark"
               >
                 {state === "submitting" ? "보내는 중..." : "의견 보내기"}
               </button>
@@ -156,7 +156,7 @@ export default function RatingPromptSheet({
                 type="button"
                 onClick={handleDismiss}
                 disabled={state === "submitting"}
-                className="w-full rounded-xl py-3 text-center text-[13.5px] font-medium text-muted disabled:opacity-60"
+                className="button-48 w-full rounded-xl type-button text-muted disabled:opacity-60"
               >
                 다음에 할게요
               </button>

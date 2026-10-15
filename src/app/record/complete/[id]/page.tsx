@@ -121,7 +121,7 @@ function CompareRecordView() {
           <button
             type="button"
             onClick={() => goToDetail("complete_confirm")}
-            className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white"
+            className="button-48 w-full rounded-xl bg-point type-button text-white"
           >
             확인
           </button>
@@ -201,7 +201,7 @@ function CompareRecordView() {
               type="button"
               onClick={() => handleSelect(option.value)}
               disabled={saving}
-              className={`rounded-xl border py-3 text-[14px] font-semibold disabled:opacity-60 ${
+              className={`button-48 rounded-xl border type-button disabled:opacity-60 ${
                 (pendingResult ?? selected) === option.value
                   ? "border-point bg-point text-white"
                   : "border-border-subtle text-foreground/80"
@@ -221,7 +221,7 @@ function CompareRecordView() {
           <button
             type="button"
             onClick={() => goToDetail("complete_done")}
-            className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white"
+            className="button-48 w-full rounded-xl bg-point type-button text-white"
           >
             완료
           </button>
@@ -229,7 +229,7 @@ function CompareRecordView() {
           <button
             type="button"
             onClick={() => goToDetail("complete_skip")}
-            className="w-full rounded-xl py-3.5 text-[13.5px] font-medium text-muted"
+            className="button-48 w-full rounded-xl type-button text-muted"
           >
             나중에 하기
           </button>

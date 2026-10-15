@@ -13,7 +13,7 @@ export default function RecordCard({ record }: { record: NewsRecord }) {
         <SectorBadge sector={record.sector} />
         <span className="text-xs text-muted">{formatDate(record.createdAt)}</span>
       </div>
-      <p className="truncate text-[14px] font-semibold text-foreground">
+      <p className="truncate type-article-title text-foreground">
         {record.title}
       </p>
       <p className="line-clamp-1 text-[13px] text-muted">

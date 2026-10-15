@@ -323,7 +323,7 @@ function RecordDetailInner() {
                 type="button"
                 onClick={() => setConfirmingDelete(false)}
                 disabled={deleting}
-                className="flex-1 rounded-xl border border-border-subtle py-2.5 text-[13.5px] font-medium text-foreground/70 disabled:opacity-60"
+                className="button-48 flex-1 rounded-xl border border-border-subtle type-button text-foreground/70 disabled:opacity-60"
               >
                 취소
               </button>
@@ -331,7 +331,7 @@ function RecordDetailInner() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={deleting}
-                className="flex-1 rounded-xl bg-red-500 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-60"
+                className="button-48 flex-1 rounded-xl bg-red-500 type-button text-white disabled:opacity-60"
               >
                 {deleting ? "삭제 중..." : "삭제"}
               </button>

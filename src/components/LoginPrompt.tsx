@@ -9,7 +9,7 @@ export default function LoginPrompt() {
       </p>
       <Link
         href="/login"
-        className="mt-2 rounded-xl bg-point px-5 py-2.5 text-[13.5px] font-semibold text-white"
+        className="button-48 mt-2 rounded-xl bg-point px-5 type-button text-white"
       >
         로그인하기
       </Link>

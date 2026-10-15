@@ -39,13 +39,13 @@ const ExternalRecordFields = forwardRef<
 ) {
   return (
     <>
-      <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+      <label className="mb-2 block text-[14px] font-semibold text-foreground">
         제목 *
       </label>
       <input
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
-        className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 text-[14px] text-foreground outline-none focus:border-point"
+        className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
       />
 
       <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
@@ -68,7 +68,7 @@ const ExternalRecordFields = forwardRef<
         ))}
       </div>
 
-      <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+      <label className="mb-2 block text-[14px] font-semibold text-foreground">
         기사 정리 *
       </label>
       <textarea
@@ -77,10 +77,10 @@ const ExternalRecordFields = forwardRef<
         onChange={(e) => onArticleSummaryChange(e.target.value)}
         placeholder="무슨 일이 일어났나요? 왜 일어났나요? 구체적으로 어떤 내용인가요?"
         rows={5}
-        className="mb-4 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 text-[14px] leading-6 text-foreground outline-none focus:border-point"
+        className="mb-4 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 type-input leading-6 text-foreground outline-none focus:border-point"
       />
 
-      <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+      <label className="mb-2 block text-[14px] font-semibold text-foreground">
         투자에 적용하기
       </label>
       <textarea
@@ -88,7 +88,7 @@ const ExternalRecordFields = forwardRef<
         onChange={(e) => onInvestmentNoteChange(e.target.value)}
         placeholder="이 변화가 어떤 산업·기업·자산에 영향을 줄까요? 앞으로 어떻게 될 것 같나요?"
         rows={4}
-        className="mb-2 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 text-[14px] leading-6 text-foreground outline-none focus:border-point"
+        className="mb-2 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 type-input leading-6 text-foreground outline-none focus:border-point"
       />
       {error ? <p className="mb-2 text-[13px] text-red-500">{error}</p> : null}
     </>

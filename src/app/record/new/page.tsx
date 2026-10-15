@@ -238,13 +238,13 @@ function NewRecordForm() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://"
-          className="w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 text-[14px] text-foreground outline-none focus:border-point"
+          className="w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
         />
         {error ? <p className="mt-2 text-[13px] text-red-500">{error}</p> : null}
         <button
           type="button"
           onClick={handleContinueToArticle}
-          className="mt-5 w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white active:bg-point-dark"
+          className="button-48 mt-5 w-full rounded-xl bg-point type-button text-white active:bg-point-dark"
         >
           다음
         </button>
@@ -279,7 +279,7 @@ function NewRecordForm() {
         type="button"
         onClick={handleSubmit}
         disabled={submitting}
-        className="mt-3 w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
+        className="button-48 mt-3 w-full rounded-xl bg-point type-button text-white disabled:opacity-60 active:bg-point-dark"
       >
         {submitting ? "저장 중..." : "저장"}
       </button>

@@ -147,7 +147,7 @@ export default function ReflectionEditPage() {
               type="button"
               onClick={() => setSelected(option.value)}
               disabled={saving}
-              className={`rounded-xl border py-3 text-[14px] font-semibold disabled:opacity-60 ${
+              className={`button-48 rounded-xl border type-button disabled:opacity-60 ${
                 currentSelection === option.value
                   ? "border-point bg-point text-white"
                   : "border-border-subtle text-foreground/80"
@@ -168,7 +168,7 @@ export default function ReflectionEditPage() {
             type="button"
             onClick={goBack}
             disabled={saving}
-            className="flex-1 rounded-xl border border-border-subtle py-3.5 text-[14px] font-medium text-foreground/70 disabled:opacity-60"
+            className="button-48 flex-1 rounded-xl border border-border-subtle type-button text-foreground/70 disabled:opacity-60"
           >
             취소
           </button>
@@ -176,7 +176,7 @@ export default function ReflectionEditPage() {
             type="button"
             onClick={handleSave}
             disabled={saving || currentSelection === reflection.result}
-            className="flex-1 rounded-xl bg-point py-3.5 text-[14px] font-semibold text-white disabled:opacity-60"
+            className="button-48 flex-1 rounded-xl bg-point type-button text-white disabled:opacity-60"
           >
             {saving ? "저장 중..." : "저장"}
           </button>

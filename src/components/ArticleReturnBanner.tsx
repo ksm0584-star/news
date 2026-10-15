@@ -37,7 +37,7 @@ export default function ArticleReturnBanner({
           <button
             type="button"
             onClick={onRecord}
-            className="mt-3 rounded-full bg-point px-4 py-2 text-[13px] font-semibold text-white active:bg-point-dark"
+            className="button-48 mt-3 rounded-full bg-point px-4 type-button text-white active:bg-point-dark"
           >
             기록하기
           </button>

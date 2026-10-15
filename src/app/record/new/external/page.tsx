@@ -275,7 +275,7 @@ function ExternalArticleView() {
         <div className="px-5 pb-6">
           <Link
             href="/record/new"
-            className="block w-full rounded-xl bg-point py-3.5 text-center text-[15px] font-semibold text-white active:bg-point-dark"
+            className="button-48 w-full rounded-xl bg-point type-button text-white active:bg-point-dark"
           >
             URL 다시 입력하기
           </Link>
@@ -416,7 +416,7 @@ function ExternalArticleView() {
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
+              className="button-48 w-full rounded-xl bg-point type-button text-white disabled:opacity-60 active:bg-point-dark"
             >
               {submitting
                 ? isEditMode

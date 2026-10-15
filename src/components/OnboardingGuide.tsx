@@ -319,7 +319,7 @@ export default function OnboardingGuide() {
           <button
             type="button"
             onClick={handlePrimary}
-            className="rounded-full bg-point px-5 py-2.5 text-[13.5px] font-semibold text-white active:bg-point-dark"
+            className="button-48 rounded-full bg-point px-5 type-button text-white active:bg-point-dark"
           >
             {copy.cta}
           </button>

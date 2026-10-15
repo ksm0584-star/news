@@ -26,16 +26,19 @@ colors:
 typography:
   sans:
     fontFamily: "Noto Sans KR"
-    loadedWeights: [400, 500, 700, 900]
+    loadedWeights: [400, 500, 600, 700, 900] # semibold는 SemiBold(600) 파일로 그려짐
+  # 역할 스타일 — globals.css의 @utility, 크기·굵기만 지정(행간은 요소별 기존 값)
+  article-title: { fontSize: 14px, fontWeight: semibold } # type-article-title = --text-sm + --font-weight-semibold
+  input: { fontSize: 16px, fontWeight: medium } # type-input = --text-base + --font-weight-medium
   page-title: { fontSize: 20px, fontWeight: extrabold } # text-xl
   content-title: { fontSize: 18px, fontWeight: bold, lineHeight: snug }
   sheet-title: { fontSize: 17px, fontWeight: bold }
   header-title: { fontSize: 16px, fontWeight: bold }
   section-title: { fontSize: 14px, fontWeight: bold }
-  button-lg: { fontSize: 15px, fontWeight: semibold }
+  button: { fontSize: 16px, fontWeight: semibold, lineHeight: 24px } # type-button = Figma type-16-semibold
   body: { fontSize: 14px, fontWeight: normal, lineHeight: 24px } # leading-6
   body-sm: { fontSize: 13.5px }
-  label: { fontSize: 13px, fontWeight: semibold }
+  label: { fontSize: 14px, fontWeight: semibold } # 입력창·textarea 라벨. 섹터 라벨은 13px
   caption: { fontSize: 12.5px }
   meta: { fontSize: 12px } # text-xs
   micro: { fontSize: 11.5px }
@@ -69,8 +72,9 @@ components:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.primary-foreground}"
     rounded: "{rounded.xl}"
-    padding: 14px 0 # py-3.5, w-full
-    typography: "{typography.button-lg}"
+    height: 48px # button-48 · 테두리 포함, 세로 패딩 없음, 글자 가로·세로 가운데
+    padding: 0 # w-full (좌우 패딩은 pill·인라인 버튼만 px-4/px-5)
+    typography: "{typography.button}" # type-button
   input-default:
     backgroundColor: "{colors.background}"
     textColor: "{colors.foreground}"
@@ -78,7 +82,7 @@ components:
     rounded: "{rounded.xl}"
     height: 50px # h-[50px] · 한 줄 input 공통(textarea 제외)
     padding: 0 16px # px-4, 세로 패딩 없음
-    fontSize: 14px
+    typography: "{typography.input}" # type-input · 16px medium, input·textarea·placeholder 공통
   card-outlined:
     borderColor: "{colors.border}"
     rounded: "{rounded.2xl}"
@@ -169,11 +173,40 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 
 ## Typography
 
-서체는 **Noto Sans KR** 하나이며(`next/font/google`, weight 400/500/700/900),
+서체는 **Noto Sans KR** 하나이며(`next/font/google`, weight 400/500/600/700/900),
 제목·본문·버튼이 모두 같은 패밀리를 씁니다. mono 서체는 없습니다.
 
 크기는 대부분 `text-[13px]` 같은 임의 값으로 지정합니다. 실제 사용 중인
-크기는 14단계입니다.
+크기는 14단계입니다. 아래 두 역할만 공통 스타일로 정의돼 있습니다.
+
+### 역할 스타일 (공통 타이포그래피)
+
+`src/app/globals.css`에 Tailwind `@utility`로 정의합니다. 크기는 Tailwind 기본
+크기 토큰(`--text-sm` 14px, `--text-base` 16px)을, 굵기는 기본 굵기 토큰을
+참조하므로 새 크기 값을 만들지 않습니다. **행간은 지정하지 않습니다.** 요소에
+이미 있는 `leading-*` 또는 상속 행간이 그대로 유지됩니다(`text-sm`/`text-base`
+클래스를 직접 쓰면 프리셋 행간이 함께 바뀌므로 쓰지 않음). 예외로 `type-button`은
+규칙상 행간 24px을 역할에 포함합니다.
+
+| 역할 | 클래스 | 크기 | 굵기 | 행간(기존 값 유지) | 사용 범위 |
+| --- | --- | --- | --- | --- | --- |
+| 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
+| 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
+| 입력창 내부 텍스트 | `type-input` | 16px | Medium 500 | textarea `leading-6`(24px), 한 줄 input·평가 의견 상속(1.5 → 24px) | 모든 제품 input·textarea의 입력값과 placeholder: URL, 기록 제목(2), 용어 검색, 나의 메모, 기사 정리, 투자에 적용하기, 평가 의견. `/webview-test` 제외 |
+
+- 색상은 역할에 포함하지 않습니다. 기사 제목은 `text-foreground`(홈은 읽은 기사
+  `#9CA3AF`), 입력창은 `text-foreground`를 요소에서 그대로 지정합니다.
+- **기사 제목과 라벨 구분**: 입력창 위 "제목 *"은 기사 제목이 아니라 라벨입니다
+  (`text-[14px] font-semibold`, Input 섹션 참조). 크기·굵기가 같아도
+  `type-article-title`을 쓰지 않습니다.
+- **역할 밖의 제목**: 기사 상세 `h1`(19px bold), 기록 상세 `h1`(18px bold)은 페이지
+  제목이라, 완료·회고 화면의 비교 카드 제목(13px semibold)은 메모를 보조하는
+  문맥 표시라 이 역할에 넣지 않았습니다. 홈에서 쓰지 않는 `NewsCard`
+  (NewsCarousel)도 제외합니다.
+- **굵기 로딩**: `src/app/layout.tsx`가 400/500/600/700/900을 불러옵니다.
+  `type-article-title`과 모든 `font-semibold`는 SemiBold(600) 파일로,
+  `type-input`은 Medium(500) 파일로 그려집니다(Chrome DevTools 확인). 600을
+  추가하기 전에는 semibold가 Bold(700)로 대체 표시됐습니다.
 
 | 크기 | 사용 횟수 | 주 용도 |
 | --- | --- | --- |
@@ -181,18 +214,18 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 | 19px | 1 | 기사 제목 (`/article/[id]`) |
 | 18px | 3 | 기록 제목, 온보딩 제목 — bold, `leading-snug` |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
-| 16px (`text-base` 포함) | 4 | BackHeader 제목, 프로필 이름 — bold |
-| 15px | 21 | 큰 버튼(semibold), 다이얼로그·섹션 제목(bold) |
-| 14.5px | 5 | 뉴스 카드 제목, 용어 이름 — semibold |
-| 14px (`text-sm` 포함) | 40 | 본문, 입력값, 카드 제목, 섹션 제목, 원문 보기 링크 |
-| 13.5px | 29 | 보조 버튼, 시트 본문 |
-| 13px | 46 | 라벨(semibold), 칩(medium), 설명, 에러 |
+| 16px (`text-base` 포함) | 4 + 역할 37 | 텍스트 버튼(`type-button`, semibold, 29곳), 입력값·placeholder(`type-input`, medium, 8곳), BackHeader 제목, 프로필 이름 — bold |
+| 15px | 10 | 다이얼로그·섹션 제목(bold) |
+| 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
+| 14px (`text-sm` 포함) | 33 + 역할 2 | 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 카드 제목, 섹션 제목, 원문 보기 링크 |
+| 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
+| 13px | 39 | 섹터 라벨(semibold), 칩(medium), 설명, 에러 |
 | 12.5px | 14 | 캡션, 에러, 작은 링크 |
 | 12px (`text-xs` 포함) | 21 | 뱃지, 메타 정보(언론사·날짜) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
 | 11px | 3 | 하단 내비 라벨 — medium |
 
-굵기는 `font-semibold`(46), `font-medium`(36), `font-bold`(28),
+굵기는 `font-semibold`(23, 역할 스타일 제외), `font-medium`(28), `font-bold`(28),
 `font-extrabold`(2)를 쓰고, 행간은 `leading-6`(본문·textarea),
 `leading-snug`(제목), `leading-5`, `leading-7`, `leading-none`을 씁니다.
 자간(`tracking-*`)은 쓰지 않습니다.
@@ -204,9 +237,9 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 - **앱 컬럼**: `mx-auto max-w-[430px] bg-surface`. `fixed` 요소(내비, FAB,
   시트, 배너)도 같은 `inset-x-0 mx-auto max-w-[430px]`로 컬럼에 맞춥니다.
 - **좌우 여백**: 페이지 `px-5`(20px, 51회), 카드·입력창 내부 `px-4`(16px, 35회).
-- **세로 패딩**: 큰 버튼·카드 `py-3.5`(14px), textarea `py-3`(12px), 작은 버튼
-  `py-2.5`(10px), 칩 `py-1.5`(6px). 한 줄 입력창은 세로 패딩 대신 높이
-  `h-[50px]`로 고정합니다.
+- **세로 패딩**: 카드 `py-3.5`(14px), textarea `py-3`(12px), 칩 `py-1.5`(6px).
+  텍스트 버튼(`button-48`, 48px)과 한 줄 입력창(`h-[50px]`)은 세로 패딩 대신
+  높이로 고정합니다.
 - **간격**: `gap-2`(8px)가 기본(35회). 그 외 `gap-3`, `gap-1.5`, `gap-2.5`.
 - **고정 바**: BackHeader와 BottomNav 모두 `h-14`(56px).
 - **Safe area**: 하단 고정 요소는 `env(safe-area-inset-bottom)`을 더하고, 탭
@@ -252,30 +285,55 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 기록합니다. 상태는 `active:`, `disabled:`, `focus:`, 선택(selected)만
 존재하며 `hover:`와 `focus-visible:`은 어디에도 없습니다.
 
-### Button — 공통 컴포넌트 없음 (inline)
+### Button — 공통 스타일 `button-48` + `type-button` (컴포넌트 없음)
 
-터치 가능한 액션. 채움형 primary 버튼만 18곳에 직접 작성되어 있습니다.
-"원문 보기"만 예외로 공통 컴포넌트(`ArticleOriginalLink`)가 있습니다(아래 참고).
+터치 가능한 액션. 버튼 컴포넌트는 없고, 텍스트 버튼은 `src/app/globals.css`의
+공통 스타일 두 개를 참조합니다. "원문 보기"만 예외로 공통 컴포넌트
+(`ArticleOriginalLink`)가 있습니다(아래 참고).
 
-| Variant | 스타일 | 사용 화면 |
+| 항목 | 값 | 코드 |
 | --- | --- | --- |
-| primary | `bg-point text-white rounded-xl font-semibold` | 기록 작성·완료·회고, 기사 상세, 시트 3종 |
-| primary-pill | `bg-point text-white rounded-full font-semibold` | ArticleReturnBanner, OnboardingGuide |
-| link | `text-[14px] font-semibold text-point` + 18px 화살표 SVG, 배경·테두리 없음 | "원문 보기" (`ArticleOriginalLink`) |
-| outline | `border border-border-subtle rounded-xl` (+`bg-surface`) | Google 로그인, 다이얼로그 취소, 회고 취소, 다시 시도 |
-| ghost | `text-muted font-medium` 배경 없음 | 시트 "다음에 할게요", 완료 화면 보조 액션 |
-| destructive | `bg-red-500 text-white rounded-xl font-semibold` | 삭제·탈퇴 확인 다이얼로그 |
-| destructive-text | `text-red-500 font-medium` | 용어 삭제, 메뉴의 삭제·탈퇴 |
-| choice | `rounded-xl border py-3 text-[14px] font-semibold`, 선택 시 `border-point bg-point text-white` | 회고 비교 선택 (완료, 회고 화면) |
-| icon | `h-9 w-9` 또는 `h-8 w-8`, `rounded-full` | BackHeader, 시트·배너 닫기, 더보기 |
-| fab | `h-14 w-14 rounded-full bg-point shadow-lg` / `h-12 w-12 bg-surface border text-point` | RecordFab(홈, 내 기록) / TermDictionaryButton(외부 기록 작성) |
+| 높이 | **48px**, 테두리 포함(`box-sizing: border-box`), 세로 패딩 없음 | `button-48` (`--spacing` × 12) |
+| 정렬 | 글자 가로·세로 가운데 (`inline-flex items-center justify-center text-center`) | `button-48` |
+| 글자 | **16px / Semibold 600 / 줄 높이 24px** | `type-button` (`--text-base`, `--font-weight-semibold`, `--spacing` × 6) |
+| Figma | 텍스트 스타일 `type-16-semibold` = 코드 `type-button` | — |
+| 유지 (버튼별) | 배경·글자색, 테두리, radius, 좌우 패딩, 폭(`w-full`·`flex-1`), 여백, `active:`·`disabled:` | 각 버튼 className |
 
-- **Size**: lg `py-3.5 text-[15px]`(전폭 CTA) · md `py-2.5 text-[13.5px]`
-  (다이얼로그, 검색) · sm `px-4 py-2 text-[13px]`(pill).
-- **State**: `active:bg-point-dark`(primary), `active:bg-background`(outline·icon),
-  `disabled:opacity-60`.
+```tsx
+<button className="button-48 w-full rounded-xl bg-point type-button text-white disabled:opacity-60 active:bg-point-dark">
+  저장
+</button>
+```
+
+| Variant | 스타일 (`button-48 type-button` + 아래) | 사용 화면 |
+| --- | --- | --- |
+| primary | `rounded-xl bg-point text-white` (+`active:bg-point-dark`) | 기록 작성 "다음"·"저장", 외부 기록 저장·"URL 다시 입력하기", 기사 상세 "메모 기록하기", 완료 화면 "확인"·"완료", 회고 "저장", 평가 "의견 보내기", 첫 기록 로그인 시트, LoginPrompt "로그인하기"(`px-5`), 용어 "검색"(`px-4`) |
+| primary-pill | `rounded-full bg-point text-white px-4`/`px-5` | ArticleReturnBanner "기록하기", OnboardingGuide "다음"·"시작하기" |
+| outline | `rounded-xl border border-border-subtle` (+`bg-surface`) | Google 로그인(아이콘 + `gap-2`), 다이얼로그 "취소", 회고 "취소", 용어 "다시 시도"(`px-4`) |
+| ghost | `rounded-xl text-muted`, 배경 없음 | 시트 "다음에 할게요"·"나중에 할게요", 완료 화면 "나중에 하기" |
+| destructive | `rounded-xl bg-red-500 text-white` | 삭제·탈퇴 확인 다이얼로그 |
+| choice | `rounded-xl border`, 선택 시 `border-point bg-point text-white` / 비선택 `border-border-subtle text-foreground/80` | 회고 비교 선택 (완료, 회고 화면) |
+
+- **상태**: 기본·눌림(`active:`)·비활성(`disabled:opacity-60`)·로딩(라벨만
+  "저장 중..." 등으로 바뀜)·선택(choice) 모두 같은 요소라 높이와 글자가 같습니다.
+- **나란히 놓기**: 다이얼로그의 두 버튼은 `flex gap-2` + `flex-1`. 입력창 옆
+  "검색"은 줄을 `flex items-center`로 두어 50px 입력창 세로 가운데에 맞춥니다.
+- **적용 범위**: 위 표의 텍스트 버튼 29곳(`<button>`과 버튼 모양 `<Link>`).
+- **결정 사항 (2026-10-15)**: ghost(보조) 버튼과 primary-pill 버튼도 의도적으로
+  같은 규칙(48px, 16px / 600)을 씁니다. 보조 버튼은 색(`text-muted`)으로만 주 버튼과
+  구분하며, 작게 만들려고 크기·굵기를 따로 지정하지 않습니다.
+- **제외 범위** (각자 스타일 유지)
+  - 아이콘 전용 버튼 — 뒤로가기, 닫기, 더보기, 별점(`h-8`·`h-9` 등)
+  - FAB — RecordFab, TermDictionaryButton
+  - 칩·탭 — 섹터·메모 힌트 칩, CategoryTabs
+  - 하단 내비게이션 — BottomNav
+  - 일반 링크·인라인 텍스트 액션 — "원문 보기"(`ArticleOriginalLink`), 완료
+    화면 "수정", 안내 팝오버 "닫기", 온보딩 "건너뛰기", 용어 카드 "삭제"
+  - 목록·메뉴 행 — 마이페이지 메뉴 카드·로그아웃·탈퇴, 기록 상세 더보기 메뉴
+    항목, 뉴스·기록 카드
+  - `/webview-test`
 - **토큰**: `primary`, `primary-pressed`, `primary-foreground`, `border`,
-  `muted-foreground`, `destructive`, `rounded.xl`, `rounded.full`.
+  `muted-foreground`, `destructive`, `rounded.xl`, `rounded.full`, `typography.button`.
 
 #### 원문 보기 링크 — `ArticleOriginalLink` (공통)
 
@@ -287,7 +345,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | 문구 | `원문 보기` + 화살표 아이콘 (컴포넌트 고정) | — |
 | 색상 | `text-point` (`#3182f6`), 아이콘도 `currentColor`로 같은 색 | `colors.primary` |
 | 서체 | `text-[14px] font-semibold`(600), 행간 미지정(상속) | 크기만 `typography.body`와 같음(행간 24px은 미적용) |
-| 실제 렌더링 굵기 | 600은 로드되지 않아 Noto Sans KR **Bold(700)** 인스턴스로 그려짐 (Chrome DevTools 확인) | — |
+| 실제 렌더링 굵기 | Noto Sans KR **SemiBold(600)** 인스턴스로 그려짐 (600 로드 후) | — |
 | 아이콘 | inline SVG `width/height 18`, `viewBox 0 0 24 24`, path `M7 17 17 7M9 7h8v8`, `stroke="currentColor"`, `strokeWidth 2.5`, round cap/join, `aria-hidden` | — |
 | 아이콘 배치 | `ml-0.5 inline-block align-text-bottom` (글자와 세로 중심 차이 약 0.3px) | — |
 | 배경·테두리·radius·padding | 없음 | — |
@@ -299,6 +357,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **아이콘을 SVG로 쓰는 이유**: semibold 적용 후 텍스트 기호 `↗`의 획(약
   1.4px)이 한글 획(약 2.0px)보다 눈에 띄게 얇았습니다. 18px·`strokeWidth 2.5`
   SVG는 획 약 1.9px, 화살표 크기 약 9.5px로 기존 기호와 같은 크기를 유지합니다.
+  이 측정은 600 로드 전, 링크가 Bold(700)로 그려질 때 기준입니다. 지금은
+  SemiBold(600)로 그려져 한글 획이 조금 얇아졌으며, 화살표 획 굵기는 다시
+  비교하지 않았습니다.
 - **접근성 이름**: 아이콘이 `aria-hidden`이라 링크 이름은 `원문 보기`입니다.
 - **사용법**: `className`에는 바깥 여백 같은 레이아웃만 넘깁니다(`mt-1` 등).
 
@@ -316,20 +377,38 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 기록 제목·메모, URL, 용어 검색, 평가 의견 입력.
 
 - **기본 스타일 (한 줄 input)**: `rounded-xl border border-border-subtle bg-background
-  h-[50px] px-4 text-[14px] text-foreground outline-none focus:border-point`.
+  h-[50px] px-4 type-input text-foreground outline-none focus:border-point`.
   높이는 50px 고정(border 포함, `box-sizing: border-box`)이고 세로 패딩은 두지
   않습니다. 텍스트는 브라우저가 input 안에서 세로 가운데 정렬합니다.
-- **Textarea**: 높이 고정 없이 `px-4 py-3 ... resize-none leading-6`(기록 메모),
-  `px-3.5 py-3 text-[13.5px]`(평가 의견).
+- **Textarea**: 높이 고정 없이 `rows`로 크기를 정합니다. `px-4 py-3 type-input
+  leading-6 resize-none`(기록 메모·기사 정리·투자에 적용하기),
+  `px-3.5 py-3 type-input resize-none`(평가 의견, 행간 미지정이라 상속값 1.5 = 24px).
+  - **평가 의견 크기 (결정 사항, 2026-10-15)**: `rows={3}` × 줄 높이 24px + 패딩·테두리
+    = **높이 98px**로 유지합니다. 글자를 16px로 키우면서 86.75px에서 늘어난 값이며,
+    다른 textarea와 같은 줄 높이 24px를 지키려고 `leading-5` 등으로 줄이지 않습니다.
+- **글자**: 한 줄 input과 textarea 모두 역할 스타일 `type-input`(16px Medium 500,
+  Typography → 역할 스타일)을 씁니다. placeholder는 별도 지정 없이 입력창의 크기·
+  굵기를 상속합니다(색은 브라우저 기본 반투명). 숫자 클래스(`text-[16px]`,
+  `font-medium`)를 직접 쓰지 말고 `type-input`을 씁니다. 16px 이상이면 iOS Safari가
+  입력창에 포커스할 때 화면을 확대하지 않습니다.
 - **Variant**: 없음.
 - **Size**: 한 줄 input은 모두 `h-[50px]`. 좌우 패딩만 다름 — 기록 제목·URL
   `px-4`, 용어 검색 `px-3.5`. 용어 검색처럼 버튼과 한 줄에 놓을 때는 input에
   `min-w-0 flex-1`, 버튼에 `shrink-0`을 줍니다(없으면 Safari에서 input 기본 너비가
-  버튼을 밀어 글자가 두 줄로 꺾임). 버튼은 flex stretch로 같은 50px이 됩니다.
+  버튼을 밀어 글자가 두 줄로 꺾임). 줄 컨테이너는 `flex items-center`라서 48px
+  "검색" 버튼이 50px 입력창의 세로 가운데에 놓입니다(위아래 1px).
   `/webview-test`(제품 외 검증 페이지)의 input은 이 규칙에서 제외.
 - **State**: `focus:border-point`만 존재. 에러는 입력창이 아니라 아래쪽
   `text-red-500` 문구로 표시. placeholder 색은 지정하지 않음(브라우저 기본).
-- **Label**: `mb-1.5 block text-[13px] font-semibold text-foreground`.
+- **Label**: `mb-2 block text-[14px] font-semibold text-foreground`. 한 줄
+  input·textarea 위 라벨(제목, 기사 정리, 투자에 적용하기, 나의 메모)에 씁니다.
+  **한 줄·여러 줄 입력창의 라벨 아래 간격은 8px**(`mb-2`, 부모 `gap` 없이 라벨
+  자체 여백으로 관리)입니다. "나의 메모"처럼 라벨과 입력창 사이에 안내문·칩이
+  있으면 라벨 바로 아래만 8px이고, 그 아래 요소들의 기존 여백은 그대로 둡니다.
+  라벨이 없는 입력창(URL, 용어 검색, 평가 의견)에는 라벨·여백을 추가하지 않습니다.
+  크기만 14px이고 굵기·색·여백은 그대로이며, 행간은 지정하지 않아 상속됩니다
+  (`typography.body`의 `leading-6`은 적용하지 않음). 칩 그룹 위 "섹터 *" 라벨은
+  입력창 라벨이 아니므로 `mb-1.5 text-[13px]`(6px 간격)을 유지합니다.
 - **토큰**: `background`, `foreground`, `border`, `primary`, `destructive`, `rounded.xl`.
 - **사용 화면**: RecordFormFields(`/record/new`), ExternalRecordFields
   (`/record/new/external`), TermDictionarySheet, RatingPromptSheet.
@@ -497,6 +576,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   하단에는 `env(safe-area-inset-bottom)`을 더한다.
 - Do: 버튼·입력창은 `rounded-xl`, 카드는 `rounded-2xl`, 칩·뱃지는 `rounded-full`을 쓴다.
 - Do: 누를 수 있는 요소에는 `active:` 피드백을, 비활성에는 `disabled:opacity-60`을 준다.
+- Do: 텍스트 버튼은 `button-48 type-button`을 쓰고 색·테두리·radius·좌우 패딩만 따로 준다. `py-*`·`text-[..]`·`font-*`로 높이와 글자를 다시 지정하지 않는다.
 - Don't: 컴포넌트에 hex 값을 직접 쓰지 않는다 (`text-[#9CA3AF]` 같은 사례를 늘리지 않는다).
 - Don't: 기존 14단계에 없는 새 글자 크기를 추가하지 않는다.
 - Don't: 그림자를 정적인 카드에 쓰지 않는다 — 떠 있는 요소에만 쓴다.
@@ -521,11 +601,10 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 ### 타이포그래피
 
-- **로드되지 않은 굵기 사용** — `font-semibold`(600, 46회)와
-  `font-extrabold`(800, 2회)를 쓰지만 폰트는 400/500/700/900만 로드.
-  브라우저 폰트 매칭상 각각 700, 900으로 대체 렌더링될 가능성이 높음. 원문
-  보기 링크의 semibold는 Chrome에서 Bold(700)로 그려지는 것을 확인함(실기기는
-  미확인). 반대로 900은 로드만 되고 `font-black`으로는 쓰이지 않음.
+- **로드되지 않은 굵기 사용** — `font-extrabold`(800, 2회)를 쓰지만 800은
+  로드하지 않아 Black(900)으로 대체 렌더링됨(Chrome에서 "내 기록" 제목 확인).
+  900은 이 대체 용도 외에 `font-black`으로는 쓰이지 않음. (`font-semibold`는
+  600을 로드하면서 이 항목에서 빠짐.)
 - **0.5px 단위 크기** — 11.5 / 12.5 / 13.5 / 14.5px이 정수 단계와 뒤섞여 14단계.
 - **같은 크기의 두 가지 표기** — `text-xs`와 `text-[12px]`, `text-sm`과
   `text-[14px]`, `text-base`와 `text-[16px]`. Tailwind 프리셋은 행간까지
@@ -535,9 +614,11 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 ### 컴포넌트
 
-- **Button** — primary 버튼 18곳 중 4곳에 `active:bg-point-dark` 누락
-  (`record/complete` 2곳, `reflection`, `LoginPrompt`). pill 버튼 글자 크기가
-  12.5 / 13 / 13.5px로 제각각.
+- **Button** — primary 버튼 중 4곳에 `active:bg-point-dark` 누락
+  (`record/complete` 2곳, `reflection`, `LoginPrompt`). 텍스트 버튼의 높이·글자는
+  `button-48 type-button`으로 통일됨. 버튼 범위에서 뺀 작은 인라인 액션
+  (용어 카드 "삭제" 12px, 안내 팝오버 "닫기"·완료 화면 링크형 12.5px, 온보딩
+  "건너뛰기" 13px)은 각자 크기를 유지.
 - **Chip** — 같은 스타일이 4개 파일에 복제. 메모 힌트 칩만 12.5px.
 - **Input** — 한 줄 input 높이는 `h-[50px]`로 통일됨. 좌우 패딩은 `px-4` /
   `px-3.5`(용어 검색) 2종, textarea 패딩은 `px-4 py-3` / `px-3.5 py-3` 2종.

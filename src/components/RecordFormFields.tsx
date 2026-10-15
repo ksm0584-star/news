@@ -52,13 +52,13 @@ const RecordFormFields = forwardRef<
 
   return (
     <>
-      <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+      <label className="mb-2 block text-[14px] font-semibold text-foreground">
         제목 *
       </label>
       <input
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
-        className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 text-[14px] text-foreground outline-none focus:border-point"
+        className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
       />
 
       <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
@@ -86,7 +86,7 @@ const RecordFormFields = forwardRef<
         ))}
       </div>
 
-      <label className="mb-1.5 block text-[13px] font-semibold text-foreground">
+      <label className="mb-2 block text-[14px] font-semibold text-foreground">
         나의 메모 *
       </label>
       <p className="mb-2 text-[12px] text-muted">
@@ -114,7 +114,7 @@ const RecordFormFields = forwardRef<
         onChange={(e) => onThoughtChange(e.target.value)}
         placeholder={placeholder}
         rows={5}
-        className="mb-2 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 text-[14px] leading-6 text-foreground outline-none focus:border-point"
+        className="mb-2 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 type-input leading-6 text-foreground outline-none focus:border-point"
       />
       {error ? <p className="mb-2 text-[13px] text-red-500">{error}</p> : null}
     </>

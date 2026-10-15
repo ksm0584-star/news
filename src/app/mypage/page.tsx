@@ -163,7 +163,7 @@ export default function MyPage() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={loggingIn}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-border-subtle bg-surface py-3.5 text-[15px] font-semibold text-foreground disabled:opacity-60"
+            className="button-48 mt-2 w-full gap-2 rounded-xl border border-border-subtle bg-surface type-button text-foreground disabled:opacity-60"
           >
             <GoogleIcon />
             {loggingIn ? "이동 중..." : "구글로 로그인"}
@@ -250,7 +250,7 @@ export default function MyPage() {
                   setWithdrawError(null);
                 }}
                 disabled={withdrawing}
-                className="flex-1 rounded-xl border border-border-subtle py-2.5 text-[13.5px] font-medium text-foreground/70 disabled:opacity-60"
+                className="button-48 flex-1 rounded-xl border border-border-subtle type-button text-foreground/70 disabled:opacity-60"
               >
                 취소
               </button>
@@ -258,7 +258,7 @@ export default function MyPage() {
                 type="button"
                 onClick={handleConfirmWithdraw}
                 disabled={withdrawing}
-                className="flex-1 rounded-xl bg-red-500 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-60"
+                className="button-48 flex-1 rounded-xl bg-red-500 type-button text-white disabled:opacity-60"
               >
                 {withdrawing ? "탈퇴 처리 중..." : "탈퇴하기"}
               </button>

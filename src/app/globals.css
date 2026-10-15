@@ -21,6 +21,42 @@
   --font-sans: var(--font-noto-sans-kr);
 }
 
+/* Typography roles (DESIGN.md Typography → 역할 스타일). Size and weight only,
+   built from Tailwind's existing --text-sm/--text-base and font-weight
+   tokens rather than new size values — line height is deliberately left to
+   each element (leading-snug, leading-6, or inherited) so applying a role
+   never changes an element's existing line height. */
+@utility type-article-title {
+  font-size: var(--text-sm); /* 14px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+}
+
+@utility type-input {
+  font-size: var(--text-base); /* 16px — also the placeholder, which inherits it */
+  font-weight: var(--font-weight-medium); /* 500 */
+}
+
+/* Text buttons (DESIGN.md Components → Button). type-button is the label's
+   typography role — Figma text style "type-16-semibold" — and button-48 is
+   the box: a fixed 48px height (border included, via border-box) with the
+   label centered both ways, so the height never depends on vertical
+   padding. Color, border, radius and horizontal padding stay on each button.
+   Both reuse existing scale tokens: --text-base, --font-weight-semibold and
+   the --spacing step (×6 = 24px like leading-6, ×12 = 48px like h-12). */
+@utility type-button {
+  font-size: var(--text-base); /* 16px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  line-height: calc(var(--spacing) * 6); /* 24px */
+}
+
+@utility button-48 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--spacing) * 12); /* 48px */
+  text-align: center;
+}
+
 html,
 body {
   /* Stops iOS Safari/Chrome from rubber-band-scrolling the whole page —

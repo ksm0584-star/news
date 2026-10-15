@@ -157,7 +157,7 @@ export default function LatestNewsList() {
                   ) : null}
                   <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <p
-                      className={`text-[14.5px] font-semibold leading-snug transition-colors duration-300 ${
+                      className={`type-article-title leading-snug transition-colors duration-300 ${
                         isRead ? "text-[#9CA3AF]" : "text-foreground"
                       }`}
                     >

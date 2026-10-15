@@ -59,7 +59,7 @@ export default function ArticlePage() {
           <Link
             href={`/record/new?articleId=${article.id}`}
             onClick={() => trackClick("article_write_cta", { article_id: article.id })}
-            className="flex w-full items-center justify-center rounded-xl bg-point py-3.5 text-[15px] font-semibold text-white active:bg-point-dark"
+            className="button-48 w-full rounded-xl bg-point type-button text-white active:bg-point-dark"
           >
             메모 기록하기
           </Link>
