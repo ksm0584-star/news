@@ -36,6 +36,14 @@
   font-weight: var(--font-weight-semibold); /* 600 */
 }
 
+/* DESIGN.md's existing typography.header-title role (16px Bold), Figma
+   "MOAYO/header-title", as a reusable class. Size and weight only — line
+   height stays inherited. Used by /record/new's URL-step heading. */
+@utility type-header-title {
+  font-size: var(--text-base); /* 16px */
+  font-weight: var(--font-weight-bold); /* 700 */
+}
+
 /* DESIGN.md's existing typography.section-title role (14px Bold), as a
    reusable class. Size and weight only, like type-article-title — line
    height stays inherited. Used by the 섹터 * label on the record forms. */

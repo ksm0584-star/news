@@ -228,7 +228,7 @@ function NewRecordForm() {
   if (step === "url") {
     return (
       <div className="px-5 py-6">
-        <p className="mb-2 text-[15px] font-bold text-foreground">
+        <p className="mb-2 type-header-title text-foreground">
           기사 URL을 붙여넣어주세요
         </p>
         <p className="mb-5 text-[13px] text-muted">

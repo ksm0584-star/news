@@ -36,7 +36,7 @@ typography:
   page-title: { fontSize: 20px, fontWeight: extrabold } # text-xl
   content-title: { fontSize: 18px, fontWeight: bold, lineHeight: snug }
   sheet-title: { fontSize: 17px, fontWeight: bold }
-  header-title: { fontSize: 16px, fontWeight: bold }
+  header-title: { fontSize: 16px, fontWeight: bold } # type-header-title = Figma MOAYO/header-title (--text-base + --font-weight-bold) · /record/new URL 단계 안내 제목에 연결
   section-title: { fontSize: 14px, fontWeight: bold } # type-section-title = --text-sm + --font-weight-bold · 섹터 라벨에 연결
   button: { fontSize: 16px, fontWeight: semibold, lineHeight: 24px } # type-button = Figma type-16-semibold
   body: { fontSize: 14px, fontWeight: normal, lineHeight: 24px } # leading-6
@@ -196,6 +196,7 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 | 역할 | 클래스 | 크기 | 굵기 | 행간(기존 값 유지) | 사용 범위 |
 | --- | --- | --- | --- | --- | --- |
 | 칩 | `type-chip` (Figma `type-14-medium`) | 14px | Medium 500 | **21px 지정**(`--spacing` × 5.25) | 홈 분야 필터(`CategoryTabs`), 기록 작성·수정의 섹터 선택 칩(`RecordFormFields`, `ExternalRecordFields`) — 선택·미선택 공통. 메모 힌트 칩(12.5px), 뱃지, 버튼, 라벨은 제외 |
+| 헤더 제목 | `type-header-title` (Figma `MOAYO/header-title`) | 16px | Bold 700 | 지정 안 함(상속, 1.5 → 24px) | 기록 작성 첫 단계(`/record/new` URL 입력)의 "기사 URL을 붙여넣어주세요" 안내 제목(`mb-2`, `text-foreground`). DESIGN.md의 기존 `typography.header-title`을 코드로 옮긴 것. BackHeader 제목·프로필 이름 등 다른 16px Bold는 아직 `text-[16px] font-bold`를 직접 씀(결과는 같음) |
 | 섹션 제목 | `type-section-title` | 14px | Bold 700 | 지정 안 함(상속, 1.5 → 21px) | 기록 작성·수정 화면(일반 `RecordFormFields`, 외부 기사 `ExternalRecordFields`)의 "섹터 *" 라벨(`mb-2`, 아래 8px). DESIGN.md의 기존 `typography.section-title`을 코드로 옮긴 것 |
 | 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
@@ -232,8 +233,8 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 | 19px | 1 | 기사 제목 (`/article/[id]`) |
 | 18px | 3 | 기록 제목, 온보딩 제목 — bold, `leading-snug` |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
-| 16px (`text-base` 포함) | 4 + 역할 37 | 텍스트 버튼(`type-button`, semibold, 29곳), 입력값·placeholder(`type-input`, medium, 8곳), BackHeader 제목, 프로필 이름 — bold |
-| 15px | 10 | 다이얼로그·섹션 제목(bold) |
+| 16px (`text-base` 포함) | 4 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 29곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold |
+| 15px | 9 | 다이얼로그·섹션 제목(bold) |
 | 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
 | 14px (`text-sm` 포함) | 33 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
 | 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
@@ -682,7 +683,8 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **섹션 제목 크기** — 홈 "최신 경제뉴스" 15px vs 마이페이지·기록 상세 14px.
 - **섹션 제목 표기** — `type-section-title`은 섹터 라벨에만 연결돼 있고, 기록
   상세·마이페이지의 14px Bold 섹션 제목은 아직 `text-[14px] font-bold`를 직접 씀
-  (결과는 같음).
+  (결과는 같음). `type-header-title`도 마찬가지로 URL 단계 안내 제목에만 연결돼
+  있고, BackHeader 제목·프로필 이름·평가 완료 문구는 `text-[16px] font-bold`를 직접 씀.
 
 ### 컴포넌트
 
