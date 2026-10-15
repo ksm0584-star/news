@@ -271,7 +271,7 @@ function RecordDetailInner() {
         </div>
 
         {investmentNote.trim() ? (
-          <div className="mt-8">
+          <div className="mt-detail-section-gap">
             <h2 className="mb-2 text-[14px] font-bold text-foreground">투자에 적용하기</h2>
             <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 type-memo-body text-foreground/80">
               {investmentNote}
@@ -280,7 +280,7 @@ function RecordDetailInner() {
         ) : null}
 
         {reflections.length > 0 ? (
-          <div className="mt-6">
+          <div className="mt-detail-section-gap">
             <h2 className="mb-2 text-[14px] font-bold text-foreground">
               회고 기록
             </h2>

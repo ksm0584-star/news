@@ -58,6 +58,7 @@ spacing:
   card-padding-x: 16px # px-4
   card-padding-y: 14px # py-3.5
   stack-gap: 8px # gap-2
+  detail-section-gap: 22px # globals.css --spacing-detail-section-gap(--spacing×5.5) → mt-detail-section-gap · 기록 상세 섹션 사이
   form-field-gap: 24px # Figma spacing/form-field-gap · globals.css --spacing-form-field-gap(--spacing×6) → mb-form-field-gap · 기록 폼 입력 항목 사이
   bar-height: 56px # h-14 · BackHeader, BottomNav
   dialog-max-width: 320px # max-w-[320px]
@@ -252,7 +253,8 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 ## Layout
 
 spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 있는 간격 토큰은
-`form-field-gap`(24px) 하나입니다(아래 "입력 항목 간격").
+`form-field-gap`(24px, 아래 "입력 항목 간격")과 `detail-section-gap`(22px, 아래
+"기록 상세 섹션") 두 개입니다.
 
 - **앱 컬럼**: `mx-auto max-w-[430px] bg-surface`. `fixed` 요소(내비, FAB,
   시트, 배너)도 같은 `inset-x-0 mx-auto max-w-[430px]`로 컬럼에 맞춥니다.
@@ -278,12 +280,19 @@ spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 �
     이 토큰과 무관하게 기존 값을 유지합니다.
 - **기록 상세 섹션**: 섹션 제목 `mb-2 text-[14px] font-bold` + filled 박스
   (본문 `whitespace-pre-line type-memo-body text-foreground/80`).
-  제목·원문 보기 아래 첫 섹션 "뉴스 기록"은 `mt-6`(24px), 그 아래 "투자에
-  적용하기"는 `mt-8`(32px, `py-8`·`px-8`과 같은 기존 값)로 띄워 별도 섹션임을
-  드러냅니다. 카드·테두리는 추가하지 않습니다. 외부 기사 기록의 `thought`를
-  `splitExternalContent`로 나눠 표시만 분리하며(저장 형식은 그대로), 투자에
-  적용하기를 쓰지 않은 기록은 그 섹션을 숨깁니다. 일반 기록은 `thought` 전체가
-  "뉴스 기록"에 표시됩니다.
+  - **섹션 사이 22px**: "뉴스 기록" → "투자에 적용하기" → "회고 기록"처럼 제목 있는
+    섹션끼리는 `mt-detail-section-gap`(22px). 코드 토큰
+    `--spacing-detail-section-gap`(`src/app/globals.css` `@theme inline`,
+    `calc(var(--spacing) * 5.5)`) 한 곳에서 관리합니다. 투자에 적용하기가 숨겨지면
+    뉴스 기록 → 회고 기록이 바로 22px입니다.
+  - **머리 영역 아래 24px**: 기사 제목·원문 보기 → 첫 섹션 "뉴스 기록"은 섹션 사이가
+    아니므로 기존 `mt-6`(24px)을 유지합니다.
+  - 22px는 4px 스케일 밖의 값이라 숫자 클래스(`mt-[22px]`)로 쓰지 않고 토큰으로만
+    씁니다. 작성·수정 화면의 입력 항목 간격(24px, `form-field-gap`)과는 별개입니다.
+  - 카드·테두리는 추가하지 않습니다.
+  - 외부 기사 기록의 `thought`를 `splitExternalContent`로 나눠 표시만 분리하며
+    (저장 형식은 그대로), 투자에 적용하기를 쓰지 않은 기록은 그 섹션을 숨깁니다.
+    일반 기록은 `thought` 전체가 "뉴스 기록"에 표시됩니다.
 - **고정 바**: BackHeader와 BottomNav 모두 `h-14`(56px).
 - **Safe area**: 하단 고정 요소는 `env(safe-area-inset-bottom)`을 더하고, 탭
   화면 본문은 `paddingBottom: calc(7rem + env(safe-area-inset-bottom))`을 inline

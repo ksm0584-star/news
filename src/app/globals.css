@@ -24,6 +24,9 @@
      from Tailwind's own spacing step so it stays on the existing scale.
      Generates mb-form-field-gap / gap-form-field-gap etc. */
   --spacing-form-field-gap: calc(var(--spacing) * 6);
+  /* Gap between titled sections on the record detail screen (뉴스 기록 →
+     투자에 적용하기 → 회고 기록): 22px. Generates mt-detail-section-gap. */
+  --spacing-detail-section-gap: calc(var(--spacing) * 5.5);
 }
 
 /* Typography roles (DESIGN.md Typography → 역할 스타일). Size and weight only,
