@@ -31,6 +31,14 @@
   font-weight: var(--font-weight-semibold); /* 600 */
 }
 
+/* Record detail memo body (뉴스 기록 / 투자에 적용하기 boxes): 16px Medium
+   with a fixed 24px line height, matching leading-6. */
+@utility type-memo-body {
+  font-size: var(--text-base); /* 16px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  line-height: calc(var(--spacing) * 6); /* 24px */
+}
+
 @utility type-input {
   font-size: var(--text-base); /* 16px — also the placeholder, which inherits it */
   font-weight: var(--font-weight-medium); /* 500 */

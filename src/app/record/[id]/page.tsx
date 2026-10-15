@@ -260,7 +260,7 @@ function RecordDetailInner() {
         <div className="mt-6">
           <h2 className="mb-2 text-[14px] font-bold text-foreground">뉴스 기록</h2>
           {articleSummary ? (
-            <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 text-[14px] leading-6 text-foreground/80">
+            <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 type-memo-body text-foreground/80">
               {articleSummary}
             </p>
           ) : (
@@ -273,7 +273,7 @@ function RecordDetailInner() {
         {investmentNote.trim() ? (
           <div className="mt-8">
             <h2 className="mb-2 text-[14px] font-bold text-foreground">투자에 적용하기</h2>
-            <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 text-[14px] leading-6 text-foreground/80">
+            <p className="whitespace-pre-line rounded-xl bg-background px-4 py-3.5 type-memo-body text-foreground/80">
               {investmentNote}
             </p>
           </div>

@@ -30,6 +30,7 @@ typography:
   # 역할 스타일 — globals.css의 @utility, 크기·굵기만 지정(행간은 요소별 기존 값)
   article-title: { fontSize: 14px, fontWeight: semibold } # type-article-title = --text-sm + --font-weight-semibold
   input: { fontSize: 16px, fontWeight: medium } # type-input = --text-base + --font-weight-medium
+  memo-body: { fontSize: 16px, fontWeight: medium, lineHeight: 24px } # type-memo-body = --text-base + --font-weight-medium + --spacing×6
   page-title: { fontSize: 20px, fontWeight: extrabold } # text-xl
   content-title: { fontSize: 18px, fontWeight: bold, lineHeight: snug }
   sheet-title: { fontSize: 17px, fontWeight: bold }
@@ -185,13 +186,14 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 크기 토큰(`--text-sm` 14px, `--text-base` 16px)을, 굵기는 기본 굵기 토큰을
 참조하므로 새 크기 값을 만들지 않습니다. **행간은 지정하지 않습니다.** 요소에
 이미 있는 `leading-*` 또는 상속 행간이 그대로 유지됩니다(`text-sm`/`text-base`
-클래스를 직접 쓰면 프리셋 행간이 함께 바뀌므로 쓰지 않음). 예외로 `type-button`은
-규칙상 행간 24px을 역할에 포함합니다.
+클래스를 직접 쓰면 프리셋 행간이 함께 바뀌므로 쓰지 않음). 예외로 `type-button`과
+`type-memo-body`는 규칙상 행간 24px을 역할에 포함합니다.
 
 | 역할 | 클래스 | 크기 | 굵기 | 행간(기존 값 유지) | 사용 범위 |
 | --- | --- | --- | --- | --- | --- |
 | 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
+| 메모 본문 | `type-memo-body` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 기록 상세(`/record/[id]`)의 메모 본문: "뉴스 기록"(기존 '나의 메모') 상자와 "투자에 적용하기" 상자. 섹션 제목, 빈 메모 안내(13.5px muted), 작성·수정 화면 입력창은 제외 |
 | 입력창 내부 텍스트 | `type-input` | 16px | Medium 500 | textarea `leading-6`(24px), 한 줄 input·평가 의견 상속(1.5 → 24px) | 모든 제품 input·textarea의 입력값과 placeholder: URL, 기록 제목(2), 용어 검색, 나의 메모, 기사 정리, 투자에 적용하기, 평가 의견. `/webview-test` 제외 |
 
 - 색상은 역할에 포함하지 않습니다. 기사 제목은 `text-foreground`(홈은 읽은 기사
@@ -241,7 +243,8 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
   텍스트 버튼(`button-48`, 48px)과 한 줄 입력창(`h-[50px]`)은 세로 패딩 대신
   높이로 고정합니다.
 - **간격**: `gap-2`(8px)가 기본(35회). 그 외 `gap-3`, `gap-1.5`, `gap-2.5`.
-- **기록 상세 섹션**: 섹션 제목 `mb-2 text-[14px] font-bold` + filled 박스.
+- **기록 상세 섹션**: 섹션 제목 `mb-2 text-[14px] font-bold` + filled 박스
+  (본문 `whitespace-pre-line type-memo-body text-foreground/80`).
   제목·원문 보기 아래 첫 섹션 "뉴스 기록"은 `mt-6`(24px), 그 아래 "투자에
   적용하기"는 `mt-8`(32px, `py-8`·`px-8`과 같은 기존 값)로 띄워 별도 섹션임을
   드러냅니다. 카드·테두리는 추가하지 않습니다. 외부 기사 기록의 `thought`를
