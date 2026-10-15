@@ -30,6 +30,7 @@ typography:
   # 역할 스타일 — globals.css의 @utility, 크기·굵기만 지정(행간은 요소별 기존 값)
   article-title: { fontSize: 14px, fontWeight: semibold } # type-article-title = --text-sm + --font-weight-semibold
   input: { fontSize: 16px, fontWeight: medium } # type-input = --text-base + --font-weight-medium
+  record-card-title: { fontSize: 16px, fontWeight: medium, lineHeight: 24px, lines: 1 } # type-record-card-title, 한 줄 말줄임 포함
   memo-body: { fontSize: 16px, fontWeight: medium, lineHeight: 24px } # type-memo-body = --text-base + --font-weight-medium + --spacing×6
   page-title: { fontSize: 20px, fontWeight: extrabold } # text-xl
   content-title: { fontSize: 18px, fontWeight: bold, lineHeight: snug }
@@ -186,13 +187,14 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 크기 토큰(`--text-sm` 14px, `--text-base` 16px)을, 굵기는 기본 굵기 토큰을
 참조하므로 새 크기 값을 만들지 않습니다. **행간은 지정하지 않습니다.** 요소에
 이미 있는 `leading-*` 또는 상속 행간이 그대로 유지됩니다(`text-sm`/`text-base`
-클래스를 직접 쓰면 프리셋 행간이 함께 바뀌므로 쓰지 않음). 예외로 `type-button`과
-`type-memo-body`는 규칙상 행간 24px을 역할에 포함합니다.
+클래스를 직접 쓰면 프리셋 행간이 함께 바뀌므로 쓰지 않음). 예외로 `type-button`,
+`type-memo-body`, `type-record-card-title`은 규칙상 행간 24px을 역할에 포함합니다.
 
 | 역할 | 클래스 | 크기 | 굵기 | 행간(기존 값 유지) | 사용 범위 |
 | --- | --- | --- | --- | --- | --- |
 | 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
+| 기록 카드 제목 | `type-record-card-title` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6) | 투자회고(회고 수정, `/record/[id]/reflection/[reflectionId]`) 화면의 과거·지금 기록 카드 제목 2곳. **한 줄 + 말줄임(…)** 을 역할에 포함(`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). 완료 화면 등 다른 화면의 기록 제목, 카드 본문·날짜·뱃지는 제외 |
 | 메모 본문 | `type-memo-body` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 기록 상세(`/record/[id]`)의 메모 본문: "뉴스 기록"(기존 '나의 메모') 상자와 "투자에 적용하기" 상자. 섹션 제목, 빈 메모 안내(13.5px muted), 작성·수정 화면 입력창은 제외 |
 | 입력창 내부 텍스트 | `type-input` | 16px | Medium 500 | textarea `leading-6`(24px), 한 줄 input·평가 의견 상속(1.5 → 24px) | 모든 제품 input·textarea의 입력값과 placeholder: URL, 기록 제목(2), 용어 검색, 나의 메모, 기사 정리, 투자에 적용하기, 평가 의견. `/webview-test` 제외 |
 
@@ -201,8 +203,15 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 - **기사 제목과 라벨 구분**: 입력창 위 "제목 *"은 기사 제목이 아니라 라벨입니다
   (`text-[14px] font-semibold`, Input 섹션 참조). 크기·굵기가 같아도
   `type-article-title`을 쓰지 않습니다.
+- **역할 구분**: `type-record-card-title`·`type-input`·`type-memo-body`는 크기·굵기
+  (16px / 500)가 같아도 용도가 달라 따로 정의합니다(입력값 / 메모 본문 / 한 줄 제목).
+  서로 바꿔 쓰지 않습니다.
+- **한 줄 말줄임 규칙**: `type-record-card-title`은 블록 요소에 써서 부모 폭에 맞춰
+  잘리게 합니다. flex·grid의 자식으로 쓸 때는 그 자식(또는 감싸는 flex 자식)에
+  `min-w-0`을 함께 줘야 말줄임이 작동합니다. 투자회고 카드는 블록 카드 안의 `<p>`라
+  `min-w-0` 없이 작동함을 확인했습니다(320px·393px, 긴 한글·공백 없는 제목).
 - **역할 밖의 제목**: 기사 상세 `h1`(19px bold), 기록 상세 `h1`(18px bold)은 페이지
-  제목이라, 완료·회고 화면의 비교 카드 제목(13px semibold)은 메모를 보조하는
+  제목이라, 완료 화면의 비교 카드 제목(13px semibold)은 메모를 보조하는
   문맥 표시라 이 역할에 넣지 않았습니다. 홈에서 쓰지 않는 `NewsCard`
   (NewsCarousel)도 제외합니다.
 - **굵기 로딩**: `src/app/layout.tsx`가 400/500/600/700/900을 불러옵니다.

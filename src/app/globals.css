@@ -31,6 +31,18 @@
   font-weight: var(--font-weight-semibold); /* 600 */
 }
 
+/* Title inside a record card on the reflection screen: 16px Medium,
+   24px line height, always one line with an ellipsis. Separate role from
+   type-input / type-memo-body even though the size and weight match. */
+@utility type-record-card-title {
+  font-size: var(--text-base); /* 16px */
+  font-weight: var(--font-weight-medium); /* 500 */
+  line-height: calc(var(--spacing) * 6); /* 24px */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Record detail memo body (뉴스 기록 / 투자에 적용하기 boxes): 16px Medium
    with a fixed 24px line height, matching leading-6. */
 @utility type-memo-body {

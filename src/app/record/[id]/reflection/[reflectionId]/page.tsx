@@ -118,7 +118,7 @@ export default function ReflectionEditPage() {
             <SectorBadge sector={pastRecord.sector} />
             <span className="text-xs text-muted">{formatDate(pastRecord.createdAt)}</span>
           </div>
-          <p className="mb-1 text-[13px] font-semibold text-foreground">{pastRecord.title}</p>
+          <p className="mb-1 type-record-card-title text-foreground">{pastRecord.title}</p>
           <p className="text-[13.5px] leading-6 text-foreground/80">{pastRecord.thought}</p>
         </div>
 
@@ -133,7 +133,7 @@ export default function ReflectionEditPage() {
             <SectorBadge sector={currentRecord.sector} />
             <span className="text-xs text-muted">{formatDate(currentRecord.createdAt)}</span>
           </div>
-          <p className="mb-1 text-[13px] font-semibold text-foreground">{currentRecord.title}</p>
+          <p className="mb-1 type-record-card-title text-foreground">{currentRecord.title}</p>
           <p className="text-[13.5px] leading-6 text-foreground/80">{currentRecord.thought}</p>
         </div>
 
