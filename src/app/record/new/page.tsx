@@ -238,7 +238,7 @@ function NewRecordForm() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://"
-          className="w-full rounded-xl border border-border-subtle bg-background px-4 py-3.5 text-[14px] text-foreground outline-none focus:border-point"
+          className="w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 text-[14px] text-foreground outline-none focus:border-point"
         />
         {error ? <p className="mt-2 text-[13px] text-red-500">{error}</p> : null}
         <button

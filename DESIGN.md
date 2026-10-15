@@ -76,7 +76,8 @@ components:
     textColor: "{colors.foreground}"
     borderColor: "{colors.border}"
     rounded: "{rounded.xl}"
-    padding: 12px 16px # py-3 px-4
+    height: 50px # h-[50px] · 한 줄 input 공통(textarea 제외)
+    padding: 0 16px # px-4, 세로 패딩 없음
     fontSize: 14px
   card-outlined:
     borderColor: "{colors.border}"
@@ -203,8 +204,9 @@ Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아�
 - **앱 컬럼**: `mx-auto max-w-[430px] bg-surface`. `fixed` 요소(내비, FAB,
   시트, 배너)도 같은 `inset-x-0 mx-auto max-w-[430px]`로 컬럼에 맞춥니다.
 - **좌우 여백**: 페이지 `px-5`(20px, 51회), 카드·입력창 내부 `px-4`(16px, 35회).
-- **세로 패딩**: 큰 버튼·카드 `py-3.5`(14px), 입력창 `py-3`(12px), 작은 버튼
-  `py-2.5`(10px), 칩 `py-1.5`(6px).
+- **세로 패딩**: 큰 버튼·카드 `py-3.5`(14px), textarea `py-3`(12px), 작은 버튼
+  `py-2.5`(10px), 칩 `py-1.5`(6px). 한 줄 입력창은 세로 패딩 대신 높이
+  `h-[50px]`로 고정합니다.
 - **간격**: `gap-2`(8px)가 기본(35회). 그 외 `gap-3`, `gap-1.5`, `gap-2.5`.
 - **고정 바**: BackHeader와 BottomNav 모두 `h-14`(56px).
 - **Safe area**: 하단 고정 요소는 `env(safe-area-inset-bottom)`을 더하고, 탭
@@ -313,12 +315,18 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 기록 제목·메모, URL, 용어 검색, 평가 의견 입력.
 
-- **기본 스타일**: `rounded-xl border border-border-subtle bg-background
-  px-4 py-3 text-[14px] text-foreground outline-none focus:border-point`.
-  Textarea는 여기에 `resize-none leading-6`.
+- **기본 스타일 (한 줄 input)**: `rounded-xl border border-border-subtle bg-background
+  h-[50px] px-4 text-[14px] text-foreground outline-none focus:border-point`.
+  높이는 50px 고정(border 포함, `box-sizing: border-box`)이고 세로 패딩은 두지
+  않습니다. 텍스트는 브라우저가 input 안에서 세로 가운데 정렬합니다.
+- **Textarea**: 높이 고정 없이 `px-4 py-3 ... resize-none leading-6`(기록 메모),
+  `px-3.5 py-3 text-[13.5px]`(평가 의견).
 - **Variant**: 없음.
-- **Size**: 기본 `px-4 py-3` · URL 입력 `px-4 py-3.5` · 검색 `px-3.5 py-2.5` ·
-  평가 의견 `px-3.5 py-3 text-[13.5px]`.
+- **Size**: 한 줄 input은 모두 `h-[50px]`. 좌우 패딩만 다름 — 기록 제목·URL
+  `px-4`, 용어 검색 `px-3.5`. 용어 검색처럼 버튼과 한 줄에 놓을 때는 input에
+  `min-w-0 flex-1`, 버튼에 `shrink-0`을 줍니다(없으면 Safari에서 input 기본 너비가
+  버튼을 밀어 글자가 두 줄로 꺾임). 버튼은 flex stretch로 같은 50px이 됩니다.
+  `/webview-test`(제품 외 검증 페이지)의 input은 이 규칙에서 제외.
 - **State**: `focus:border-point`만 존재. 에러는 입력창이 아니라 아래쪽
   `text-red-500` 문구로 표시. placeholder 색은 지정하지 않음(브라우저 기본).
 - **Label**: `mb-1.5 block text-[13px] font-semibold text-foreground`.
@@ -415,7 +423,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | 텍스트 | `text-white` | `colors.primary-foreground` |
 | 서체 | `text-[13.5px] font-medium text-center`, 행간 미지정(상속) | `typography.body-sm` |
 | radius | `rounded-xl` (12px) | `rounded.xl` |
-| padding | `px-4 py-3` (16px / 12px) | — (Input과 같은 값) |
+| padding | `px-4 py-3` (16px / 12px) | — (Textarea와 같은 값) |
 | shadow | `shadow-lg` | `shadows.lg` |
 | z-index | `z-50` | `zIndex.modal` |
 | 폭 | 문구 길이만큼. 앱 컬럼(`max-w-[430px]`) 안에서 좌우 `px-5` 여백 | `spacing.app-max-width`, `spacing.page-gutter` |
@@ -531,7 +539,8 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   (`record/complete` 2곳, `reflection`, `LoginPrompt`). pill 버튼 글자 크기가
   12.5 / 13 / 13.5px로 제각각.
 - **Chip** — 같은 스타일이 4개 파일에 복제. 메모 힌트 칩만 12.5px.
-- **Input** — 패딩 조합 4종(`px-4 py-3`, `px-4 py-3.5`, `px-3.5 py-2.5`, `px-3.5 py-3`).
+- **Input** — 한 줄 input 높이는 `h-[50px]`로 통일됨. 좌우 패딩은 `px-4` /
+  `px-3.5`(용어 검색) 2종, textarea 패딩은 `px-4 py-3` / `px-3.5 py-3` 2종.
 - **Card** — 패딩 3종(`p-3.5`, `px-4 py-3.5`, `p-4`). 마이페이지 "내 활동"
   채움 박스만 `rounded-2xl`(다른 채움 박스는 `rounded-xl`).
 - **Confirm Dialog** — 동일 마크업이 3개 페이지에 복제.

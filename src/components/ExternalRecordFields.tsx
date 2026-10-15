@@ -45,7 +45,7 @@ const ExternalRecordFields = forwardRef<
       <input
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
-        className="mb-4 w-full rounded-xl border border-border-subtle bg-background px-4 py-3 text-[14px] text-foreground outline-none focus:border-point"
+        className="mb-4 w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 text-[14px] text-foreground outline-none focus:border-point"
       />
 
       <label className="mb-1.5 block text-[13px] font-semibold text-foreground">

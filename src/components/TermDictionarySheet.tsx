@@ -128,13 +128,13 @@ export default function TermDictionarySheet({ onClose }: { onClose: () => void }
             maxLength={MAX_TERM_LENGTH}
             placeholder="예) 기준금리"
             aria-label="경제용어 검색"
-            className="flex-1 rounded-xl border border-border-subtle bg-background px-3.5 py-2.5 text-[14px] text-foreground outline-none focus:border-point"
+            className="min-w-0 flex-1 rounded-xl border border-border-subtle bg-background h-[50px] px-3.5 text-[14px] text-foreground outline-none focus:border-point"
           />
           <button
             type="button"
             onClick={handleSearch}
             disabled={state.status === "loading" || !query.trim()}
-            className="rounded-xl bg-point px-4 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
+            className="shrink-0 rounded-xl bg-point px-4 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-60 active:bg-point-dark"
           >
             검색
           </button>
