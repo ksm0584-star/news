@@ -174,7 +174,9 @@ CSS 변수가 없는 역할은 Tailwind 기본 클래스로 직접 씁니다.
 쓰입니다. `primary` 틴트는 `bg-point/5` + `border-point/30`(강조 카드)입니다.
 `secondary`, `accent`, `ring`, `card`, `popover` 역할은 존재하지 않습니다.
 
-Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아닙니다.
+Google 로고의 4색(`#FFC107` 등)은 브랜드 에셋이므로 토큰이 아닙니다. Apple
+로그인 버튼의 검정 배경(`bg-black`)과 흰색 로고도 Apple Human Interface
+Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 
 ## Typography
 
@@ -340,8 +342,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 ### Button — 공통 스타일 `button-48` + `type-button` (컴포넌트 없음)
 
 터치 가능한 액션. 버튼 컴포넌트는 없고, 텍스트 버튼은 `src/app/globals.css`의
-공통 스타일 두 개를 참조합니다. "원문 보기"만 예외로 공통 컴포넌트
-(`ArticleOriginalLink`)가 있습니다(아래 참고).
+공통 스타일 두 개를 참조합니다. 예외는 두 곳입니다: "원문 보기"는 공통 컴포넌트
+(`ArticleOriginalLink`, 아래 참고)이고, Google/Apple 로그인 버튼은 `/login`과
+`/mypage`가 함께 쓰는 `SocialLoginButtons`(아래 "그 외 공통 컴포넌트")입니다.
 
 | 항목 | 값 | 코드 |
 | --- | --- | --- |
@@ -361,7 +364,8 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | --- | --- | --- |
 | primary | `rounded-xl bg-point text-white` (+`active:bg-point-dark`) | 기록 작성 "다음"·"저장", 외부 기록 저장·"URL 다시 입력하기", 기사 상세 "메모 기록하기", 완료 화면 "확인"·"완료", 회고 "저장", 평가 "의견 보내기", 첫 기록 로그인 시트, LoginPrompt "로그인하기"(`px-5`), 용어 "검색"(`px-4`) |
 | primary-pill | `rounded-full bg-point text-white px-4`/`px-5` | ArticleReturnBanner "기록하기", OnboardingGuide "다음"·"시작하기" |
-| outline | `rounded-xl border border-border-subtle` (+`bg-surface`) | Google 로그인(아이콘 + `gap-2`), 다이얼로그 "취소", 회고 "취소", 용어 "다시 시도"(`px-4`) |
+| outline | `rounded-xl border border-border-subtle` (+`bg-surface`) | Google 로그인(아이콘 + `gap-2`, `SocialLoginButtons`), 다이얼로그 "취소", 회고 "취소", 용어 "다시 시도"(`px-4`) |
+| apple | `rounded-xl bg-black text-white`(아이콘 + `gap-2`) | Apple 로그인(`SocialLoginButtons`) |
 | ghost | `rounded-xl text-muted`, 배경 없음 | 시트 "다음에 할게요"·"나중에 할게요", 완료 화면 "나중에 하기" |
 | destructive | `rounded-xl bg-red-500 text-white` | 삭제·탈퇴 확인 다이얼로그 |
 | choice | `rounded-xl border`, 선택 시 `border-point bg-point text-white` / 비선택 `border-border-subtle text-foreground/80` | 회고 비교 선택 (완료, 회고 화면) |
@@ -370,7 +374,8 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   "저장 중..." 등으로 바뀜)·선택(choice) 모두 같은 요소라 높이와 글자가 같습니다.
 - **나란히 놓기**: 다이얼로그의 두 버튼은 `flex gap-2` + `flex-1`. 입력창 옆
   "검색"은 줄을 `flex items-center`로 두어 50px 입력창 세로 가운데에 맞춥니다.
-- **적용 범위**: 위 표의 텍스트 버튼 29곳(`<button>`과 버튼 모양 `<Link>`).
+- **적용 범위**: 위 표의 텍스트 버튼 29곳(`<button>`과 버튼 모양 `<Link>`) +
+  `SocialLoginButtons`의 Google·Apple 버튼 2곳.
 - **결정 사항 (2026-10-15)**: ghost(보조) 버튼과 primary-pill 버튼도 의도적으로
   같은 규칙(48px, 16px / 600)을 씁니다. 보조 버튼은 색(`text-muted`)으로만 주 버튼과
   구분하며, 작게 만들려고 크기·굵기를 따로 지정하지 않습니다.
@@ -646,6 +651,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - `EmptyState` — dashed 카드. 제목 14px semibold + 설명 13px muted.
 - `LoginPrompt` — 로그인 유도 블록 (검색한 용어).
 - `OnboardingGuide` — 스포트라이트 코치마크 (`rgba(0,0,0,0.72)`).
+- `SocialLoginButtons` — Google·Apple 로그인 버튼 세로 묶음(`gap-2`). 로그인 중인
+  provider만 "이동 중..."으로 라벨이 바뀌고, 응답을 기다리는 동안 두 버튼 모두
+  `disabled`. `/login`, `/mypage`(비로그인 상태)에서 재사용.
 
 ## Do's and Don'ts
 

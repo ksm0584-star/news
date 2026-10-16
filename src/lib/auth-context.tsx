@@ -23,6 +23,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   signInWithGoogle: (next?: string) => Promise<AuthResult>;
+  signInWithApple: (next?: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
 }
 
@@ -114,13 +115,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function signInWithGoogle(next?: string): Promise<AuthResult> {
+  // Shared by both providers — the only thing that differs between Google
+  // and Apple sign-in is this string, so every other OAuth concern (native
+  // vs. web branching, the oauth-next cookie, the fixed redirectTo) lives
+  // here once instead of being duplicated per provider.
+  async function signInWithProvider(
+    provider: "google" | "apple",
+    next?: string,
+  ): Promise<AuthResult> {
     if (!isSupabaseConfigured()) return { error: CONFIG_ERROR };
     const supabase = getSupabaseBrowserClient();
 
     if (isNativePlatform()) {
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: {
           redirectTo: NATIVE_AUTH_CALLBACK_URL,
           skipBrowserRedirect: true,
@@ -141,12 +149,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOauthNextCookie(next);
 
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     return { error: error?.message ?? null };
+  }
+
+  async function signInWithGoogle(next?: string): Promise<AuthResult> {
+    return signInWithProvider("google", next);
+  }
+
+  async function signInWithApple(next?: string): Promise<AuthResult> {
+    return signInWithProvider("apple", next);
   }
 
   async function signOut(): Promise<void> {
@@ -156,7 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider
+      value={{ user, loading, signInWithGoogle, signInWithApple, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

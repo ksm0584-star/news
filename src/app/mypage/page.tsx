@@ -7,10 +7,13 @@ import { useRouter } from "next/navigation";
 import BackHeader from "@/components/BackHeader";
 import { resetOnboardingGuide } from "@/components/OnboardingGuide";
 import RatingPromptSheet from "@/components/RatingPromptSheet";
+import { SocialLoginButtons } from "@/components/SocialLoginButtons";
 import { useAuth } from "@/lib/auth-context";
 import { useRecordCount } from "@/lib/use-records-store";
 import { deleteAccount } from "@/lib/account";
 import { trackClick } from "@/lib/mixpanel";
+
+type SocialProvider = "google" | "apple";
 
 function DefaultAvatar() {
   return (
@@ -28,35 +31,12 @@ function DefaultAvatar() {
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-      <path
-        fill="#FFC107"
-        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
-      />
-      <path
-        fill="#FF3D00"
-        d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
-      />
-      <path
-        fill="#4CAF50"
-        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
-      />
-      <path
-        fill="#1976D2"
-        d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.088 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
-      />
-    </svg>
-  );
-}
-
 export default function MyPage() {
   const router = useRouter();
-  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
   const { count, loading: countLoading } = useRecordCount();
 
-  const [loggingIn, setLoggingIn] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
@@ -78,19 +58,20 @@ export default function MyPage() {
     user?.email ??
     "사용자";
 
-  async function handleGoogleLogin() {
-    setLoggingIn(true);
+  async function handleLogin(provider: SocialProvider) {
+    setLoadingProvider(provider);
     setLoginError(null);
     // No explicit return path — login always lands on the home screen
     // regardless of where it was started from (see auth-context.tsx:
-    // omitting `next` here means signInWithGoogle doesn't set the
-    // oauth-next cookie, so /auth/callback falls back to its default, "/").
-    const { error } = await signInWithGoogle();
+    // omitting `next` here means signInWithGoogle/signInWithApple doesn't
+    // set the oauth-next cookie, so /auth/callback falls back to its
+    // default, "/").
+    const { error } = await (provider === "google" ? signInWithGoogle() : signInWithApple());
     if (error) {
-      setLoggingIn(false);
+      setLoadingProvider(null);
       setLoginError(error);
     }
-    // On success the browser is redirected to Google — nothing else to do here.
+    // On success the browser is redirected to the provider — nothing else to do here.
   }
 
   function handleReplayGuide() {
@@ -159,15 +140,12 @@ export default function MyPage() {
             로그인하면 다른 기기에서도 기록을 확인할 수 있어요.
           </p>
           {loginError ? <p className="text-[13px] text-red-500">{loginError}</p> : null}
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={loggingIn}
-            className="button-48 mt-2 w-full gap-2 rounded-xl border border-border-subtle bg-surface type-button text-foreground disabled:opacity-60"
-          >
-            <GoogleIcon />
-            {loggingIn ? "이동 중..." : "구글로 로그인"}
-          </button>
+          <SocialLoginButtons
+            onGoogle={() => handleLogin("google")}
+            onApple={() => handleLogin("apple")}
+            loadingProvider={loadingProvider}
+            className="mt-2"
+          />
         </div>
       )}
 
