@@ -8,13 +8,11 @@
  * stays aligned with the app's mobile-width column on a wide desktop
  * window without needing a separate measured offset.
  *
- * This component only ever renders on the home screen, where RecordFab is
- * also only ever mounted — but whenever this banner is showing, the home
- * page passes RecordFab `hidden={Boolean(articleReturnInfo)}`, so the two
- * are never visible at the same time. No extra clearance for the FAB's own
- * height is needed here (there used to be — removed, since it just left a
- * large empty gap once the FAB started hiding behind this banner instead
- * of sitting beside it).
+ * This component only ever renders on the home screen. The floating
+ * "기록하기" FAB (`RecordFab`) that used to also float here — and later on
+ * `/records` — has been removed entirely (recording now starts from each
+ * news card's own "기록하기" action instead), so there's no second floating
+ * CTA here to coordinate visibility with.
  */
 export default function ArticleReturnBanner({
   onRecord,

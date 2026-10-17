@@ -74,11 +74,10 @@ export function isBottomNavPath(pathname: string) {
  * instead, so this checks an allowlist rather than trying to enumerate
  * every screen to hide on.
  *
- * The old center "기록하기" item is gone — that entry point is now the
- * floating RecordFab (mounted directly by src/app/page.tsx and
- * src/app/records/page.tsx), shown only on the two screens where writing a
- * new record makes sense (`/`, `/records`), independent of this nav's own
- * three tabs.
+ * The old center "기록하기" item is gone — that entry point used to be a
+ * floating FAB (`RecordFab`), mounted on `/` and `/records`. Both were
+ * removed by 2026-10-17 (recording now starts from each news card's own
+ * "기록하기" action instead), so no screen mounts a record FAB anymore.
  */
 export default function BottomNav() {
   const pathname = usePathname();

@@ -142,6 +142,10 @@ function RecordDetailInner() {
   // column (see external-record-content.ts); split it back here for display
   // only. Records without the marker show their whole `thought` as-is.
   const { articleSummary, investmentNote } = splitExternalContent(record.thought);
+  // Gates both the "원문 보기" link and the title's conditional top margin
+  // below — a record with no usable URL keeps its original layout exactly
+  // (title with no extra top margin, nothing above it).
+  const hasOriginalLink = Boolean(record.url && isHttpUrl(record.url));
 
   async function handleConfirmDelete() {
     setDeleting(true);
@@ -227,15 +231,18 @@ function RecordDetailInner() {
             ) : null}
           </div>
         </div>
-        <h1 className="text-[18px] font-bold leading-snug text-foreground">
-          {record.title}
-        </h1>
-        {record.url && isHttpUrl(record.url) ? (
+        {hasOriginalLink ? (
           // Always the real article URL, same tab (no target="_blank") so
           // the browser's own back button returns here — unified with the
           // record-writing screen's "원문 보기" (뉴스 열람 구조 개편 3차).
           // No more iframe-support branch: /record/[id]/article (the old
           // iframe viewer for "supported" domains) is gone.
+          //
+          // 2026-10-17: moved above the title (was below, with the title
+          // owning no top margin and this link's own `mt-1` providing the
+          // gap) so this screen's head order matches the write screen's
+          // "원문 보기 먼저, 제목 나중" — same `mt-1` value, just now on
+          // the title below it instead of on this link.
           <ArticleOriginalLink
             href={record.url}
             onClick={() => {
@@ -253,9 +260,13 @@ function RecordDetailInner() {
                 sector: record.sector,
               });
             }}
-            className="mt-1"
           />
         ) : null}
+        <h1
+          className={`${hasOriginalLink ? "mt-1 " : ""}text-[18px] font-bold leading-snug text-foreground`}
+        >
+          {record.title}
+        </h1>
 
         <div className="mt-6">
           <h2 className="mb-2 text-[14px] font-bold text-foreground">뉴스 기록</h2>

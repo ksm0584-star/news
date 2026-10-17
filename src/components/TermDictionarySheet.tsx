@@ -25,6 +25,11 @@ export default function TermDictionarySheet({ onClose }: { onClose: () => void }
   const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [state, setState] = useState<SearchState>({ status: "idle" });
+  // Toggled by the "AI" chip next to the term title — hidden by default per
+  // this change, shown only on tap (mobile has no hover). Reset on every
+  // new search so a leftover "open" state from a previous term's result
+  // doesn't carry over to the next one.
+  const [showAiNotice, setShowAiNotice] = useState(false);
   // Guards a response landing after this sheet unmounted (closed) or after
   // a newer search started — not a UI concern by itself, just correctness
   // for the setState calls in handleSearch below.
@@ -52,6 +57,7 @@ export default function TermDictionarySheet({ onClose }: { onClose: () => void }
       source: "dictionary_sheet",
     });
     setState({ status: "loading" });
+    setShowAiNotice(false);
     const result = await searchEconomicTerm(term);
     if (requestRef.current !== requestId) return;
     const responseTimeMs = Date.now() - startedAt;
@@ -154,13 +160,37 @@ export default function TermDictionarySheet({ onClose }: { onClose: () => void }
             </div>
           ) : state.status === "success" ? (
             <div className="rounded-xl bg-background px-4 py-3.5">
-              <p className="text-[14.5px] font-bold text-foreground">{state.term}</p>
+              {/* min-w-0 flex-1 on the title (and shrink-0 on the chip) —
+                  same long-title-vs-fixed-badge pattern as the reflection
+                  list's title/date row — keeps the "AI" chip's own size
+                  untouched no matter how long the term or how many lines
+                  it wraps to. */}
+              <div className="flex items-start justify-between gap-2">
+                <p className="min-w-0 flex-1 text-[14.5px] font-bold text-foreground">
+                  {state.term}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowAiNotice((prev) => !prev)}
+                  aria-expanded={showAiNotice}
+                  aria-label="AI가 생성한 설명이에요. 눌러서 안내 보기"
+                  // before:-inset-2: same touch-target extension as
+                  // RecordCardAction — the visible chip (SectorBadge's own
+                  // bg-background/px-2.5/py-1/text-xs recipe) is too small
+                  // on its own to meet a comfortable tap target.
+                  className="relative shrink-0 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-foreground/70 before:absolute before:-inset-2 before:content-[''] active:bg-border-subtle"
+                >
+                  AI
+                </button>
+              </div>
               <p className="mt-1.5 text-[13.5px] leading-6 text-foreground/80">
                 {state.description}
               </p>
-              <p className="mt-2 text-[11.5px] text-muted">
-                AI가 생성한 설명으로, 부정확할 수 있어요.
-              </p>
+              {showAiNotice ? (
+                <p className="mt-2 text-[11.5px] text-muted">
+                  AI가 생성한 설명으로, 부정확할 수 있어요.
+                </p>
+              ) : null}
               {state.saved ? null : (
                 <p className="mt-1 text-[11.5px] text-red-500">
                   검색 기록 저장에 실패했어요. 설명은 그대로 확인할 수 있어요.

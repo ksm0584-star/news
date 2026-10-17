@@ -1,20 +1,38 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, MouseEvent } from "react";
+import { isNativePlatform } from "@/lib/platform";
 
 /**
  * The one "원문 보기" link style, taken as-is from the record detail screen.
- * Always the real article URL in the same tab (no target="_blank") so the
- * browser's own back button returns to the caller. Callers keep their own
- * href/tracking handlers and pass layout spacing (e.g. `mt-1`) via
- * className.
+ * On the web, always the real article URL in the same tab (no
+ * target="_blank") so the browser's own back button returns to the caller.
+ * On the native iOS/Android app, opens in an in-app browser instead (see
+ * src/lib/native/article-browser.ts) — a reliable "완료"/Done button back
+ * into the app, the same mechanism the OAuth flow already uses, instead of
+ * a plain external-origin navigation. Callers keep their own `onClick`
+ * (still called first, every platform, for tracking) and layout spacing
+ * (e.g. `mt-1`) via className.
  */
 export default function ArticleOriginalLink({
+  href,
+  onClick,
   className = "",
   ...props
 }: Omit<ComponentProps<"a">, "children" | "rel">) {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    onClick?.(event);
+    if (!href || !isNativePlatform()) return;
+    event.preventDefault();
+    import("@/lib/native/article-browser").then(({ openArticleInBrowser }) =>
+      openArticleInBrowser(href),
+    );
+  }
+
   return (
     <a
       rel="noopener noreferrer"
+      href={href}
       {...props}
+      onClick={handleClick}
       className={`inline-block truncate text-[14px] font-semibold text-point ${className}`}
     >
       원문 보기

@@ -8,6 +8,11 @@ let initialized = false;
 function ensureInit(): boolean {
   if (!MIXPANEL_TOKEN) return false;
   if (typeof window === "undefined") return false;
+  // Never send events from an automated/test browser (Playwright, Selenium,
+  // Puppeteer, …) into the shared dev+prod Mixpanel project below —
+  // navigator.webdriver is set by every mainstream automation tool and
+  // never by a real visitor, so this is a no-op for actual users.
+  if (navigator.webdriver) return false;
   if (!initialized) {
     mixpanel.init(MIXPANEL_TOKEN, {
       track_pageview: false,

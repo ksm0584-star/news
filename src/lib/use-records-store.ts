@@ -6,10 +6,14 @@ import {
   findPastRecordWithThought,
   getRecord,
   getRecordCount,
+  getRecordCountForMonth,
   getRecords,
+  getRecordsForMonth,
   getReflectionsForRecord,
   subscribe,
 } from "./record-store";
+import { getSectorValuesForCategory, ALL_CATEGORY, type NewsCategory } from "./news-categories";
+import { getKstMonthRange } from "./month-range";
 import type { NewsRecord, Reflection } from "./types";
 
 /**
@@ -63,6 +67,68 @@ export function useRecords(): { records: NewsRecord[]; loading: boolean; error: 
   useEffect(() => subscribe(refetch), [refetch]);
 
   return { records, loading, error };
+}
+
+/**
+ * 내 기록 탭의 월별 데이트피커 전용 — useRecords()(전체 조회)와 완전히
+ * 분리된 별도 훅이라, mypage/record detail 등 useRecords()를 쓰는 다른
+ * 화면에는 영향이 없다. 매 호출을 record-store.ts의 월별 캐시로 보내고,
+ * 어떤 기록이든 쓰기가 일어나면(이미 모든 쓰기가 거치는 subscribe() 채널)
+ * 그 캐시가 통째로 비워진 뒤 이 훅도 다시 조회한다.
+ *
+ * `monthHasAnyRecords`는 특정 섹터를 선택했는데 결과가 0건일 때만(그
+ * 경우에만 "이 달엔 있는데 이 섹터엔 없음"과 "이 달 자체가 없음"을 구분해야
+ * 함) 섹터 조건 없는 카운트를 한 번 더 확인해서 채운다 — "전체"거나 결과가
+ * 1건 이상이면 이미 답이 나와 있어 추가 호출 없음.
+ */
+export function useRecordsForMonth(
+  year: number,
+  month: number,
+  category: NewsCategory,
+): { records: NewsRecord[]; loading: boolean; error: boolean; monthHasAnyRecords: boolean | null } {
+  const { user, loading: authLoading } = useAuth();
+  const [records, setRecords] = useState<NewsRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [monthHasAnyRecords, setMonthHasAnyRecords] = useState<boolean | null>(null);
+
+  const refetch = useCallback(async () => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+    setLoading(true);
+    try {
+      const range = getKstMonthRange(year, month);
+      const sectorValues = category === ALL_CATEGORY ? null : getSectorValuesForCategory(category);
+      const result = await getRecordsForMonth(user, range, sectorValues);
+      setRecords(result);
+      setError(false);
+
+      if (category === ALL_CATEGORY || result.length > 0) {
+        setMonthHasAnyRecords(result.length > 0);
+      } else {
+        setMonthHasAnyRecords((await getRecordCountForMonth(user, range)) > 0);
+      }
+    } catch (err) {
+      console.error("useRecordsForMonth: failed to fetch records", err);
+      setRecords([]);
+      setError(true);
+      setMonthHasAnyRecords(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, authLoading, year, month, category]);
+
+  // See useRecords above for why this isn't the force-update anti-pattern.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refetch();
+  }, [refetch]);
+
+  useEffect(() => subscribe(refetch), [refetch]);
+
+  return { records, loading, error, monthHasAnyRecords };
 }
 
 export function useRecordCount(): { count: number; loading: boolean } {

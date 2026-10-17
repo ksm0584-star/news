@@ -4,6 +4,7 @@ import type {
   CreateRecordResult,
   UpdateRecordInput,
 } from "./records";
+import type { MonthRange } from "./month-range";
 import type { NewsRecord, Reflection, ReflectionResult } from "./types";
 
 /**
@@ -77,6 +78,32 @@ export async function getRecordCount(): Promise<number> {
 
 export async function getRecord(id: string): Promise<NewsRecord | null> {
   return readRecords().find((record) => record.id === id) ?? null;
+}
+
+/** Mirrors records.ts's getRecordsForMonth for a logged-out (local) user — same month/sector semantics, same sort order. */
+export async function getRecordsForMonth(
+  range: MonthRange,
+  sectorValues: string[] | null,
+): Promise<NewsRecord[]> {
+  const start = new Date(range.startIso).getTime();
+  const end = new Date(range.endIsoExclusive).getTime();
+  return readRecords()
+    .filter((record) => {
+      const createdAt = new Date(record.createdAt).getTime();
+      if (createdAt < start || createdAt >= end) return false;
+      return sectorValues ? sectorValues.includes(record.sector) : true;
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+/** Mirrors records.ts's getRecordCountForMonth for a logged-out (local) user. */
+export async function getRecordCountForMonth(range: MonthRange): Promise<number> {
+  const start = new Date(range.startIso).getTime();
+  const end = new Date(range.endIsoExclusive).getTime();
+  return readRecords().filter((record) => {
+    const createdAt = new Date(record.createdAt).getTime();
+    return createdAt >= start && createdAt < end;
+  }).length;
 }
 
 function findExistingByDedupeKey(

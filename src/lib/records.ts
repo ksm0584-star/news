@@ -1,5 +1,6 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "./supabase/client";
+import type { MonthRange } from "./month-range";
 import type { NewsRecord, Reflection, ReflectionResult, SourceType } from "./types";
 
 /**
@@ -96,6 +97,50 @@ export async function getRecordCount(): Promise<number> {
   const { count, error } = await supabase
     .from("records")
     .select("*", { count: "exact", head: true });
+  if (error) throw toError(error);
+  return count ?? 0;
+}
+
+/**
+ * 내 기록 탭의 월별 데이트피커 전용 조회 — getRecords()(전체 조회)와는
+ * 완전히 분리된 별도 함수라, mypage/record detail 등 getRecords()를 쓰는
+ * 다른 화면에는 아무 영향이 없다. `created_at`(timestamptz)을 KST 월
+ * 경계의 UTC 인스턴트로 직접 비교하므로 DB 서버 자신의 타임존 설정과
+ * 무관하게 항상 올바르다(month-range.ts 참고). `sectorValues`가 null이면
+ * "전체" — 섹터 조건 없이 그 달 전체를 조회한다. RLS는 그대로 적용된다
+ * (쿼리 조건을 추가했을 뿐 테이블/정책은 전혀 바꾸지 않음).
+ */
+export async function getRecordsForMonth(
+  range: MonthRange,
+  sectorValues: string[] | null,
+): Promise<NewsRecord[]> {
+  const supabase = getSupabaseBrowserClient();
+  let query = supabase
+    .from("records")
+    .select("*")
+    .gte("created_at", range.startIso)
+    .lt("created_at", range.endIsoExclusive)
+    .order("created_at", { ascending: false });
+  if (sectorValues) query = query.in("sector", sectorValues);
+
+  const { data, error } = await query;
+  if (error) throw toError(error);
+  return (data ?? []).map(rowToRecord);
+}
+
+/**
+ * Sector-agnostic "does this month have anything at all" check — only
+ * needed by the month picker to tell "이 달에 기록이 없어요" apart from
+ * "이 섹터에 기록이 없어요" when a sector-filtered getRecordsForMonth()
+ * call above comes back empty. `head: true` fetches no rows.
+ */
+export async function getRecordCountForMonth(range: MonthRange): Promise<number> {
+  const supabase = getSupabaseBrowserClient();
+  const { count, error } = await supabase
+    .from("records")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", range.startIso)
+    .lt("created_at", range.endIsoExclusive);
   if (error) throw toError(error);
   return count ?? 0;
 }

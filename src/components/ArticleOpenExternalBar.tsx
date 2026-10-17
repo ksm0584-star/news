@@ -52,6 +52,13 @@ export default function ArticleOpenExternalBar({
 
   return (
     <div ref={containerRef} className="relative flex items-center gap-1 px-4 pt-4">
+      {/* No mr-cancel on ArticleOriginalLink here (tried -mr-1, then
+          -mr-0.5) — the full row gap-1 (4px) now applies on top of the
+          arrow icon's own trailing transparent SVG padding (viewBox is
+          24×24 but the glyph itself only occupies roughly the middle
+          10×10 of it), so the visible gap before the ⓘ button is wider
+          than 4px. record/[id]/page.tsx's unrelated use of this same link
+          (no adjacent ⓘ there) is untouched either way. */}
       <ArticleOriginalLink
         href={url}
         onPointerDown={(event) => event.stopPropagation()}
@@ -61,6 +68,14 @@ export default function ArticleOpenExternalBar({
         }}
       />
 
+      {/* Was `h-9 w-9` with the glyph centered inside — a 36px box whose
+          own internal centering padding (sized for an easy tap target) sat
+          entirely on this row's gap-1 side too, on top of the SVG padding
+          above. Shrunk to the glyph's own tight size so the visible "ⓘ"
+          sits right where this row's gap-1 ends, and the same ~36px tap
+          target (plus its active-state circle) moved to `before:`, which
+          is absolutely positioned and so doesn't count toward gap-1's
+          measurement at all. */}
       <button
         type="button"
         onPointerDown={(event) => event.stopPropagation()}
@@ -68,7 +83,7 @@ export default function ArticleOpenExternalBar({
         aria-label="원문 보기 안내"
         aria-expanded={infoOpen}
         aria-controls={INFO_POPOVER_ID}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold text-muted active:bg-background"
+        className="relative shrink-0 text-[15px] font-semibold leading-none text-muted before:absolute before:-inset-[10px] before:rounded-full before:content-[''] active:before:bg-background"
       >
         ⓘ
       </button>

@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import SectorBadge from "./SectorBadge";
 import CategoryTabs from "./CategoryTabs";
 import EmptyState from "./EmptyState";
+import RecordCardAction from "./RecordCardAction";
 import { ALL_CATEGORY, type NewsCategory } from "@/lib/news-categories";
+import { distributeAcrossSectors } from "@/lib/distribute-sectors";
 import { formatDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
 import { isHttpUrl, saveArticleReturnInfo } from "@/lib/article-return";
 import { getReadArticleUrls, markArticleRead } from "@/lib/read-articles";
+import { isNativePlatform } from "@/lib/platform";
 import type { LatestNewsItem } from "@/lib/news-rss";
 
 /**
@@ -24,7 +27,12 @@ function NewsThumbnail({ src, read }: { src: string; read: boolean }) {
   const [failed, setFailed] = useState(false);
   if (failed) return null;
   return (
-    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-background">
+    // pointer-events-none (inherited by its children below): this card's
+    // own `position: relative` would otherwise paint it, and swallow taps,
+    // above the card's absolutely-positioned stretched link (see that
+    // link's comment) — the thumbnail has no handler of its own, so
+    // without this a tap here would silently do nothing.
+    <div className="pointer-events-none relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-background">
       <Image
         src={src}
         alt=""
@@ -78,16 +86,29 @@ export default function LatestNewsList() {
     };
   }, []);
 
-  const filtered = (articles ?? []).filter(
-    (article) => category === ALL_CATEGORY || article.sector === category,
-  );
+  // "전체"만 섹터별로 교차 배치 — 개별 섹터 탭은 API가 이미 내려준 최신순
+  // 그대로 필터링만 한다(정렬·필터링 동작 변경 없음). distributeAcrossSectors
+  // 자체도 이미 불러온 articles를 재배열만 할 뿐 추가 요청을 하지 않는다.
+  const filtered =
+    category === ALL_CATEGORY
+      ? distributeAcrossSectors(articles ?? [])
+      : (articles ?? []).filter((article) => article.sector === category);
 
   // Fired at the moment the user leaves for the original article — moved
   // here from the record-writing screen's own mount effect, which used to
   // fire this same event once the screen (reached via this exact click)
   // loaded; that screen now skips it for this entry_point specifically so
   // the two don't double-count the same open (see its own comment).
-  function handleArticleOpen(article: LatestNewsItem) {
+  //
+  // Native (iOS/Android) only: opens in an in-app browser instead of
+  // letting the click fall through to a plain external-origin navigation
+  // (see src/lib/native/article-browser.ts for why — a reliable "완료"/Done
+  // button back into the app). `event.preventDefault()` stops the
+  // native WKWebView from ever starting that navigation in the first
+  // place. The web path is untouched: `isNativePlatform()` is false there,
+  // so this always returns before reaching preventDefault, and the `<a
+  // href>` does its normal same-tab navigation exactly as before.
+  function handleArticleOpen(article: LatestNewsItem, event: MouseEvent) {
     trackClick("home_news_item_open", { sector: article.sector });
     track("article_opened", {
       source_type: "external",
@@ -101,6 +122,12 @@ export default function LatestNewsList() {
       fromPath: "/",
     });
     handleArticleRead(article);
+
+    if (!isNativePlatform()) return;
+    event.preventDefault();
+    import("@/lib/native/article-browser").then(({ openArticleInBrowser }) =>
+      openArticleInBrowser(article.url),
+    );
   }
 
   // Keyed by URL (see read-articles.ts) — the same article reads as read
@@ -114,13 +141,24 @@ export default function LatestNewsList() {
     });
   }
 
-  return (
-    <section className="pt-5">
-      <h2 className="px-5 text-[15px] font-bold text-foreground">최신 경제뉴스</h2>
+  // Per-card "기록하기" — sends this article straight into the existing
+  // external-record flow (see RecordCardAction) without opening the
+  // original article first, so it deliberately does NOT call
+  // handleArticleOpen/handleArticleRead (those are "the user went to read
+  // it" signals; this is "the user wants to record it").
+  function handleRecordAction(article: LatestNewsItem) {
+    trackClick("home_news_card_record_action", { sector: article.sector });
+  }
 
-      <div className="mt-3">
-        <CategoryTabs selected={category} onSelect={setCategory} />
-      </div>
+  function recordHref(article: LatestNewsItem): string {
+    const params = new URLSearchParams({ title: article.title, sector: article.sector });
+    if (isHttpUrl(article.url)) params.set("url", article.url);
+    return `/record/new/external?${params.toString()}`;
+  }
+
+  return (
+    <section className="mt-3">
+      <CategoryTabs selected={category} onSelect={setCategory} />
 
       <div
         id="news-explorer-panel"
@@ -148,60 +186,85 @@ export default function LatestNewsList() {
           <div className="flex flex-col gap-2.5">
             {filtered.map((article, index) => {
               const isRead = readUrls.has(article.url);
-              const cardClassName =
-                "flex items-center gap-3 rounded-2xl border border-border-subtle px-4 py-3.5 active:bg-background";
-              const cardBody = (
-                <>
-                  {article.imageUrl ? (
-                    <NewsThumbnail src={article.imageUrl} read={isRead} />
-                  ) : null}
-                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <p
-                      className={`type-article-title leading-snug transition-colors duration-300 ${
-                        isRead ? "text-[#9CA3AF]" : "text-foreground"
-                      }`}
-                    >
-                      {article.title}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-                      <span>{article.press}</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{formatDate(article.publishedAt)}</span>
-                      <SectorBadge sector={article.sector} muted={isRead} />
-                    </div>
-                  </div>
-                </>
-              );
-
-              // Safe fallback for a feed entry with no usable URL — falls
-              // back to the existing internal write-flow entry point
-              // (which already handles a missing/invalid URL gracefully
-              // with its own "올바른 기사 주소가 아니에요" message) instead
-              // of ever navigating to a broken link.
-              if (!isHttpUrl(article.url)) {
-                return (
-                  <Link
-                    key={`${article.title}-${article.publishedAt}`}
-                    href={`/record/new/external?title=${encodeURIComponent(article.title)}&sector=${encodeURIComponent(article.sector)}`}
-                    onClick={() => handleArticleRead(article)}
-                    data-onboarding-target={index === 0 ? "news-card-first" : undefined}
-                    className={cardClassName}
-                  >
-                    {cardBody}
-                  </Link>
-                );
-              }
+              const hasUrl = isHttpUrl(article.url);
+              const cardKey = hasUrl ? article.url : `${article.title}-${article.publishedAt}`;
 
               return (
-                <a
-                  key={article.url}
-                  href={article.url}
-                  onClick={() => handleArticleOpen(article)}
+                <div
+                  key={cardKey}
                   data-onboarding-target={index === 0 ? "news-card-first" : undefined}
-                  className={cardClassName}
+                  // iOS WebKit (Safari and this app's own Capacitor WebView
+                  // alike) only evaluates `:active` on tap for elements
+                  // that have a touch listener of their own — true for the
+                  // old plain `<a>` card (anchors are exempt), not for a
+                  // bare `<div>`. The now-moved-here `active:bg-background`
+                  // needs this no-op listener to keep working on a tap.
+                  onTouchStart={() => undefined}
+                  className="relative flex items-center gap-1.5 rounded-2xl border border-border-subtle px-4 py-3.5 active:bg-background"
                 >
-                  {cardBody}
-                </a>
+                  {/* Stretched link: covers the whole card so tapping
+                      anywhere except the "기록하기" action below keeps the
+                      existing open-article (or, for a URL-less entry, the
+                      write-flow fallback) behavior. A sibling of
+                      RecordCardAction rather than its wrapper — nesting two
+                      interactive elements breaks keyboard/screen-reader
+                      navigation — positioned (`absolute`) so it paints
+                      above the plain-static thumbnail/text below it, and
+                      under RecordCardAction's own `relative` stacking. */}
+                  {hasUrl ? (
+                    <a
+                      href={article.url}
+                      onClick={(event) => handleArticleOpen(article, event)}
+                      aria-label={article.title}
+                      className="absolute inset-0 rounded-2xl"
+                    />
+                  ) : (
+                    // Safe fallback for a feed entry with no usable URL —
+                    // falls back to the existing internal write-flow entry
+                    // point (which already handles a missing/invalid URL
+                    // gracefully with its own "올바른 기사 주소가 아니에요"
+                    // message) instead of ever navigating to a broken link.
+                    <Link
+                      href={recordHref(article)}
+                      onClick={() => handleArticleRead(article)}
+                      aria-label={article.title}
+                      className="absolute inset-0 rounded-2xl"
+                    />
+                  )}
+
+                  {/* Own gap-3 (12px, thumbnail↔text) nested inside the
+                      outer row — kept separate from the outer row's gap
+                      (6px, this wrapper↔RecordCardAction) since a single
+                      flex container can't give two adjacent-pair gaps
+                      different sizes. min-w-0 flex-1 here (and again on the
+                      text column below) lets the title shrink/wrap first,
+                      so it can never grow under the action button. */}
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {article.imageUrl ? (
+                      <NewsThumbnail src={article.imageUrl} read={isRead} />
+                    ) : null}
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <p
+                        className={`type-article-title leading-snug transition-colors duration-300 ${
+                          isRead ? "text-[#9CA3AF]" : "text-foreground"
+                        }`}
+                      >
+                        {article.title}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                        <span>{article.press}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{formatDate(article.publishedAt)}</span>
+                        <SectorBadge sector={article.sector} muted={isRead} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <RecordCardAction
+                    href={recordHref(article)}
+                    onClick={() => handleRecordAction(article)}
+                  />
+                </div>
               );
             })}
           </div>

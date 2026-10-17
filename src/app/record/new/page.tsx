@@ -79,10 +79,12 @@ function NewRecordForm() {
       : "external";
 
   // Fires once per mount: the true start of a *new* record's funnel. Bare
-  // /record/new (no articleId) is only ever reached from RecordFab; a
-  // URL-paste on this screen then redirects to /record/new/external,
-  // which recognizes that continuation (no title/sector params) and does
-  // not fire its own record_started.
+  // /record/new (no articleId) used to be reached from the floating FAB
+  // (`RecordFab`); now that it's removed from every screen, this route has
+  // no in-app entry point left and is reachable only by navigating to the
+  // URL directly. A URL-paste on this screen then redirects to
+  // /record/new/external, which recognizes that continuation (no
+  // title/sector params) and does not fire its own record_started.
   const trackedStartRef = useRef(false);
   useEffect(() => {
     if (isEditMode || authLoading || trackedStartRef.current) return;

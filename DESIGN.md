@@ -19,6 +19,7 @@ colors:
   primary-pressed: "#1b64da" # --point-dark · active 상태 전용
   muted-foreground: "#8b95a1" # --muted · 보조 텍스트 색 (배경색 아님)
   border: "#eef0f3" # --border-subtle
+  record-action-background: "#eff6ff" # --record-action-background · Figma colors/record-action-background · 홈 뉴스 카드 "기록하기" 액션 배경(RecordCardAction) 전용
   # CSS 변수 없이 Tailwind 기본 클래스로 쓰이는 역할 (미토큰화)
   primary-foreground: "white" # text-white on bg-point
   destructive: "red-500" # Tailwind 기본 red-500 · text-red-500 / bg-red-500
@@ -31,6 +32,7 @@ typography:
   article-title: { fontSize: 14px, fontWeight: semibold } # type-article-title = --text-sm + --font-weight-semibold
   input: { fontSize: 16px, fontWeight: medium } # type-input = --text-base + --font-weight-medium
   chip: { fontSize: 14px, fontWeight: medium, lineHeight: 21px } # type-chip = Figma type-14-medium (--text-sm + --font-weight-medium + --spacing×5.25)
+  record-action: { fontSize: 12px, fontWeight: bold, lineHeight: auto } # type-record-action = Figma type-12-bold. 홈 뉴스 카드 "기록하기" 액션(RecordCardAction). 줄 높이 미지정 → 상속 1.5 = 18px(코드 대응값, Components → 기록하기 액션 참고)
   record-card-title: { fontSize: 16px, fontWeight: medium, lineHeight: 24px, lines: 1 } # type-record-card-title, 한 줄 말줄임 포함
   memo-body: { fontSize: 16px, fontWeight: medium, lineHeight: 24px } # type-memo-body = --text-base + --font-weight-medium + --spacing×6
   page-title: { fontSize: 20px, fontWeight: extrabold } # text-xl
@@ -51,7 +53,7 @@ rounded:
   xl: 12px # rounded-xl · 버튼, 입력창, 채움 박스
   2xl: 16px # rounded-2xl · 카드, 다이얼로그, 썸네일
   3xl: 24px # rounded-t-3xl · 바텀시트 상단만
-  full: 9999px # rounded-full · 칩, 뱃지, 아이콘 버튼, FAB
+  full: 9999px # rounded-full · 칩, 뱃지, 아이콘 버튼, FAB(TermDictionaryButton)
 spacing:
   app-max-width: 430px # max-w-[430px]
   page-gutter: 20px # px-5
@@ -70,7 +72,7 @@ shadows:
 zIndex:
   dropdown: 10
   banner: 20
-  bar: 30 # BackHeader, BottomNav, RecordFab
+  bar: 30 # BackHeader, BottomNav
   floating: 40 # TermDictionaryButton
   modal: 50 # 시트, 다이얼로그, 토스트
 components:
@@ -161,6 +163,12 @@ components:
 | `primary-pressed` | `--point-dark` | `#1b64da` | `active:bg-point-dark` 전용 |
 | `muted-foreground` | `--muted` | `#8b95a1` | 보조 텍스트, 비활성 탭, 닫기 아이콘 |
 | `border` | `--border-subtle` | `#eef0f3` | 카드·입력창 테두리, 구분선 |
+| `record-action-background` | `--record-action-background` | `#eff6ff` | 홈 뉴스 카드 "기록하기" 액션 배경(`RecordCardAction`) 전용 — Figma `colors/record-action-background` |
+
+`record-action-background`는 `primary`를 어떤 투명도로 흰 배경 위에 얹어도
+나오지 않는 고유 값이라(확인함), `bg-point/N` 조합을 재사용하지 않고 새
+토큰으로 추가했습니다. `foreground`·`surface`·`primary` 등 다른 역할과
+섞어 쓰지 않습니다.
 
 CSS 변수가 없는 역할은 Tailwind 기본 클래스로 직접 씁니다.
 
@@ -199,10 +207,11 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 
 | 역할 | 클래스 | 크기 | 굵기 | 행간(기존 값 유지) | 사용 범위 |
 | --- | --- | --- | --- | --- | --- |
-| 칩 | `type-chip` (Figma `type-14-medium`) | 14px | Medium 500 | **21px 지정**(`--spacing` × 5.25) | 홈 분야 필터(`CategoryTabs`), 기록 작성·수정의 섹터 선택 칩(`RecordFormFields`, `ExternalRecordFields`) — 선택·미선택 공통. 메모 힌트 칩(12.5px), 뱃지, 버튼, 라벨은 제외 |
+| 칩 | `type-chip` (Figma `type-14-medium`) | 14px | Medium 500 | **21px 지정**(`--spacing` × 5.25) | 홈·내 기록 분야 필터(`CategoryTabs`), 기록 작성·수정의 섹터 선택 칩(`RecordFormFields`, `ExternalRecordFields`) — 선택·미선택 공통. 메모 힌트 칩(12.5px), 뱃지, 버튼, 라벨은 제외 |
 | 헤더 제목 | `type-header-title` (Figma `MOAYO/header-title`) | 16px | Bold 700 | 지정 안 함(상속, 1.5 → 24px) | 기록 작성 첫 단계(`/record/new` URL 입력)의 "기사 URL을 붙여넣어주세요" 안내 제목(`mb-2`, `text-foreground`). DESIGN.md의 기존 `typography.header-title`을 코드로 옮긴 것. BackHeader 제목·프로필 이름 등 다른 16px Bold는 아직 `text-[16px] font-bold`를 직접 씀(결과는 같음) |
 | 섹션 제목 | `type-section-title` | 14px | Bold 700 | 지정 안 함(상속, 1.5 → 21px) | 기록 작성·수정 화면(일반 `RecordFormFields`, 외부 기사 `ExternalRecordFields`)의 "섹터 *" 라벨(`mb-2`, 아래 8px). DESIGN.md의 기존 `typography.section-title`을 코드로 옮긴 것 |
 | 기사 제목 | `type-article-title` | 14px | Semibold 600 | 홈 뉴스 카드 `leading-snug`(1.375 → 19.25px), 내 기록 카드 상속(1.5 → 21px) | 홈 최신 뉴스 목록(`LatestNewsList`), 내 기록 목록(`RecordCard`) |
+| 뉴스 카드 액션 | `type-record-action` (Figma `type-12-bold`) | 12px | Bold 700 | 지정 안 함(상속, 1.5 → 18px) | 홈 뉴스 카드의 "기록하기" 액션(`RecordCardAction`, Components → 기록하기 액션 참고) |
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
 | 기록 카드 제목 | `type-record-card-title` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6) | ① 기록 상세(`/record/[id]`) "회고 기록" 목록 카드의 비교 기록 제목(날짜와 같은 flex 줄, `min-w-0 flex-1` + 날짜 `shrink-0`) ② 투자회고(회고 수정, `/record/[id]/reflection/[reflectionId]`) 화면의 과거·지금 기록 카드 제목 2곳. **한 줄 + 말줄임(…)** 을 역할에 포함(`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). 완료 화면 등 다른 화면의 기록 제목, 카드 본문·날짜·뱃지는 제외 |
 | 메모 본문 | `type-memo-body` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 기록 상세(`/record/[id]`)의 메모 본문: "뉴스 기록"(기존 '나의 메모') 상자와 "투자에 적용하기" 상자. 섹션 제목, 빈 메모 안내(13.5px muted), 작성·수정 화면 입력창은 제외 |
@@ -216,7 +225,9 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
   `type-article-title`을 쓰지 않습니다.
 - **역할 구분**: `type-record-card-title`·`type-input`·`type-memo-body`는 크기·굵기
   (16px / 500)가 같아도 용도가 달라 따로 정의합니다(입력값 / 메모 본문 / 한 줄 제목).
-  서로 바꿔 쓰지 않습니다.
+  서로 바꿔 쓰지 않습니다. `type-record-action`도 `type-nav-label`과 크기(12px)와
+  줄 높이 처리(둘 다 지정 안 함, 상속)는 같지만 굵기(Bold 700 vs Medium 500)와 용도
+  (뉴스 카드 액션 라벨 vs 하단 내비 탭 라벨)가 달라 따로 정의했습니다.
 - **한 줄 말줄임 규칙**: `type-record-card-title`은 블록 요소에 써서 부모 폭에 맞춰
   잘리게 합니다. flex·grid의 자식으로 쓸 때는 그 자식(또는 감싸는 flex 자식)에
   `min-w-0`을 함께 줘야 말줄임이 작동합니다. 기록 상세 회고 목록은 제목에
@@ -239,7 +250,7 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 18px | 3 | 기록 제목, 온보딩 제목 — bold, `leading-snug` |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
 | 16px (`text-base` 포함) | 4 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 29곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold |
-| 15px | 9 | 다이얼로그·섹션 제목(bold) |
+| 15px | 10 | 다이얼로그·섹션 제목(bold), `MonthPicker`의 연·월 레이블(bold) |
 | 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
 | 14px (`text-sm` 포함) | 33 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
 | 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
@@ -259,8 +270,8 @@ spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 �
 `form-field-gap`(24px, 아래 "입력 항목 간격")과 `detail-section-gap`(22px, 아래
 "기록 상세 섹션") 두 개입니다.
 
-- **앱 컬럼**: `mx-auto max-w-[430px] bg-surface`. `fixed` 요소(내비, FAB,
-  시트, 배너)도 같은 `inset-x-0 mx-auto max-w-[430px]`로 컬럼에 맞춥니다.
+- **앱 컬럼**: `mx-auto max-w-[430px] bg-surface`. `fixed` 요소(내비, 시트,
+  배너)도 같은 `inset-x-0 mx-auto max-w-[430px]`로 컬럼에 맞춥니다.
 - **좌우 여백**: 페이지 `px-5`(20px, 51회), 카드·입력창 내부 `px-4`(16px, 35회).
 - **세로 패딩**: 카드 `py-3.5`(14px), textarea `py-3`(12px), 칩 `py-1.5`(6px).
   텍스트 버튼(`button-48`, 48px)과 한 줄 입력창(`h-[50px]`)은 세로 패딩 대신
@@ -302,9 +313,12 @@ spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 �
   공유하지 않으므로, 하나를 바꿔도 다른 바는 영향받지 않습니다.
 - **Safe area**: 하단 고정 요소는 `env(safe-area-inset-bottom)`을 더하고, 탭
   화면 본문은 `paddingBottom: calc(7.5rem + env(safe-area-inset-bottom))`을
-  inline style로 줍니다(BottomNav 64px + RecordFab 56px 기준. Bottom Navigation
-  섹션의 "의존 값" 참고).
-- **z-index**: 10(드롭다운) · 20(배너) · 30(헤더/내비/FAB) · 40(사전 버튼) ·
+  inline style로 줍니다. 세 탭(`/`, `/records`, `/mypage`) 모두 같은 값을
+  쓰는데, 숫자 자체는 BottomNav 64px에 과거 `RecordFab`(56px)을 더해 정했던
+  값이 그대로 남아 있는 것입니다 — `RecordFab`은 2026-10-17 `/records`에서도
+  제거되어 이제 이 세 화면 어디에도 FAB이 없지만, 패딩 숫자는 바꾸지
+  않았습니다(Bottom Navigation 섹션의 "의존 값" 참고).
+- **z-index**: 10(드롭다운) · 20(배너) · 30(헤더/내비) · 40(사전 버튼) ·
   50(시트/다이얼로그/온보딩/토스트).
 
 ## Elevation & Depth
@@ -314,7 +328,7 @@ spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 �
 | 토큰 | 값 | 사용처 |
 | --- | --- | --- |
 | `sm` | `shadow-sm` | 앱 컬럼 |
-| `lg` | `shadow-lg` | RecordFab, TermDictionaryButton, ArticleReturnBanner, 드롭다운 메뉴, 안내 팝오버, Toast |
+| `lg` | `shadow-lg` | TermDictionaryButton, ArticleReturnBanner, 드롭다운 메뉴, 안내 팝오버, Toast |
 | `sheet` | `0 -8px 24px rgba(0,0,0,0.12)` | 바텀시트 3종 |
 
 BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리를 씁니다.
@@ -326,15 +340,15 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | --- | --- | --- | --- |
 | `xl` | 12px | 43 | 버튼, 입력창, 채움 박스, 드롭다운, 리스트 썸네일 |
 | `2xl` | 16px | 22 | 카드, 확인 다이얼로그, 대표 이미지, EmptyState |
-| `full` | 9999px | 22 | 칩, 뱃지, 아이콘 버튼, FAB, pill 버튼, 아바타 |
+| `full` | 9999px | 19 | 칩, 뱃지, 아이콘 버튼, FAB(TermDictionaryButton), pill 버튼, 아바타 |
 | `3xl` | 24px | 3 | 바텀시트 상단(`rounded-t-3xl`) |
-| `lg` | 8px | 2 | `/webview-test` 전용 |
+| `lg` | 8px | 3 | `/webview-test`(2곳) + 홈 뉴스 카드 "기록하기" 액션(`RecordCardAction`) |
 
 ### Icons
 
 아이콘 라이브러리 없이 inline SVG를 씁니다. 공통 규칙은 `viewBox="0 0 24 24"`,
 `fill="none"`, `stroke="currentColor"`, round cap/join입니다. 크기는
-24px(하단 내비, FAB), 22px(사전 버튼), 20px(뒤로가기), 18/16px(닫기),
+24px(하단 내비), 22px(사전 버튼), 20px(뒤로가기), 18/16px(닫기),
 18px(원문 보기 화살표), 32px(별점)이고 `strokeWidth`는 2(11회)가 기본,
 1.8(4회), 2.5(3회), 1.5가 섞여 있습니다. 이미지는 `next/image`를 씁니다.
 
@@ -386,11 +400,14 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   구분하며, 작게 만들려고 크기·굵기를 따로 지정하지 않습니다.
 - **제외 범위** (각자 스타일 유지)
   - 아이콘 전용 버튼 — 뒤로가기, 닫기, 더보기, 별점(`h-8`·`h-9` 등)
-  - FAB — RecordFab, TermDictionaryButton
+  - FAB — TermDictionaryButton
   - 칩·탭 — 섹터·메모 힌트 칩, CategoryTabs
   - 하단 내비게이션 — BottomNav
   - 일반 링크·인라인 텍스트 액션 — "원문 보기"(`ArticleOriginalLink`), 완료
     화면 "수정", 안내 팝오버 "닫기", 온보딩 "건너뛰기", 용어 카드 "삭제"
+  - 뉴스 카드 전용 액션 — 홈 뉴스 카드 "기록하기"(`RecordCardAction`, 배경 있는
+    필 모양이라 위 "일반 링크·인라인 텍스트 액션"과도 다름 — Components →
+    기록하기 액션 참고)
   - 목록·메뉴 행 — 마이페이지 메뉴 카드·로그아웃·탈퇴, 기록 상세 더보기 메뉴
     항목, 뉴스·기록 카드
   - `/webview-test`
@@ -423,16 +440,85 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   SemiBold(600)로 그려져 한글 획이 조금 얇아졌으며, 화살표 획 굵기는 다시
   비교하지 않았습니다.
 - **접근성 이름**: 아이콘이 `aria-hidden`이라 링크 이름은 `원문 보기`입니다.
-- **사용법**: `className`에는 바깥 여백 같은 레이아웃만 넘깁니다(`mt-1` 등).
+- **사용법**: `className`에는 바깥 여백 같은 레이아웃만 넘깁니다. 호출하는
+  쪽이 자기 위에 오는 요소와의 간격을 직접 정하므로, 앞에 다른 요소가
+  없거나 그 요소가 이미 아래쪽 여백을 갖고 있다면(기록 상세처럼) 이
+  컴포넌트 자체에는 `className`을 아예 안 줄 수도 있습니다.
 
   ```tsx
   <ArticleOriginalLink href={record.url} onClick={handleOpen} className="mt-1" />
   ```
 
-- **사용 화면**: 기록 상세(`/record/[id]`, 제목 아래), 외부 기사 기록
-  작성·수정(`/record/new/external`, `ArticleOpenExternalBar`의 ⓘ 안내 버튼 왼쪽).
+- **사용 화면**: 기록 상세(`/record/[id]`, **2026-10-17부터 제목 위** —
+  섹터/날짜 행 바로 다음, 제목이 `mt-1`로 이 링크와의 간격을 가짐), 외부
+  기사 기록 작성·수정(`/record/new/external`, `ArticleOpenExternalBar`의
+  ⓘ 안내 버튼 왼쪽).
 - **규칙**: 원문을 여는 링크는 이 컴포넌트를 재사용하고, 문구·스타일을 화면별로
   따로 만들지 않습니다.
+- **`ArticleOpenExternalBar`는 상쇄 margin 없음** (2026-10-17, `-mr-1` →
+  `-mr-0.5` → 제거 순으로 조정) — 이 아이콘의 화살표 SVG는
+  `viewBox 0 0 24 24`인데 글자 획 자체는 그 안의 10×10 정도만 차지해서,
+  아이콘 박스 오른쪽에 ~5px의 투명한 여백이 남습니다. 바로 옆 ⓘ 버튼과의
+  `gap-1`(4px)에 이 투명 여백이 그대로 더해져, 시각적 간격은 4px보다
+  넓습니다. Figma 인증 없이 수동으로 확인을 반복하며 간격을 2px씩 늘린
+  결과이며, 더 넓혀야 하면 `gap-1`을 `gap-1.5`(6px) 등으로 올립니다.
+  기록 상세의 단독 사용(원문 보기만 있고 옆에 아무것도 없음)에는 영향
+  없습니다. ⓘ 버튼 쪽 원인(아래)과 함께 봐야 전체 그림이 맞습니다.
+
+#### 기록하기 액션 — `RecordCardAction` (공통, Figma 노드 `109:1347`, 프레임 "개편안 2")
+
+홈 뉴스 카드마다 붙는 "기록하기" 액션. 기사를 먼저 열지 않고 그 기사의 URL을
+바로 기존 외부 기록 작성 화면(`/record/new/external`)으로 넘깁니다.
+**2026-10-17 디자인 교체**: 연필 아이콘 + 배경 없는 14px 인라인 링크였던
+"개편안 1" 디자인("기록하기 액션" 이전 버전)을 아래 배경 있는 필 버튼("개편안
+2")으로 완전히 대체했습니다 — 아이콘 없음, 새 배경 토큰 사용.
+
+| 항목 | 값 | 토큰 |
+| --- | --- | --- |
+| 문구 | `기록하기` (고정, 아이콘 없음) | — |
+| 배경 | `bg-record-action-background` (`#EFF6FF`) | `colors.record-action-background` (Figma `colors/record-action-background`) |
+| 글자색 | `text-point` | `colors.primary` |
+| radius | `rounded-lg` (8px) | `rounded.lg` |
+| 패딩 | 좌우 12px(`px-3`), 상하 8px(`py-2`) — 둘 다 Tailwind 기본 4px 스케일 값, 새 임의값 없음 | — |
+| 서체 | `type-record-action` (12px Bold 700, 줄 높이 미지정 → 상속 1.5 = 18px) | Typography → 역할 스타일 |
+| 테두리·그림자 | 없음 | — |
+| Figma 시각 크기 | 69×30px | — |
+| 실제 렌더링 크기 | 약 69×34px(패딩 8+8 + 줄 높이 18px) — Figma의 줄 높이가 "Auto"라 Figma 자체도 강제 값을 안 주므로, 코드도 `type-header-title`·`type-section-title`과 같은 규칙대로 줄 높이를 지정하지 않고 상속에 맡겼습니다. 그 결과 세로로 4px 더 큽니다(폭은 거의 동일) — 고정 `h-[30px]`를 주지 않은 의도적 차이입니다 | — |
+| 터치 영역 | `before:absolute before:-inset-2`로 시각 영역 바깥 8px까지 확장(레이아웃 크기에는 영향 없음) — 실제 박스(약 69×34px)만으로는 Apple HIG의 44×44pt 권장 터치 영역에 못 미쳐서 필요 | — |
+| 눌림 상태 | 없음(`active:` 미지정) | — |
+
+- **버튼 규칙의 예외**: Button 섹션의 `button-48`/`type-button`(48px, 16px Semibold)은
+  저장·다음 같은 CTA용 규칙입니다. 이 액션은 배경·radius·패딩이 있어 CTA 버튼처럼
+  보이지만 크기·서체가 전혀 다른 "뉴스 카드 전용 액션"이라 그 규칙을 쓰지 않습니다
+  (Button 섹션 "제외 범위" 참고). Chip과도 다릅니다 — Chip은 `type-chip`(14px
+  Medium, 21px 지정)과 `rounded-full`을 쓰고 선택 상태가 있지만, 이 액션은
+  `type-record-action`(12px Bold, 줄 높이 상속)과 `rounded-lg`를 쓰고 상태가 없습니다.
+- **배치**: 카드 오른쪽. 왼쪽 기사 정보(썸네일+텍스트)를 감싸는 안쪽 `flex` 묶음과
+  바깥 행 사이 간격이 **6px**(`gap-1.5`) — 썸네일↔텍스트 사이의 기존 12px(`gap-3`)와는
+  별개 값이라, 안쪽 묶음을 `flex min-w-0 flex-1 items-center gap-3`로 따로 감싸고
+  바깥 행의 `gap`을 6px로 낮췄습니다(한 flex 컨테이너는 인접 쌍마다 다른 gap을 줄 수
+  없어서). `shrink-0`이라 제목이 길어져도 액션 폭은 줄지 않고, 제목 쪽
+  (`min-w-0 flex-1`, 안쪽 묶음에도 한 번 더)이 먼저 줄바꿈됩니다 — 320px·393px에서도
+  겹치지 않습니다. 세로 정렬은 바깥 행의 `items-center`가 맡습니다.
+- **DOM 구조**: 카드를 감싸던 기존 `<a>`를, 카드 전체를 덮는 절대 위치
+  `<a>`(원문 열기/기록 작성 폴백용 "스트레치드 링크")로 바꾸고 `RecordCardAction`은 그
+  형제로 둡니다. `<a>` 안에 `<button>`/`<Link>`를 중첩하면 키보드·스크린리더 탐색이
+  깨지기 때문입니다. `RecordCardAction`에 `relative`를 줘서 그 스트레치드 링크 위에
+  그려지게 하고, 썸네일(`NewsThumbnail`, 내부에 `position: relative`가 있어 그대로 두면
+  스트레치드 링크보다 위에 그려짐)에는 `pointer-events-none`을 줘서 탭이 항상 스트레치드
+  링크로 전달되게 합니다.
+- **동작**: 클릭 시 해당 기사의 `url`·`title`·`sector`를 query string으로 붙여
+  `/record/new/external`로 이동(URL이 없는 피드 항목은 `url` 없이 `title`·`sector`만,
+  `ArticleReturnBanner`의 "기록하기"가 쓰는 것과 같은 패턴). 카드의 원문 열기용
+  `handleArticleOpen`/`handleArticleRead`(읽음 처리, `article_opened` 트래킹, 복귀
+  배너용 `saveArticleReturnInfo`)는 호출하지 않습니다 — 이 액션은 "읽으러 간다"가
+  아니라 "바로 기록한다"는 별도 의도라서입니다. 로그인 여부는 확인하지 않습니다
+  (`/record/new/external`의 저장 로직이 비로그인 사용자도 로컬 저장으로 처리하는
+  기존 동작을 그대로 재사용). **2026-10-17**: 홈 화면의 `RecordFab`(카드 오른쪽
+  하단에 떠 있던 전역 "기록하기" 진입점)은 제거되어, 이제 홈에서 기록을 시작하는
+  방법은 이 액션뿐입니다. `RecordFab`은 그 뒤 `/records`(내 기록 탭)에서도
+  제거되고 컴포넌트 자체도 삭제되어, 이제 앱 어디에도 이 FAB이 남아 있지 않습니다.
+- **사용 화면**: 홈 최신 뉴스 목록(`LatestNewsList`)의 모든 카드.
 
 ### Input / Textarea — 공통 컴포넌트 없음 (inline)
 
@@ -512,15 +598,25 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   bg-background px-2.5 py-1 text-xs font-medium text-foreground/70`.
   Variant: 기본 / `muted`(`text-foreground/40`, 읽은 기사). 사용: 홈, 내 기록,
   기록 상세·완료·회고, 기사 상세.
+  - **AI 칩**(`TermDictionarySheet`, 2026-10-17) — `SectorBadge`와 똑같은
+    시각 레시피를 그대로 쓰지만 공통 컴포넌트가 아니라 인라인 `<button>`입니다
+    (`SectorBadge`는 `<span>`이라 탭 동작을 넣을 수 없어 별도 작성 —
+    다른 `SectorBadge` 사용처에는 영향 없음). 경제용어 검색 결과 카드의
+    용어 제목 오른쪽에 `shrink-0`으로 고정 — 제목이 길어 줄바꿈돼도 칩
+    크기는 바뀌지 않습니다(`RecordCardAction`과 같은 `before:absolute
+    before:-inset-2` 터치 영역 확장 포함, 시각 박스만으로는 44×44pt에
+    못 미쳐서). 탭하면(호버 아님) 바로 아래 "AI가 생성한 설명으로,
+    부정확할 수 있어요." 안내가 토글로 나타납니다 — 이전엔 카드 하단에
+    항상 떠 있던 문구였는데, 이 칩을 탭해야만 보이도록 바뀌었습니다.
 - **Chip** — 공통 컴포넌트 없음 (inline), 글자는 공통 스타일 `type-chip`.
   분야 선택. `rounded-full px-3 py-1.5 type-chip`.
   - 글자: **14px / Medium 500 / 줄 높이 21px** — `type-chip` = Figma `type-14-medium`
     (`--text-sm`, `--font-weight-medium`, `--spacing` × 5.25). 높이는 패딩 포함 33px.
   - State: 선택 `bg-point text-white` / 비선택 `bg-background text-foreground/70`.
     두 상태 모두 같은 `type-chip`을 쓰고 색만 다릅니다.
-  - 칩 사이 간격 `gap-2`(8px). 홈 필터는 한 줄 가로 스크롤(`whitespace-nowrap`),
+  - 칩 사이 간격 `gap-2`(8px). 홈·내 기록 필터는 한 줄 가로 스크롤(`whitespace-nowrap`),
     섹터 칩은 `flex-wrap`으로 줄바꿈(393px 3줄, 320px 4줄).
-  - 사용: CategoryTabs(홈 분야 필터), RecordFormFields·ExternalRecordFields(섹터 선택).
+  - 사용: CategoryTabs(홈·내 기록 분야 필터), RecordFormFields·ExternalRecordFields(섹터 선택).
   - 예외: 메모 힌트 칩(RecordFormFields)은 `text-[12.5px] font-medium`으로 별도 유지.
 
   ```tsx
@@ -532,16 +628,35 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 ### Tabs
 
-- `CategoryTabs` (공통). 홈 뉴스 목록의 분야 필터. `role="tablist"`, 방향키
-  이동 지원, 가로 스크롤(`no-scrollbar`).
+- `CategoryTabs` (공통). 분야 필터. `role="tablist"`, 방향키 이동 지원,
+  가로 스크롤(`no-scrollbar`).
 - 시각 스타일은 Chip과 동일(`type-chip`, 14px Medium). Variant·Size 없음. State: 선택 / 비선택.
-- 사용 화면: 홈(LatestNewsList).
+- **`ariaLabel`·`panelId` props** (기본값은 홈의 기존 문구·id를 그대로 유지):
+  각 화면의 `aria-label`과 연결된 `role="tabpanel"`의 `id`가 서로 달라야 해서
+  2026-10-17 내 기록 탭 재사용 시 추가했습니다. 두 화면이 동시에 마운트되는
+  일이 없어 `id` 자체가 겹쳐도 동작엔 문제가 없었겠지만, 스크린리더가 읽는
+  의미(`aria-label`)까지는 화면마다 달라야 해서 prop으로 분리했습니다.
+- **필터 로직은 화면마다 다름**: 홈은 서버에서 받아온 기사 목록을
+  `article.sector === category`로 직접 비교(기사는 항상 최신 10개 분류
+  체계로 분류되어 들어옴, `news-classification-v2.ts`) — 클라이언트에
+  이미 있는 목록만 다시 필터링하므로 선택이 바뀌어도 추가 요청이 없습니다.
+  내 기록은 과거 8개 분류 체계로 저장된 기록이 섞여 있을 수 있어
+  **2026-10-17부터 쿼리 단계에서** `getSectorValuesForCategory(category)`
+  (`news-categories.ts` — `resolveCategoryForSector`의 역매핑, 구분류
+  이름까지 포함)로 구한 sector 값 목록을 월별 쿼리의 `sector IN (...)`
+  조건에 그대로 넘깁니다(Components → 그 외 공통 컴포넌트의
+  `MonthPicker` 참고). 즉 섹터를 바꾸면 선택된 월 안에서 새 쿼리가 한 번
+  나갑니다(전체 기록을 받아와 클라이언트에서 거르지 않음).
+- 사용 화면: 홈(`LatestNewsList`, `ariaLabel`/`panelId` 기본값, 매번
+  클라이언트 재필터링), 내 기록(`RecordsPage`, `ariaLabel="분야별 기록
+  필터"`, `panelId="records-explorer-panel"`, `MonthPicker` 아래 배치,
+  섹터 변경 시 쿼리 재요청).
 
 ### Dialog / Bottom Sheet
 
 | 종류 | 스타일 | 구현 | 사용 화면 |
 | --- | --- | --- | --- |
-| Bottom Sheet | `fixed bottom-0 max-w-[430px] rounded-t-3xl bg-surface p-5` + `shadows.sheet`, safe-area 하단 패딩 | `RatingPromptSheet`, `FirstRecordLoginPromptSheet`, `TermDictionarySheet` (각자 셸을 직접 작성) | 기록 완료·상세, 마이페이지, 외부 기록 작성 |
+| Bottom Sheet | `fixed bottom-0 max-w-[430px] rounded-t-3xl bg-surface p-5` + `shadows.sheet`, safe-area 하단 패딩 | `RatingPromptSheet`, `FirstRecordLoginPromptSheet`, `TermDictionarySheet`, `MonthPicker`의 연월 선택 시트(`YearMonthSheet`) (각자 셸을 직접 작성) | 기록 완료·상세, 마이페이지, 외부 기록 작성, 내 기록 |
 | Confirm Dialog | 중앙 정렬, `max-w-[320px] rounded-2xl bg-surface p-5`, 버튼 2개(outline + destructive) | inline 3곳 | 기록 상세(삭제), 마이페이지(탈퇴), 검색한 용어(삭제) |
 | Popover / Menu | `rounded-xl border border-border-subtle bg-surface shadow-lg z-10` | inline 2곳 | 기록 상세 더보기 메뉴, ArticleOpenExternalBar 안내 |
 
@@ -549,6 +664,13 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **Size**: Bottom Sheet는 내용 높이(용어 사전만 `max-h-[80dvh]`), Dialog는 320px 고정.
 - **State**: 열림/닫힘만 존재. 진입·퇴장 애니메이션 없음.
 - **토큰**: `surface`, `overlay`, `border`, `rounded.3xl`, `rounded.2xl`, `shadows.sheet`.
+- **`ArticleOpenExternalBar`의 ⓘ 버튼** (2026-10-17) — 원래 `h-9 w-9`
+  고정 박스에 글자를 가운데 정렬했는데, 이 박스 크기 자체가 "원문 보기"
+  링크와의 `gap-1`(4px) 계산에 끼어들어 체감 간격이 훨씬 넓어 보였습니다.
+  이제 버튼 자체는 글자 크기만큼만 차지하고(`before:-inset-[10px]`로
+  ~36px 터치 영역·눌림 배경만 레이아웃에 영향 없이 바깥으로 확장) —
+  `RecordCardAction`(Components → 기록하기 액션)이 이미 쓰는 것과 같은
+  기법입니다. 보이는 아이콘 크기·색·눌림 피드백은 전과 동일합니다.
 
 ### Bottom Navigation
 
@@ -573,9 +695,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   | 위치 | 이전 | 이후 |
   | --- | --- | --- |
   | 탭 화면 본문 하단 패딩(`/`, `/records`, `/mypage`) | `calc(7rem + env(safe-area-inset-bottom))` | `calc(7.5rem + env(safe-area-inset-bottom))` |
-  | `RecordFab` bottom 오프셋 | `calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem)` | `calc(4rem + env(safe-area-inset-bottom) + 0.75rem)` |
+  | `RecordFab` bottom 오프셋(2026-10-17 컴포넌트 자체가 삭제되어 이 행은 더 이상 존재하지 않음) | `calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem)` | `calc(4rem + env(safe-area-inset-bottom) + 0.75rem)` |
   | `ArticleReturnBanner` bottom 오프셋 | `calc(3.5rem + env(safe-area-inset-bottom) + 0.5rem)` | `calc(4rem + env(safe-area-inset-bottom) + 0.5rem)` |
-  | `Toaster`의 하단 내비 경로 오프셋(첫 항만 nav, 둘째 `3.5rem`은 RecordFab 자체 높이라 변경 없음) | `calc(3.5rem + 0.75rem + 3.5rem + 0.75rem + …)` | `calc(4rem + 0.75rem + 3.5rem + 0.75rem + …)` |
+  | `Toaster`의 하단 내비 경로 오프셋(첫 항만 nav, 둘째 `3.5rem`은 RecordFab 자체 높이라 변경 없음) | `calc(3.5rem + 0.75rem + 3.5rem + 0.75rem + …)` | `calc(4rem + 0.75rem + 3.5rem + 0.75rem + …)`(이후 `RecordFab` 삭제로 다시 바뀜 — 아래 Toast 섹션 참고) |
   | `/record/new/external` 하단 패딩 | `calc(7rem + …)` | **변경 안 함** — 이 화면은 BottomNav를 쓰지 않아(`isBottomNavPath` 목록 밖) nav 높이와 무관한 값입니다 |
 - Variant·Size 없음. State: 활성 `text-point` / 비활성 `text-muted`.
 - **토큰**: `surface`, `border`, `primary`, `muted-foreground`, `spacing.nav-content-height`, `typography.nav-label`.
@@ -620,8 +742,11 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **위치**: 하단 가운데. `fixed inset-x-0 mx-auto max-w-[430px]`로 앱 컬럼에
   맞춥니다. 하단 오프셋은 inline style이며 경로에 따라 둘 중 하나입니다.
   - 하단 내비 경로(`/`, `/records`, `/mypage`, `isBottomNavPath()`로 판별):
-    `calc(4rem + 0.75rem + 3.5rem + 0.75rem + env(safe-area-inset-bottom))`.
-    순서대로 BottomNav 콘텐츠 높이(64px), RecordFab 간격, RecordFab 높이, 간격입니다.
+    `calc(4rem + 1.25rem + env(safe-area-inset-bottom))`. 순서대로 BottomNav
+    콘텐츠 높이(64px), 그 외 경로와 같은 1.25rem 간격입니다. **2026-10-17**:
+    `RecordFab`이 `/records`에서도 제거되어 세 탭 모두 FAB이 없어졌으므로,
+    FAB 높이·간격만큼 더하던 기존 값(`calc(4rem + 0.75rem + 3.5rem + 0.75rem + …)`)에서
+    FAB 관련 부분을 걷어내고 그 외 경로와 같은 1.25rem 간격만 남겼습니다.
   - 그 외 경로: `calc(1.25rem + env(safe-area-inset-bottom))`.
 - **표시 시점**: `queueToast`로 대기한 토스트는 도착 화면의 로딩이 끝나 실제
   콘텐츠가 렌더링된 뒤(`"ready"`) 표시됩니다. 이동 중이나 로딩 화면 위에는
@@ -675,8 +800,19 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - `BackHeader` — `sticky top-0 h-14 border-b bg-surface/95 backdrop-blur`,
   뒤로가기 + 16px bold 제목 + 우측 슬롯. 탭 화면을 제외한 9개 화면.
 - `EmptyState` — dashed 카드. 제목 14px semibold + 설명 13px muted.
+- `MonthPicker` — 내 기록 전용 월 선택. 레이블(`text-[15px] font-bold`) +
+  좌우 화살표(`BackHeader` 뒤로가기와 같은 `h-9 w-9 rounded-full`, 20px
+  아이콘). 레이블 탭 시 연/월 그리드 바텀시트(위 Dialog / Bottom Sheet의
+  `YearMonthSheet`)가 열리고, 월 칩은 Chip 규칙(`rounded-full type-chip`,
+  선택 `bg-point text-white`)을 그대로 씀. 현재 KST 월보다 미래인 달은
+  `disabled:opacity-60`로 비활성. 일 단위 선택 없음. 사용 화면: 내 기록.
 - `LoginPrompt` — 로그인 유도 블록 (검색한 용어).
-- `OnboardingGuide` — 스포트라이트 코치마크 (`rgba(0,0,0,0.72)`).
+- `OnboardingGuide` — 스포트라이트 코치마크 (`rgba(0,0,0,0.72)`). 설명 문구
+  박스 너비는 기본 300px(`spacing.dialog-max-width`인 320px보다 작음) 고정이지만,
+  2단계만 문장이 길어 마지막 어절이 혼자 줄바꿈되는 문제가 있어 2단계에
+  한해 320px(`spacing.dialog-max-width`와 동일 값 재사용)로 넓히고
+  `break-keep`(단어 중간 줄바꿈 방지)을 적용했습니다. 1단계와 화살표·
+  스포트라이트·버튼 위치 계산은 영향 없음.
 - `SocialLoginButtons` — Google·Apple 로그인 버튼 세로 묶음(`gap-2`). 로그인 중인
   provider만 "이동 중..."으로 라벨이 바뀌고, 응답을 기다리는 동안 두 버튼 모두
   `disabled`. `/login`, `/mypage`(비로그인 상태)에서 재사용.
@@ -709,8 +845,6 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   (22회)이 비슷한 역할에 혼용.
 - **`background`의 이중 역할** — 페이지 배경과 입력창·칩의 채움색이 같은 토큰.
   `--muted`는 이름과 달리 텍스트 색.
-- **FAB 그림자 색** — `shadow-black/25`(RecordFab), `shadow-black/10`
-  (TermDictionaryButton), `shadow-point/30`(FabButton).
 
 ### 타이포그래피
 
@@ -723,7 +857,6 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   `text-[14px]`, `text-base`와 `text-[16px]`. Tailwind 프리셋은 행간까지
   지정하므로 결과도 미세하게 다름.
 - **콘텐츠 제목 크기** — 기사 상세 19px vs 기록 상세 18px.
-- **섹션 제목 크기** — 홈 "최신 경제뉴스" 15px vs 마이페이지·기록 상세 14px.
 - **섹션 제목 표기** — `type-section-title`은 섹터 라벨에만 연결돼 있고, 기록
   상세·마이페이지의 14px Bold 섹션 제목은 아직 `text-[14px] font-bold`를 직접 씀
   (결과는 같음). `type-header-title`도 마찬가지로 URL 단계 안내 제목에만 연결돼
@@ -745,25 +878,25 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **Bottom Sheet** — 셸(overlay + 컨테이너)이 3개 컴포넌트에 복제.
   Escape 닫기는 `FirstRecordLoginPromptSheet`에만 구현.
 - **닫기 아이콘** — 시트 18px vs 배너 16px. 아이콘 `strokeWidth` 4종.
-- **하단 오프셋** — `7.5rem`, `4rem + 0.75rem`, `4rem + 0.5rem`, `5rem`(미사용
-  `FabButton`), Toast의 `4rem + 0.75rem + 3.5rem + 0.75rem` / `1.25rem`이
-  inline style 매직 넘버로 흩어져 있음(토큰을 참조하지 않고 각자 숫자로 적힘).
-  전부 BottomNav·RecordFab 크기를 직접 더한 값이라 두 요소의 크기가 바뀌면
-  함께 고쳐야 함 — 2026-10-17 BottomNav 콘텐츠 높이를 56px→64px로 바꾸면서
-  이 값들을 전부 +0.5rem(nav 쪽 항만) 올렸지만, 여러 파일에 나뉜 숫자를 손으로
-  맞추는 구조 자체는 바뀌지 않았음(Bottom Navigation → "의존 값" 표 참고).
+- **하단 오프셋** — `7.5rem`, `4rem + 0.5rem`, Toast의 `4rem + 1.25rem` /
+  `1.25rem`이 inline style 매직 넘버로 흩어져 있음(토큰을 참조하지 않고 각자
+  숫자로 적힘). 전부 BottomNav 크기를 직접 더한 값이라 BottomNav 크기가
+  바뀌면 함께 고쳐야 함 — 2026-10-17 BottomNav 콘텐츠 높이를 56px→64px로
+  바꾸면서 이 값들을 전부 +0.5rem(nav 쪽 항만) 올렸지만, 여러 파일에 나뉜
+  숫자를 손으로 맞추는 구조 자체는 바뀌지 않았음(Bottom Navigation → "의존
+  값" 표 참고). `RecordFab`·`FabButton`은 이후 모두 삭제되어 이 숫자들에서
+  빠졌습니다.
 - **Toast**
   - "서버 요청 성공 뒤 표시"는 로그인 사용자에게만 해당합니다. 비로그인
     사용자는 localStorage 저장이 끝난 뒤 표시됩니다.
   - Supabase 삭제(`records.ts`의 `deleteRecord`)는 지워진 행이 0개여도 오류를
     내지 않아, 실제로 삭제되지 않은 경우에도 삭제 토스트가 뜰 수 있습니다.
-  - 오프셋은 경로만 보고 정합니다. `/mypage`에는 FAB이 없지만 FAB 높이만큼
-    떠 있고, 홈에서 ArticleReturnBanner가 보일 때(FAB 숨김)는 배너와 겹칠 수
-    있습니다.
+  - 오프셋은 경로만 보고 정합니다. 홈에서 ArticleReturnBanner가 보일 때는
+    배너와 겹칠 수 있습니다.
   - 퇴장 애니메이션과 수동 닫기가 없습니다.
   - `foreground`를 배경색으로 쓰는 유일한 사례입니다(다른 곳은 텍스트 색).
-- **미사용 컴포넌트** — `FabButton`, `NewsCarousel`(및 이를 통해서만 쓰이는
-  `NewsCard`)은 어디에서도 import하지 않음.
+- **미사용 컴포넌트** — `NewsCarousel`(및 이를 통해서만 쓰이는 `NewsCard`)은
+  어디에서도 import하지 않음.
 
 ## 향후 토큰화가 필요한 항목
 

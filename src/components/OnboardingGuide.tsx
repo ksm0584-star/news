@@ -4,32 +4,38 @@ import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 /**
- * First-visit, 3-step spotlight coach mark for the home screen: step 1
- * highlights the first news card, step 2 highlights the floating
- * "기록하기" button (RecordFab), step 3 highlights the bottom nav's "내
- * 기록" tab. All three targets already live on this screen (RecordFab and
- * the bottom nav are both fixed, rendered from the root layout), so the
- * whole guide runs without any navigation between steps.
+ * First-visit, 2-step spotlight coach mark for the home screen: step 1
+ * highlights the first news card, step 2 highlights the bottom nav's "내
+ * 기록" tab. Both targets already live on this screen (the bottom nav is
+ * fixed, rendered from the root layout), so the whole guide runs without
+ * any navigation between steps.
+ *
+ * 2026-10-17: the old step 2 (highlighting the floating "기록하기"
+ * button, `RecordFab`) was removed from this screen — recording now starts
+ * from each news card's own "기록하기" action (`RecordCardAction`) instead.
+ * `RecordFab` itself has since been removed entirely (it was later also
+ * dropped from `/records`, its last screen). Steps renumbered; copy for the
+ * remaining two steps was unchanged by that removal (step 1's copy was
+ * separately reworded afterward — see STEP_COPY).
  *
  * Deliberately no speech-bubble/tooltip box: a dark overlay with a
  * transparent "hole" over the target, a Primary-colored title + white
  * description floating directly on the overlay, and an SVG arrow between
- * the text and the target — see DESIGN.md note below.
+ * the text and the target — see the color note below.
  *
  * Targets are found via `[data-onboarding-target]` attributes (see
- * LatestNewsList.tsx / RecordFab.tsx / BottomNav.tsx) rather than refs,
- * since they live in different parts of the component tree (one inside
- * the page, two in the root layout).
+ * LatestNewsList.tsx / BottomNav.tsx) rather than refs, since they live in
+ * different parts of the component tree (one inside the page, one in the
+ * root layout).
  *
- * No DESIGN.md exists in this repo (checked) — "Primary 컬러" is this
- * app's one accent color, already used everywhere else as `text-point` /
- * `bg-point` (see globals.css's `--point` token), so the step title uses
- * that same token.
+ * "Primary 컬러" is this app's one accent color — DESIGN.md's `primary`
+ * role, implemented as globals.css's `--point` and used everywhere else as
+ * `text-point` / `bg-point` — so the step title uses that same token.
  */
 const STORAGE_KEY = "moayo:onboarding-completed-v2";
 const POLL_INTERVAL_MS = 200;
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2;
 
 interface TargetRect {
   top: number;
@@ -40,22 +46,16 @@ interface TargetRect {
 
 const TARGET_SELECTOR: Record<Step, string> = {
   1: "news-card-first",
-  2: "write-nav",
-  3: "records-nav",
+  2: "records-nav",
 };
 
 const STEP_COPY: Record<Step, { title: string; description: string; cta: string }> = {
   1: {
-    title: "관심 있는 뉴스를 발견해요",
-    description: "뉴스를 읽고 나만의 생각을 기록해 보세요.",
+    title: "뉴스를 읽고 생각을 남겨보세요",
+    description: "관심 있는 뉴스를 읽고 나만의 생각을 기록해 보세요.",
     cta: "다음",
   },
   2: {
-    title: "외부 뉴스도 기록할 수 있어요",
-    description: "다른 곳에서 발견한 뉴스 링크를 첨부해 기록해 보세요.",
-    cta: "다음",
-  },
-  3: {
     title: "기록을 모아 다시 돌아봐요",
     description: "과거의 생각을 확인하고 달라진 관점을 발견해 보세요.",
     cta: "시작하기",
@@ -165,7 +165,7 @@ export default function OnboardingGuide() {
     });
   }, []);
 
-  // All three targets only exist on the home screen. Wait for the first
+  // Both targets only exist on the home screen. Wait for the first
   // news card to actually render — not while the list is still loading —
   // then start step 1.
   useEffect(() => {
@@ -228,7 +228,7 @@ export default function OnboardingGuide() {
   const copy = STEP_COPY[activeStep];
 
   function handlePrimary() {
-    if (activeStep === 3) {
+    if (activeStep === 2) {
       finish();
     } else {
       activateStep((activeStep + 1) as Step);
@@ -243,7 +243,19 @@ export default function OnboardingGuide() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  const blockWidth = Math.min(300, vw - margin * 2);
+  // Step 2's description is one 어절 longer than step 1's, and without
+  // `break-keep` below the browser's default CJK line-breaking (which
+  // allows a break between any two Hangul syllables, not just at spaces)
+  // can strand its trailing "요." alone on a 3rd line. Capping step 2's
+  // block a bit wider gives that sentence room to settle into a clean
+  // 2-line wrap instead — reusing the existing dialog-max-width token
+  // (DESIGN.md spacing.dialog-max-width, 320px) rather than inventing a
+  // new number. Still clamped by `vw - margin * 2` below, so this never
+  // overflows a narrow screen; it only matters once the viewport is wide
+  // enough for the cap itself to be the binding constraint. Step 1 keeps
+  // the original 300px cap, untouched.
+  const maxBlockWidth = activeStep === 2 ? 320 : 300;
+  const blockWidth = Math.min(maxBlockWidth, vw - margin * 2);
   let blockLeft = rect.left + rect.width / 2 - blockWidth / 2;
   blockLeft = Math.min(Math.max(blockLeft, margin), vw - blockWidth - margin);
 
@@ -306,7 +318,15 @@ export default function OnboardingGuide() {
         }}
       >
         <p className="text-[18px] font-bold leading-snug text-point">{copy.title}</p>
-        <p className="mt-2 text-[14px] leading-6 text-white">{copy.description}</p>
+        <p
+          className={`mt-2 text-[14px] leading-6 text-white ${
+            // keep-all only here — step 1's own description never needs it
+            // and this must not change step 1's rendering at all.
+            activeStep === 2 ? "break-keep" : ""
+          }`}
+        >
+          {copy.description}
+        </p>
 
         <div className="mt-6 flex items-center justify-center gap-5">
           <button

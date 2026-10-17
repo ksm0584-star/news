@@ -61,3 +61,24 @@ export function resolveCategoryForSector(sector: string): NewsCategory | undefin
   }
   return getCategoryForSector(sector);
 }
+
+/**
+ * The inverse of resolveCategoryForSector: every raw `sector` string a
+ * stored record could have that resolves to `category` — the category's
+ * own (current-taxonomy) name plus any legacy sector name SECTOR_TO_CATEGORY
+ * maps to it. Lets a DB/localStorage query filter by `sector IN (...)` for a
+ * chosen category without duplicating the mapping table — derived from the
+ * exact same SECTOR_TO_CATEGORY used above, so the two can never disagree.
+ * Never called with ALL_CATEGORY (callers branch on that separately, since
+ * "전체" means no sector restriction at all, not a list of values).
+ */
+export function getSectorValuesForCategory(category: NewsCategory): string[] {
+  // A Set, not a plain array push — a few SECTOR_TO_CATEGORY entries (e.g.
+  // 반도체, 에너지) map a legacy name to the identical current-taxonomy
+  // name, which would otherwise duplicate `category` itself in the result.
+  const values = new Set<string>([category]);
+  for (const [legacySector, mapped] of Object.entries(SECTOR_TO_CATEGORY)) {
+    if (mapped === category) values.add(legacySector);
+  }
+  return [...values];
+}

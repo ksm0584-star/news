@@ -6,9 +6,14 @@ import { NEWS_CATEGORIES, type NewsCategory } from "@/lib/news-categories";
 export default function CategoryTabs({
   selected,
   onSelect,
+  ariaLabel = "분야별 뉴스 탐색",
+  panelId = "news-explorer-panel",
 }: {
   selected: NewsCategory;
   onSelect: (category: NewsCategory) => void;
+  /** Defaults match the original home-only usage — only a second mount (e.g. 내 기록) needs to override these. */
+  ariaLabel?: string;
+  panelId?: string;
 }) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -42,7 +47,7 @@ export default function CategoryTabs({
   return (
     <div
       role="tablist"
-      aria-label="분야별 뉴스 탐색"
+      aria-label={ariaLabel}
       className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-1"
     >
       {NEWS_CATEGORIES.map((category, index) => {
@@ -56,7 +61,7 @@ export default function CategoryTabs({
             type="button"
             role="tab"
             aria-selected={isSelected}
-            aria-controls="news-explorer-panel"
+            aria-controls={panelId}
             tabIndex={isSelected ? 0 : -1}
             onClick={() => onSelect(category)}
             onKeyDown={(event) => handleKeyDown(event, index)}

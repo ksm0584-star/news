@@ -22,10 +22,7 @@ const config: CapacitorConfig = {
   appName: "모아요",
   webDir: "capacitor-shell",
   server: {
-    // TEMPORARY while validating /webview-test on the iOS Simulator — there's
-    // no address bar in the native shell, so this is how the app lands
-    // directly on that screen. Revert to "http://localhost:3000" afterward.
-    url: "http://localhost:3000/webview-test",
+    url: "http://localhost:3000",
     cleartext: true,
   },
 };

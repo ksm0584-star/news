@@ -19,9 +19,9 @@ import {
  *
  * Bottom offset clears whatever is pinned to the bottom of the current
  * screen: on the three tab screens that's BottomNav (64px content height,
- * `--spacing-nav-content-height`) plus RecordFab's own 0.75rem gap and h-14
- * button, plus another 0.75rem gap; elsewhere just the 1.25rem the bottom
- * sheets also use. Both add the safe-area inset.
+ * `--spacing-nav-content-height`) plus the same 1.25rem gap the bottom
+ * sheets use; elsewhere it's just that 1.25rem on its own. Both add the
+ * safe-area inset.
  */
 export default function Toaster() {
   const toast = useSyncExternalStore(subscribeToast, getToast, () => null);
@@ -38,7 +38,7 @@ export default function Toaster() {
   }, [toast]);
 
   const bottom = isBottomNavPath(pathname)
-    ? "calc(4rem + 0.75rem + 3.5rem + 0.75rem + env(safe-area-inset-bottom))"
+    ? "calc(4rem + 1.25rem + env(safe-area-inset-bottom))"
     : "calc(1.25rem + env(safe-area-inset-bottom))";
 
   return (

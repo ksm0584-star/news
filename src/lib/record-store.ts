@@ -1,6 +1,8 @@
 import type { User } from "@supabase/supabase-js";
 import * as remote from "./records";
 import * as local from "./local-records";
+import { subscribe } from "./records";
+import type { MonthRange } from "./month-range";
 import type { NewsRecord, Reflection, ReflectionResult } from "./types";
 
 /**
@@ -29,6 +31,60 @@ export async function getRecordCount(user: User | null): Promise<number> {
 
 export async function getRecord(user: User | null, id: string): Promise<NewsRecord | null> {
   return user ? remote.getRecord(id) : local.getRecord(id);
+}
+
+/**
+ * Caches getRecordsForMonth/getRecordCountForMonth results by exact
+ * (user, range, sector) key, so re-visiting a month/sector combo already
+ * seen this session skips the request entirely — until any write
+ * (createRecord/updateRecord/deleteRecord, either backend, both already
+ * call records.ts's emitChange()) clears the whole cache below. Caching the
+ * *promise* (not just the resolved value) also de-dupes two near-simultaneous
+ * calls for the same key into a single request, and a rejected promise is
+ * evicted immediately so a failed fetch never poisons the cache.
+ */
+const monthCache = new Map<string, Promise<NewsRecord[]>>();
+const monthCountCache = new Map<string, Promise<number>>();
+subscribe(() => {
+  monthCache.clear();
+  monthCountCache.clear();
+});
+
+function monthCacheKey(user: User | null, range: MonthRange, sectorValues: string[] | null): string {
+  const sectorKey = sectorValues ? [...sectorValues].sort().join(",") : "*";
+  return `${user?.id ?? "anon"}|${range.startIso}|${range.endIsoExclusive}|${sectorKey}`;
+}
+
+export function getRecordsForMonth(
+  user: User | null,
+  range: MonthRange,
+  sectorValues: string[] | null,
+): Promise<NewsRecord[]> {
+  const key = monthCacheKey(user, range, sectorValues);
+  const cached = monthCache.get(key);
+  if (cached) return cached;
+
+  const promise = (user ? remote.getRecordsForMonth(range, sectorValues) : local.getRecordsForMonth(range, sectorValues))
+    .catch((err) => {
+      monthCache.delete(key);
+      throw err;
+    });
+  monthCache.set(key, promise);
+  return promise;
+}
+
+export function getRecordCountForMonth(user: User | null, range: MonthRange): Promise<number> {
+  const key = monthCacheKey(user, range, null);
+  const cached = monthCountCache.get(key);
+  if (cached) return cached;
+
+  const promise = (user ? remote.getRecordCountForMonth(range) : local.getRecordCountForMonth(range))
+    .catch((err) => {
+      monthCountCache.delete(key);
+      throw err;
+    });
+  monthCountCache.set(key, promise);
+  return promise;
 }
 
 export async function createRecord(
