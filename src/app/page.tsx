@@ -21,7 +21,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}>
+    <div style={{ paddingBottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}>
       <header className="flex items-center justify-between px-5 pt-6 pb-1">
         <h1 className="text-xl font-extrabold text-foreground">모아요</h1>
       </header>

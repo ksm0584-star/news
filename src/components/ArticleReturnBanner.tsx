@@ -3,7 +3,7 @@
 /**
  * Home-only floating CTA banner — not a toast (no auto-dismiss timer) and
  * not a modal/bottom-sheet (doesn't block the rest of the screen). Sits
- * just above BottomNav (h-14 + safe-area + an 8px gap), using the same
+ * just above BottomNav (64px content height + safe-area + an 8px gap), using the same
  * `inset-x-0 mx-auto max-w-[430px]` centering BottomNav itself uses, so it
  * stays aligned with the app's mobile-width column on a wide desktop
  * window without needing a separate measured offset.
@@ -25,7 +25,7 @@ export default function ArticleReturnBanner({
 }) {
   return (
     <div
-      style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom) + 0.5rem)" }}
+      style={{ bottom: "calc(4rem + env(safe-area-inset-bottom) + 0.5rem)" }}
       className="fixed inset-x-0 z-20 mx-auto w-full max-w-[430px] px-4"
     >
       <div className="flex items-start gap-3 rounded-2xl border border-border-subtle bg-surface p-4 shadow-lg">

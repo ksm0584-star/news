@@ -10,7 +10,7 @@ const TABS = [
     label: "뉴스",
     tab: "news",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <rect x="3" y="4" width="14" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
         <path
           d="M7 8h6M7 11h6M7 14h3"
@@ -33,7 +33,7 @@ const TABS = [
     label: "내 기록",
     tab: "records",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
           d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z"
           stroke="currentColor"
@@ -49,7 +49,7 @@ const TABS = [
     label: "마이페이지",
     tab: "mypage",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
         <path
           d="M5 20c1.2-3.5 4-5.5 7-5.5s5.8 2 7 5.5"
@@ -87,7 +87,7 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-[430px] border-t border-border-subtle bg-surface pb-[env(safe-area-inset-bottom)]">
-      <div className="flex h-14">
+      <div className="flex h-nav-content-height">
         {TABS.map((tab) => (
           <Link
             key={tab.href}
@@ -95,7 +95,7 @@ export default function BottomNav() {
             onClick={() => track("bottom_nav_clicked", { tab: tab.tab })}
             aria-current={pathname === tab.href ? "page" : undefined}
             data-onboarding-target={tab.onboardingTarget}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${
+            className={`flex flex-1 flex-col items-center justify-center gap-0.5 type-nav-label ${
               pathname === tab.href ? "text-point" : "text-muted"
             }`}
           >

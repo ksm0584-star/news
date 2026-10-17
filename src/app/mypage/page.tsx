@@ -109,7 +109,7 @@ export default function MyPage() {
   }
 
   return (
-    <div style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}>
+    <div style={{ paddingBottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}>
       <BackHeader title="마이페이지" />
 
       {user ? (

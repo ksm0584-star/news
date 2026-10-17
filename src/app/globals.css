@@ -27,6 +27,11 @@
   /* Gap between titled sections on the record detail screen (뉴스 기록 →
      투자에 적용하기 → 회고 기록): 22px. Generates mt-detail-section-gap. */
   --spacing-detail-section-gap: calc(var(--spacing) * 5.5);
+  /* BottomNav's content height (icon + label row, safe-area padding is
+     separate) — 64px. Named apart from BackHeader's height (still the bare
+     `h-14` utility, 56px) so changing this can never move the header.
+     Generates h-nav-content-height / etc. */
+  --spacing-nav-content-height: calc(var(--spacing) * 16);
 }
 
 /* Typography roles (DESIGN.md Typography → 역할 스타일). Size and weight only,
@@ -83,6 +88,15 @@
   font-size: var(--text-base); /* 16px */
   font-weight: var(--font-weight-medium); /* 500 */
   line-height: calc(var(--spacing) * 6); /* 24px */
+}
+
+/* BottomNav tab label — Figma "MOAYO/nav-label", updated there to 12px.
+   Size only, reusing the existing 12px step (--text-xs, same size as
+   badge/meta text) rather than a new value; weight stays Medium like
+   before. Active/inactive color stays on each tab (text-point/text-muted). */
+@utility type-nav-label {
+  font-size: var(--text-xs); /* 12px */
+  font-weight: var(--font-weight-medium); /* 500 */
 }
 
 @utility type-input {

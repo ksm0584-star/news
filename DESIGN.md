@@ -45,7 +45,7 @@ typography:
   caption: { fontSize: 12.5px }
   meta: { fontSize: 12px } # text-xs
   micro: { fontSize: 11.5px }
-  nav-label: { fontSize: 11px, fontWeight: medium }
+  nav-label: { fontSize: 12px, fontWeight: medium } # type-nav-label = Figma MOAYO/nav-label(12px로 수정) · BottomNav 탭 라벨에 연결
 rounded:
   lg: 8px # rounded-lg · /webview-test에서만 사용
   xl: 12px # rounded-xl · 버튼, 입력창, 채움 박스
@@ -60,7 +60,8 @@ spacing:
   stack-gap: 8px # gap-2
   detail-section-gap: 22px # globals.css --spacing-detail-section-gap(--spacing×5.5) → mt-detail-section-gap · 기록 상세 섹션 사이
   form-field-gap: 24px # Figma spacing/form-field-gap · globals.css --spacing-form-field-gap(--spacing×6) → mb-form-field-gap · 기록 폼 입력 항목 사이
-  bar-height: 56px # h-14 · BackHeader, BottomNav
+  bar-height: 56px # h-14 · BackHeader 전용. BottomNav는 더 이상 이 값을 쓰지 않음(아래 nav-content-height로 분리)
+  nav-content-height: 64px # globals.css --spacing-nav-content-height(--spacing×16) → h-nav-content-height · BottomNav 콘텐츠 영역(세이프 에어리어 제외)
   dialog-max-width: 320px # max-w-[320px]
 shadows:
   sm: "shadow-sm" # 앱 컬럼
@@ -117,7 +118,7 @@ components:
   bottom-nav:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.border}"
-    height: 56px
+    height: 64px # 콘텐츠 영역만(세이프 에어리어 패딩은 바깥에 별도 추가). {spacing.nav-content-height}
     activeColor: "{colors.primary}"
     inactiveColor: "{colors.muted-foreground}"
   toast:
@@ -206,6 +207,7 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 기록 카드 제목 | `type-record-card-title` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6) | ① 기록 상세(`/record/[id]`) "회고 기록" 목록 카드의 비교 기록 제목(날짜와 같은 flex 줄, `min-w-0 flex-1` + 날짜 `shrink-0`) ② 투자회고(회고 수정, `/record/[id]/reflection/[reflectionId]`) 화면의 과거·지금 기록 카드 제목 2곳. **한 줄 + 말줄임(…)** 을 역할에 포함(`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). 완료 화면 등 다른 화면의 기록 제목, 카드 본문·날짜·뱃지는 제외 |
 | 메모 본문 | `type-memo-body` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 기록 상세(`/record/[id]`)의 메모 본문: "뉴스 기록"(기존 '나의 메모') 상자와 "투자에 적용하기" 상자. 섹션 제목, 빈 메모 안내(13.5px muted), 작성·수정 화면 입력창은 제외 |
 | 입력창 내부 텍스트 | `type-input` | 16px | Medium 500 | textarea `leading-6`(24px), 한 줄 input·평가 의견 상속(1.5 → 24px) | 모든 제품 input·textarea의 입력값과 placeholder: URL, 기록 제목(2), 용어 검색, 나의 메모, 기사 정리, 투자에 적용하기, 평가 의견. `/webview-test` 제외 |
+| 하단 내비 라벨 | `type-nav-label` (Figma `MOAYO/nav-label`) | 12px(2026-10-17까지 11px) | Medium 500 | 지정 안 함(상속) | `BottomNav`의 탭 라벨 3곳(뉴스·내 기록·마이페이지). 아이콘은 24×24px(기존 22px), 콘텐츠 높이는 `h-nav-content-height`(64px, 기존 56px) |
 
 - 색상은 역할에 포함하지 않습니다. 기사 제목은 `text-foreground`(홈은 읽은 기사
   `#9CA3AF`), 입력창은 `text-foreground`를 요소에서 그대로 지정합니다.
@@ -243,9 +245,8 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
 | 13px | 34 | 설명, 에러 |
 | 12.5px | 14 | 캡션, 에러, 작은 링크 |
-| 12px (`text-xs` 포함) | 21 | 뱃지, 메타 정보(언론사·날짜) |
+| 12px (`text-xs` 포함) | 21 + 역할 3 | 뱃지, 메타 정보(언론사·날짜), 하단 내비 라벨(`type-nav-label`, medium, 3곳 — 2026-10-17까지 11px) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
-| 11px | 3 | 하단 내비 라벨 — medium |
 
 굵기는 `font-semibold`(23, 역할 스타일 제외), `font-medium`(28), `font-bold`(28),
 `font-extrabold`(2)를 쓰고, 행간은 `leading-6`(본문·textarea),
@@ -295,10 +296,14 @@ spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 �
   - 외부 기사 기록의 `thought`를 `splitExternalContent`로 나눠 표시만 분리하며
     (저장 형식은 그대로), 투자에 적용하기를 쓰지 않은 기록은 그 섹션을 숨깁니다.
     일반 기록은 `thought` 전체가 "뉴스 기록"에 표시됩니다.
-- **고정 바**: BackHeader와 BottomNav 모두 `h-14`(56px).
+- **고정 바**: BackHeader는 `h-14`(56px, 변경 없음). BottomNav의 콘텐츠 영역은
+  별도 토큰 `h-nav-content-height`(64px, `--spacing-nav-content-height`,
+  Layout → Bottom Navigation 참고)를 씁니다 — 두 바는 더 이상 같은 값을
+  공유하지 않으므로, 하나를 바꿔도 다른 바는 영향받지 않습니다.
 - **Safe area**: 하단 고정 요소는 `env(safe-area-inset-bottom)`을 더하고, 탭
-  화면 본문은 `paddingBottom: calc(7rem + env(safe-area-inset-bottom))`을 inline
-  style로 줍니다.
+  화면 본문은 `paddingBottom: calc(7.5rem + env(safe-area-inset-bottom))`을
+  inline style로 줍니다(BottomNav 64px + RecordFab 56px 기준. Bottom Navigation
+  섹션의 "의존 값" 참고).
 - **z-index**: 10(드롭다운) · 20(배너) · 30(헤더/내비/FAB) · 40(사전 버튼) ·
   50(시트/다이얼로그/온보딩/토스트).
 
@@ -329,7 +334,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 아이콘 라이브러리 없이 inline SVG를 씁니다. 공통 규칙은 `viewBox="0 0 24 24"`,
 `fill="none"`, `stroke="currentColor"`, round cap/join입니다. 크기는
-22px(하단 내비·사전 버튼), 24px(FAB), 20px(뒤로가기), 18/16px(닫기),
+24px(하단 내비, FAB), 22px(사전 버튼), 20px(뒤로가기), 18/16px(닫기),
 18px(원문 보기 화살표), 32px(별점)이고 `strokeWidth`는 2(11회)가 기본,
 1.8(4회), 2.5(3회), 1.5가 섞여 있습니다. 이미지는 `next/image`를 씁니다.
 
@@ -548,11 +553,32 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 ### Bottom Navigation
 
 - `BottomNav` (공통, `layout.tsx`에서 마운트). `/`, `/records`, `/mypage`에서만 노출.
-- `fixed bottom-0 max-w-[430px] h-14 border-t border-border-subtle bg-surface`,
-  safe-area 하단 패딩. 탭 3개(뉴스·내 기록·마이페이지), 22px 아이콘 +
-  `text-[11px] font-medium` 라벨.
+- `fixed bottom-0 max-w-[430px] border-t border-border-subtle bg-surface`,
+  safe-area 하단 패딩(바깥). 탭 3개(뉴스·내 기록·마이페이지).
+
+| 항목 | 값 | 코드 | Figma |
+| --- | --- | --- | --- |
+| 콘텐츠 높이 | **64px** (세이프 에어리어 제외, 아이콘+라벨 영역만) | `h-nav-content-height` (`globals.css` `--spacing-nav-content-height`, `--spacing` × 16) | — |
+| 아이콘 | **24×24px** (기존 22px에서 변경) | `<svg width="24" height="24" viewBox="0 0 24 24">` | — |
+| 라벨 | **12px / Medium 500** (기존 11px에서 변경, 굵기는 유지) | `type-nav-label` (`globals.css`, `--text-xs` + `--font-weight-medium`) | `MOAYO/nav-label` (12px로 수정) |
+| 정렬 | 아이콘·라벨을 64px 안에서 가운데 정렬, 둘 사이 8px 중 절반(`gap-0.5`, 2px) | `flex flex-col items-center justify-center gap-0.5` | — |
+
+- **BackHeader와의 분리**: BackHeader는 여전히 `h-14`(56px, 변경 없음).
+  BottomNav의 콘텐츠 높이는 별도 토큰(`--spacing-nav-content-height`, 64px)이라
+  둘은 더 이상 같은 값을 공유하지 않습니다 — 이 중 하나를 바꿔도 다른 바는
+  영향받지 않습니다.
+- **의존 값 (BottomNav 높이가 바뀌면 함께 확인해야 함)**: BottomNav 콘텐츠가
+  56px → 64px(+8px = +0.5rem)로 바뀌면서, nav 높이를 끌어다 쓰는 다른 inline
+  style도 같은 양만큼 올렸습니다.
+  | 위치 | 이전 | 이후 |
+  | --- | --- | --- |
+  | 탭 화면 본문 하단 패딩(`/`, `/records`, `/mypage`) | `calc(7rem + env(safe-area-inset-bottom))` | `calc(7.5rem + env(safe-area-inset-bottom))` |
+  | `RecordFab` bottom 오프셋 | `calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem)` | `calc(4rem + env(safe-area-inset-bottom) + 0.75rem)` |
+  | `ArticleReturnBanner` bottom 오프셋 | `calc(3.5rem + env(safe-area-inset-bottom) + 0.5rem)` | `calc(4rem + env(safe-area-inset-bottom) + 0.5rem)` |
+  | `Toaster`의 하단 내비 경로 오프셋(첫 항만 nav, 둘째 `3.5rem`은 RecordFab 자체 높이라 변경 없음) | `calc(3.5rem + 0.75rem + 3.5rem + 0.75rem + …)` | `calc(4rem + 0.75rem + 3.5rem + 0.75rem + …)` |
+  | `/record/new/external` 하단 패딩 | `calc(7rem + …)` | **변경 안 함** — 이 화면은 BottomNav를 쓰지 않아(`isBottomNavPath` 목록 밖) nav 높이와 무관한 값입니다 |
 - Variant·Size 없음. State: 활성 `text-point` / 비활성 `text-muted`.
-- **토큰**: `surface`, `border`, `primary`, `muted-foreground`.
+- **토큰**: `surface`, `border`, `primary`, `muted-foreground`, `spacing.nav-content-height`, `typography.nav-label`.
 
 ### Toast
 
@@ -594,8 +620,8 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **위치**: 하단 가운데. `fixed inset-x-0 mx-auto max-w-[430px]`로 앱 컬럼에
   맞춥니다. 하단 오프셋은 inline style이며 경로에 따라 둘 중 하나입니다.
   - 하단 내비 경로(`/`, `/records`, `/mypage`, `isBottomNavPath()`로 판별):
-    `calc(3.5rem + 0.75rem + 3.5rem + 0.75rem + env(safe-area-inset-bottom))`.
-    순서대로 BottomNav 높이, RecordFab 간격, RecordFab 높이, 간격입니다.
+    `calc(4rem + 0.75rem + 3.5rem + 0.75rem + env(safe-area-inset-bottom))`.
+    순서대로 BottomNav 콘텐츠 높이(64px), RecordFab 간격, RecordFab 높이, 간격입니다.
   - 그 외 경로: `calc(1.25rem + env(safe-area-inset-bottom))`.
 - **표시 시점**: `queueToast`로 대기한 토스트는 도착 화면의 로딩이 끝나 실제
   콘텐츠가 렌더링된 뒤(`"ready"`) 표시됩니다. 이동 중이나 로딩 화면 위에는
@@ -719,10 +745,13 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **Bottom Sheet** — 셸(overlay + 컨테이너)이 3개 컴포넌트에 복제.
   Escape 닫기는 `FirstRecordLoginPromptSheet`에만 구현.
 - **닫기 아이콘** — 시트 18px vs 배너 16px. 아이콘 `strokeWidth` 4종.
-- **하단 오프셋** — `7rem`, `3.5rem + 0.75rem`, `3.5rem + 0.5rem`, `5rem`,
-  Toast의 `3.5rem + 0.75rem + 3.5rem + 0.75rem` / `1.25rem`이 inline style
-  매직 넘버로 흩어져 있음. Toast 오프셋은 BottomNav·RecordFab 크기를 직접
-  더한 값이라 두 요소의 크기가 바뀌면 함께 고쳐야 함.
+- **하단 오프셋** — `7.5rem`, `4rem + 0.75rem`, `4rem + 0.5rem`, `5rem`(미사용
+  `FabButton`), Toast의 `4rem + 0.75rem + 3.5rem + 0.75rem` / `1.25rem`이
+  inline style 매직 넘버로 흩어져 있음(토큰을 참조하지 않고 각자 숫자로 적힘).
+  전부 BottomNav·RecordFab 크기를 직접 더한 값이라 두 요소의 크기가 바뀌면
+  함께 고쳐야 함 — 2026-10-17 BottomNav 콘텐츠 높이를 56px→64px로 바꾸면서
+  이 값들을 전부 +0.5rem(nav 쪽 항만) 올렸지만, 여러 파일에 나뉜 숫자를 손으로
+  맞추는 구조 자체는 바뀌지 않았음(Bottom Navigation → "의존 값" 표 참고).
 - **Toast**
   - "서버 요청 성공 뒤 표시"는 로그인 사용자에게만 해당합니다. 비로그인
     사용자는 localStorage 저장이 끝난 뒤 표시됩니다.

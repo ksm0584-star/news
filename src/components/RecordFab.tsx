@@ -33,7 +33,7 @@ export default function RecordFab({ hidden = false }: { hidden?: boolean }) {
 
   return (
     <div
-      style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom) + 0.75rem)" }}
+      style={{ bottom: "calc(4rem + env(safe-area-inset-bottom) + 0.75rem)" }}
       className="pointer-events-none fixed inset-x-0 z-30 mx-auto w-full max-w-[430px] px-4"
     >
       <div className="flex justify-end">
