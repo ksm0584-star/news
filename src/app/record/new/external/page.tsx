@@ -136,25 +136,29 @@ function ExternalArticleView() {
     return () => window.removeEventListener("resize", updateOffset);
   }, []);
 
-  // Same measurement approach as the right offset above, but against the
-  // fixed save-button footer's own live top edge — this already reflects
-  // its current keyboard-aware position (it's pinned at `bottom:
-  // keyboardInsetPx`) and safe-area padding, so re-measuring whenever
-  // keyboardInsetPx changes keeps the dictionary button just above it,
-  // keyboard up or down, without double-counting either inset itself
-  // (see TermDictionaryButton's comment on why it no longer adds its own).
+  // The dictionary button sits just above the fixed save-button footer.
+  // Previously this re-measured the footer's *live rendered* rect
+  // (getBoundingClientRect()) every time keyboardInsetPx changed — but
+  // that rect is itself produced by a React commit + paint that has to
+  // happen first, so on iOS Safari (where keyboardInsetPx can update
+  // several times in quick succession while the keyboard animates open or
+  // closed) this button could read the footer's rect for the *previous*
+  // frame, one step behind — visible as it briefly jumping to, or
+  // vanishing to, the wrong spot before catching up. The footer's own
+  // *height* never changes with the keyboard (only its `bottom` does, via
+  // the same keyboardInsetPx this button also has) — so the only thing
+  // worth measuring is that height, once, and then this button's offset is
+  // a direct synchronous function of keyboardInsetPx, the same single
+  // source of truth the footer itself renders from, instead of a second
+  // value derived from the footer's own DOM output a frame later.
   const footerRef = useRef<HTMLDivElement>(null);
-  const [dictionaryBottomPx, setDictionaryBottomPx] = useState(76);
+  const [footerHeightPx, setFooterHeightPx] = useState<number | null>(null);
   useEffect(() => {
-    function updateOffset() {
-      const rect = footerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setDictionaryBottomPx(Math.max(0, Math.round(window.innerHeight - rect.top) + 12));
-    }
-    updateOffset();
-    window.addEventListener("resize", updateOffset);
-    return () => window.removeEventListener("resize", updateOffset);
-  }, [keyboardInsetPx]);
+    if (keyboardInsetPx !== 0 || footerHeightPx !== null) return;
+    const rect = footerRef.current?.getBoundingClientRect();
+    if (rect) setFooterHeightPx(Math.round(rect.height));
+  }, [keyboardInsetPx, footerHeightPx]);
+  const dictionaryBottomPx = (footerHeightPx ?? 76) + keyboardInsetPx + 12;
 
   function openDictionary() {
     track("dictionary_open", {
