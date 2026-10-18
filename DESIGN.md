@@ -20,6 +20,8 @@ colors:
   muted-foreground: "#8b95a1" # --muted · 보조 텍스트 색 (배경색 아님)
   border: "#eef0f3" # --border-subtle
   record-action-background: "#eff6ff" # --record-action-background · Figma colors/record-action-background · 홈 뉴스 카드 "기록하기" 액션 배경(RecordCardAction) 전용
+  coachmark-emphasis: "#5198ff" # --coachmark-emphasis · 코치마크(OnboardingGuide) 설명 단계 제목 전용 강조색. primary(#3182f6)와 다른 값이며 --point를 바꾸지 않음
+  coachmark-dim: "rgba(0,0,0,0.8)" # --coachmark-dim · 코치마크(OnboardingGuide) 스포트라이트 딤 전용. Dialog/Bottom Sheet의 overlay(black/40%)와 다른 값
   # CSS 변수 없이 Tailwind 기본 클래스로 쓰이는 역할 (미토큰화)
   primary-foreground: "white" # text-white on bg-point
   destructive: "red-500" # Tailwind 기본 red-500 · text-red-500 / bg-red-500
@@ -151,8 +153,10 @@ components:
 
 ## Colors
 
-`globals.css`의 `:root`에 CSS 변수 7개가 있고 `@theme inline`으로 Tailwind
-색상(`bg-point`, `text-muted` 등)에 매핑됩니다.
+`globals.css`의 `:root`에 CSS 변수 10개가 있습니다. 그중 9개는 `@theme inline`으로
+Tailwind 색상(`bg-point`, `text-muted` 등)에 매핑됩니다. 나머지 1개
+(`--coachmark-dim`)는 Tailwind 클래스가 아니라 인라인 스타일에서 `var()`로
+직접 참조하는 값이라 매핑하지 않았습니다 — 아래 표의 사용처 참고.
 
 | 역할 토큰 | 현재 코드 이름 | 값 | 사용처 |
 | --- | --- | --- | --- |
@@ -164,11 +168,22 @@ components:
 | `muted-foreground` | `--muted` | `#8b95a1` | 보조 텍스트, 비활성 탭, 닫기 아이콘 |
 | `border` | `--border-subtle` | `#eef0f3` | 카드·입력창 테두리, 구분선 |
 | `record-action-background` | `--record-action-background` | `#eff6ff` | 홈 뉴스 카드 "기록하기" 액션 배경(`RecordCardAction`) 전용 — Figma `colors/record-action-background` |
+| `coachmark-emphasis` | `--coachmark-emphasis` | `#5198ff` | 코치마크(`OnboardingGuide`) 설명 단계 제목(`text-coachmark-emphasis`) 전용 강조 텍스트 색 |
+| `coachmark-dim` | `--coachmark-dim` | `rgba(0,0,0,0.8)` | 코치마크(`OnboardingGuide`) 스포트라이트 오버레이의 딤(`boxShadow`에 `var(--coachmark-dim)`로 사용) 전용 |
 
 `record-action-background`는 `primary`를 어떤 투명도로 흰 배경 위에 얹어도
 나오지 않는 고유 값이라(확인함), `bg-point/N` 조합을 재사용하지 않고 새
 토큰으로 추가했습니다. `foreground`·`surface`·`primary` 등 다른 역할과
 섞어 쓰지 않습니다.
+
+`coachmark-emphasis`·`coachmark-dim`도 같은 이유로 새 토큰입니다.
+`coachmark-emphasis`(`#5198ff`)는 `primary`(`#3182f6`)와 가깝지만 다른 값이고,
+코치마크 제목에만 씁니다 — `primary`를 이 값으로 바꾸면 버튼·링크·활성 탭 등
+`primary`를 쓰는 다른 모든 화면이 함께 바뀌므로 그렇게 하지 않았습니다.
+`coachmark-dim`(검정 80%)은 `overlay`(검정 40%, Dialog / Bottom Sheet 전용)와
+적용 범위가 다른 별개 토큰입니다 — 코치마크의 스포트라이트는 CSS 클래스가
+아니라 인라인 `boxShadow`로 그려지므로, `--coachmark-dim`을 `var()`로
+참조해 값을 한 곳(`globals.css`)에서만 관리합니다.
 
 CSS 변수가 없는 역할은 Tailwind 기본 클래스로 직접 씁니다.
 
@@ -660,7 +675,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | Confirm Dialog | 중앙 정렬, `max-w-[320px] rounded-2xl bg-surface p-5`, 버튼 2개(outline + destructive) | inline 3곳 | 기록 상세(삭제), 마이페이지(탈퇴), 검색한 용어(삭제) |
 | Popover / Menu | `rounded-xl border border-border-subtle bg-surface shadow-lg z-10` | inline 2곳 | 기록 상세 더보기 메뉴, ArticleOpenExternalBar 안내 |
 
-- 공통: `fixed inset-0 z-50` + `bg-black/40` overlay, `role="dialog"`.
+- 공통: `fixed inset-0 z-50` + `bg-black/40` overlay, `role="dialog"`. 코치마크
+  (`OnboardingGuide`, 그 외 공통 컴포넌트 참고)의 검정 80% 딤(`coachmark-dim`)은
+  이 `overlay`(검정 40%)와 별개 토큰이라, 바꿔도 서로 영향을 주지 않습니다.
 - **Size**: Bottom Sheet는 내용 높이(용어 사전만 `max-h-[80dvh]`), Dialog는 320px 고정.
 - **State**: 열림/닫힘만 존재. 진입·퇴장 애니메이션 없음.
 - **토큰**: `surface`, `overlay`, `border`, `rounded.3xl`, `rounded.2xl`, `shadows.sheet`.
@@ -807,12 +824,26 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   선택 `bg-point text-white`)을 그대로 씀. 현재 KST 월보다 미래인 달은
   `disabled:opacity-60`로 비활성. 일 단위 선택 없음. 사용 화면: 내 기록.
 - `LoginPrompt` — 로그인 유도 블록 (검색한 용어).
-- `OnboardingGuide` — 스포트라이트 코치마크 (`rgba(0,0,0,0.72)`). 설명 문구
-  박스 너비는 기본 300px(`spacing.dialog-max-width`인 320px보다 작음) 고정이지만,
-  2단계만 문장이 길어 마지막 어절이 혼자 줄바꿈되는 문제가 있어 2단계에
-  한해 320px(`spacing.dialog-max-width`와 동일 값 재사용)로 넓히고
-  `break-keep`(단어 중간 줄바꿈 방지)을 적용했습니다. 1단계와 화살표·
-  스포트라이트·버튼 위치 계산은 영향 없음.
+- `OnboardingGuide` — 스포트라이트 코치마크. 딤은 검정 80%(`coachmark-dim`,
+  `var(--coachmark-dim)`를 `boxShadow`에 사용) — Dialog / Bottom Sheet의
+  `overlay`(검정 40%, 위 Dialog / Bottom Sheet 섹션)와는 별개 토큰이라 코치마크만
+  바뀌고 다른 모달·바텀시트 딤에는 영향이 없습니다. 각 단계 제목은
+  `text-coachmark-emphasis`(`#5198ff`) — 설명 문구(흰색, 유지)·버튼(`bg-point`
+  유지)·화살표(흰색 SVG, 유지)와는 다른, 코치마크 제목 전용 색입니다. 모든
+  단계(1·2단계)에 동일하게 적용되며 딤·강조색 모두 단일 토큰이라 단계마다
+  값이 갈리지 않습니다. 설명 문구 박스 너비는 기본 300px(`spacing.dialog-max-width`인
+  320px보다 작음) 고정이지만, 2단계만 문장이 길어 마지막 어절이 혼자
+  줄바꿈되는 문제가 있어 2단계에 한해 320px(`spacing.dialog-max-width`와
+  동일 값 재사용)로 넓히고 `break-keep`(단어 중간 줄바꿈 방지)을 적용했습니다.
+  1단계와 화살표·스포트라이트·버튼 위치 계산은 영향 없음.
+  - **단계별 버튼 구성**: 버튼 영역은 `flex items-center justify-center gap-5`.
+    1단계는 "건너뛰기"(`text-[13px] font-medium text-white/70`, `finish` 호출) +
+    "다음"(`button-48 rounded-full bg-point type-button text-white`,
+    `handlePrimary`) 두 개를 나란히 둡니다. 2단계는 "건너뛰기"를 렌더링하지
+    않고 "시작하기" 버튼만 남깁니다 — `justify-center`가 전체 너비(`blockWidth`)
+    기준으로 중앙 정렬하므로, 자식이 하나여도 추가 레이아웃 코드 없이 그 버튼이
+    가로 중앙에 옵니다. 두 단계 모두 같은 버튼 스타일·클릭 동작(`handlePrimary` →
+    2단계에서는 `finish` 호출)을 그대로 씁니다.
 - `SocialLoginButtons` — Google·Apple 로그인 버튼 세로 묶음(`gap-2`). 로그인 중인
   provider만 "이동 중..."으로 라벨이 바뀌고, 응답을 기다리는 동안 두 버튼 모두
   `disabled`. `/login`, `/mypage`(비로그인 상태)에서 재사용.

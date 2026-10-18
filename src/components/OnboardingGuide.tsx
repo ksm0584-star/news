@@ -19,7 +19,7 @@ import { usePathname } from "next/navigation";
  * separately reworded afterward — see STEP_COPY).
  *
  * Deliberately no speech-bubble/tooltip box: a dark overlay with a
- * transparent "hole" over the target, a Primary-colored title + white
+ * transparent "hole" over the target, an emphasis-colored title + white
  * description floating directly on the overlay, and an SVG arrow between
  * the text and the target — see the color note below.
  *
@@ -28,9 +28,12 @@ import { usePathname } from "next/navigation";
  * different parts of the component tree (one inside the page, one in the
  * root layout).
  *
- * "Primary 컬러" is this app's one accent color — DESIGN.md's `primary`
- * role, implemented as globals.css's `--point` and used everywhere else as
- * `text-point` / `bg-point` — so the step title uses that same token.
+ * The step title and the overlay's dim both use coach-mark-only tokens —
+ * `--coachmark-emphasis` (#5198FF, `text-coachmark-emphasis`) and
+ * `--coachmark-dim` (rgba(0,0,0,0.8)) — rather than DESIGN.md's `primary`
+ * role (`--point`) or the Dialog/Bottom Sheet `overlay` token, so neither
+ * can drift when this component's colors change. See DESIGN.md Colors and
+ * Components → OnboardingGuide.
  */
 const STORAGE_KEY = "moayo:onboarding-completed-v2";
 const POLL_INTERVAL_MS = 200;
@@ -237,9 +240,9 @@ export default function OnboardingGuide() {
 
   const margin = 16;
   const spotlightPadding = 8;
-  const arrowGap = 4; // between the spotlight's edge and the arrow
+  const arrowGap = 6; // between the spotlight's edge and the arrow
   const arrowHeight = 34;
-  const textGap = 6; // between the arrow and the text block
+  const textGap = 10; // between the arrow and the text block
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
@@ -289,7 +292,7 @@ export default function OnboardingGuide() {
           left: rect.left - spotlightPadding,
           width: rect.width + spotlightPadding * 2,
           height: rect.height + spotlightPadding * 2,
-          boxShadow: "0 0 0 2000px rgba(0,0,0,0.72)",
+          boxShadow: "0 0 0 2000px var(--coachmark-dim)",
           pointerEvents: "none",
         }}
       />
@@ -317,9 +320,9 @@ export default function OnboardingGuide() {
             : { bottom: vh - rect.top + spotlightPadding + arrowGap + arrowHeight + textGap }),
         }}
       >
-        <p className="text-[18px] font-bold leading-snug text-point">{copy.title}</p>
+        <p className="text-[18px] font-bold leading-snug text-coachmark-emphasis">{copy.title}</p>
         <p
-          className={`mt-2 text-[14px] leading-6 text-white ${
+          className={`mt-1 text-[14px] leading-6 text-white ${
             // keep-all only here — step 1's own description never needs it
             // and this must not change step 1's rendering at all.
             activeStep === 2 ? "break-keep" : ""
@@ -329,13 +332,15 @@ export default function OnboardingGuide() {
         </p>
 
         <div className="mt-6 flex items-center justify-center gap-5">
-          <button
-            type="button"
-            onClick={finish}
-            className="text-[13px] font-medium text-white/70"
-          >
-            건너뛰기
-          </button>
+          {activeStep === 1 && (
+            <button
+              type="button"
+              onClick={finish}
+              className="text-[13px] font-medium text-white/70"
+            >
+              건너뛰기
+            </button>
+          )}
           <button
             type="button"
             onClick={handlePrimary}

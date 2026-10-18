@@ -14,6 +14,14 @@
      --point composited over white produces #eff6ff), so it's a new token
      rather than a reference to one that already exists. */
   --record-action-background: #eff6ff;
+  /* OnboardingGuide's coach-mark spotlight only. A distinct accent from
+     --point — not a swap-in replacement for it — so the coach mark's title
+     can read brighter against its own dark overlay without changing
+     --point and affecting every other screen that uses it. */
+  --coachmark-emphasis: #5198ff;
+  /* OnboardingGuide's coach-mark overlay only, kept apart from --overlay
+     (bg-black/40, Dialog / Bottom Sheet) which stays unchanged. */
+  --coachmark-dim: rgba(0, 0, 0, 0.8);
 }
 
 @theme inline {
@@ -25,6 +33,7 @@
   --color-muted: var(--muted);
   --color-border-subtle: var(--border-subtle);
   --color-record-action-background: var(--record-action-background);
+  --color-coachmark-emphasis: var(--coachmark-emphasis);
   --font-sans: var(--font-noto-sans-kr);
   /* Figma spacing/form-field-gap: vertical gap between record form fields
      (the last element of one field → the next field's label). 24px, built
