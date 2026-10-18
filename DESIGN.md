@@ -262,13 +262,13 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | --- | --- | --- |
 | 20px (`text-xl`) | 2 | 탭 화면 제목 — extrabold |
 | 19px | 1 | 기사 제목 (`/article/[id]`) |
-| 18px | 4 | 기록 제목, 온보딩 제목, ArticleReturnBanner 제목(2026-10-18, 14px에서 변경) — bold, `leading-snug` |
+| 18px | 3 | 기록 제목, 온보딩 제목 — bold, `leading-snug` |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
-| 16px (`text-base` 포함) | 6 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태·ArticleReturnBanner 설명(2026-10-18, medium, 역할 밖 — `type-input`/`type-memo-body`/`type-record-card-title`와는 용도가 달라 그 토큰들을 쓰지 않음) |
+| 16px (`text-base` 포함) | 5 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태 설명(medium, 역할 밖 — `type-input`/`type-memo-body`/`type-record-card-title`와는 용도가 달라 그 토큰들을 쓰지 않음) |
 | 15px | 10 | 다이얼로그·섹션 제목(bold), `MonthPicker`의 연·월 레이블(bold) |
 | 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
 | 14px (`text-sm` 포함) | 31 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
-| 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
+| 13.5px | 17 | 시트 본문, 메뉴 항목, 토스트, ArticleReturnBanner 메시지(2026-10-18, 스낵바로 개편되며 18px bold 제목 + 16px medium 설명 2줄에서 Toast와 같은 13.5px medium 한 줄로 변경) |
 | 13px | 34 | 설명, 에러 |
 | 12.5px | 13 | 캡션, 에러, 작은 링크 |
 | 12px (`text-xs` 포함) | 21 + 역할 3 | 뱃지, 메타 정보(날짜·언론사), 하단 내비 라벨(`type-nav-label`, medium, 3곳 — 2026-10-17까지 11px) |
@@ -396,7 +396,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 | Variant | 스타일 (`button-48 type-button` + 아래) | 사용 화면 |
 | --- | --- | --- |
-| primary | `rounded-xl bg-point text-white` (+`active:bg-point-dark`) | 기록 작성 "다음"·"저장", 외부 기록 저장·"URL 다시 입력하기", 기사 상세 "메모 기록하기", 완료 화면 "확인"·"완료", 회고 "저장", 평가 "의견 보내기", 첫 기록 로그인 시트, LoginPrompt "로그인하기"(`px-5`), 용어 "검색"(`px-4`), 내 기록 빈 상태 EmptyState `action` "뉴스 둘러보기"(`px-5`), ArticleReturnBanner "기록하기"(`w-full`, 2026-10-18 primary-pill에서 변경) |
+| primary | `rounded-xl bg-point text-white` (+`active:bg-point-dark`) | 기록 작성 "다음"·"저장", 외부 기록 저장·"URL 다시 입력하기", 기사 상세 "메모 기록하기", 완료 화면 "확인"·"완료", 회고 "저장", 평가 "의견 보내기", 첫 기록 로그인 시트, LoginPrompt "로그인하기"(`px-5`), 용어 "검색"(`px-4`), 내 기록 빈 상태 EmptyState `action` "뉴스 둘러보기"(`px-5`) |
 | primary-pill | `rounded-full bg-point text-white px-4`/`px-5` | OnboardingGuide "다음"·"시작하기" |
 | outline | `rounded-xl border border-border-subtle` (+`bg-surface`) | Google 로그인(아이콘 + `gap-2`, `SocialLoginButtons`), 다이얼로그 "취소", 회고 "취소", 용어 "다시 시도"(`px-4`) |
 | apple | `rounded-xl bg-black text-white`(아이콘 + `gap-2`) | Apple 로그인(`SocialLoginButtons`) |
@@ -408,7 +408,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   "저장 중..." 등으로 바뀜)·선택(choice) 모두 같은 요소라 높이와 글자가 같습니다.
 - **나란히 놓기**: 다이얼로그의 두 버튼은 `flex gap-2` + `flex-1`. 입력창 옆
   "검색"은 줄을 `flex items-center`로 두어 50px 입력창 세로 가운데에 맞춥니다.
-- **적용 범위**: 위 표의 텍스트 버튼 30곳(`<button>`과 버튼 모양 `<Link>`) +
+- **적용 범위**: 위 표의 텍스트 버튼 29곳(`<button>`과 버튼 모양 `<Link>`) +
   `SocialLoginButtons`의 Google·Apple 버튼 2곳.
 - **결정 사항 (2026-10-15)**: ghost(보조) 버튼과 primary-pill 버튼도 의도적으로
   같은 규칙(48px, 16px / 600)을 씁니다. 보조 버튼은 색(`text-muted`)으로만 주 버튼과
@@ -423,6 +423,13 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   - 뉴스 카드 전용 액션 — 홈 뉴스 카드 "기록하기"(`RecordCardAction`, 배경 있는
     필 모양이라 위 "일반 링크·인라인 텍스트 액션"과도 다름 — Components →
     기록하기 액션 참고)
+  - 스낵바 전용 액션 — `ArticleReturnBanner` "기록하기"(2026-10-18,
+    `rounded-full bg-point px-3 py-2 type-record-action text-white`
+    — radius는 같은 날 `rounded-lg`(8px)에서 `rounded-full`(완전히 둥근
+    모서리, Shapes `full` 토큰)로 다시 변경. `RecordCardAction`과 같은
+    작은 필 모양·패딩·서체 역할을 재사용하되 배경·글자색·radius는 Primary
+    블루 배경 + 흰 글자 + 완전히 둥근 모서리로 다름 — 아래 "그 외 공통
+    컴포넌트" 참고)
   - 목록·메뉴 행 — 마이페이지 메뉴 카드·로그아웃·탈퇴, 기록 상세 더보기 메뉴
     항목, 뉴스·기록 카드
   - `/webview-test`
@@ -599,9 +606,14 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 | filled | `rounded-xl bg-background px-4 py-3.5` | inline | 기록 상세 "뉴스 기록"·"투자에 적용하기", 용어 검색 결과 |
 | highlighted | `rounded-2xl border border-point/30 bg-point/5 p-4` | inline | 완료·회고 화면의 "지금의 생각" |
 | dashed | `rounded-2xl border border-dashed border-border-subtle px-6 py-10` | `EmptyState` | 내 기록, 검색한 용어, 홈 |
-| floating | outlined + `bg-surface px-4 py-5 shadow-lg` | `ArticleReturnBanner` | 홈 |
 
-- **Size**: 패딩이 `p-3.5` / `px-4 py-3.5` / `p-4` / `px-4 py-5`(floating) 네 가지.
+**2026-10-18**: `ArticleReturnBanner`는 세로형 floating 카드(outlined +
+`bg-surface shadow-lg`)에서 가로형 스낵바로 개편되며 이 Card 분류를
+벗어났습니다 — `bg-surface`·테두리 없이 `bg-foreground`(진한 Neutral,
+Toast와 같은 토큰)를 쓰고 `rounded-full`(완전히 둥근 모서리)이라, 아래
+Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹니다.
+
+- **Size**: 패딩이 `p-3.5` / `px-4 py-3.5` / `p-4` 세 가지.
 - **State**: 링크형 카드만 `active:bg-background`.
 - **토큰**: `surface`, `background`, `border`, `primary`, `rounded.2xl`, `rounded.xl`.
 
@@ -849,20 +861,57 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   선택 `bg-point text-white`)을 그대로 씀. 현재 KST 월보다 미래인 달은
   `disabled:opacity-60`로 비활성. 일 단위 선택 없음. 사용 화면: 내 기록.
 - `LoginPrompt` — 로그인 유도 블록 (검색한 용어).
-- `ArticleReturnBanner` — 홈 전용, 기사 복귀 후 뜨는 floating 카드(위 Card →
-  floating 참고). **2026-10-18**: 제목(18px bold)·설명(16px medium, 14px
-  Regular에서 변경 — `EmptyState` 쪽과 같은 이유로 named 토큰 대신
-  `text-[16px] font-medium` 역할 밖 값, 위 `EmptyState` 항목 참고)이
-  모두 가운데 정렬 — 카드를 `relative`로 두고 닫기(X) 버튼을
-  `absolute right-4 top-4`로 빼내 제목·설명이 닫기 버튼 옆 좁은 열이 아니라
-  카드 전체 너비를 기준으로 중앙 정렬되게 했습니다. 제목↔설명 간격은
-  `mt-1.5`(6px) — `EmptyState`의 제목↔설명 `gap-1.5`와 같은 값을 그대로
-  재사용. 상하 패딩만 `py-5`(20px, Bottom Sheet·Confirm Dialog의 `p-5`와
-  같은 기존 값)로 키우고 좌우는 `px-4`(16px) 그대로. 설명↔"기록하기" 버튼
-  간격은 `mt-8`(32px, 2026-10-18, 기존 `mt-3`=12px에서 변경 — Tailwind
-  기본 4px 스케일 값이라 Layout 섹션의 "spacing은 Tailwind 기본 스케일을
-  그대로 씀" 원칙 그대로, 이 간격만의 새 named 토큰은 추가하지 않음).
-  "기록하기" 버튼은 Button → primary 참고.
+- `ArticleReturnBanner` — 홈 전용, 기사 복귀 후 뜨는 가로형 스낵바.
+  **2026-10-18 전면 개편** (세로형 floating 카드 → 토스 스타일 컴팩트
+  스낵바, Figma 없이 기존 Toast 레시피를 재사용해 구성):
+  - **컨테이너**: `flex items-center gap-3 rounded-full bg-foreground/70
+    px-4 py-3 shadow-lg`. 배경은 Toast와 같은 `bg-foreground`(진한
+    Neutral, `#19202b`) — 이 앱에서 `foreground`를 배경으로 쓰는
+    2번째이자 마지막 사례(Inconsistencies → Toast 참고). **2026-10-18**:
+    배경만 70% 불투명도로 — Tailwind의 컬러 opacity modifier(`/70`)를 써서
+    `background-color`의 alpha만 0.7로 낮추고, 엘리먼트 자체의 CSS
+    `opacity`는 그대로 1이라 안의 흰 글자·버튼은 100% 불투명 유지(등장/
+    퇴장 애니메이션이 쓰는 `opacity-0`/`opacity-100` 전환과는 별개 속성).
+    radius는 `rounded-full`(기존 "충분히 둥근" 값 중 가장 큰 것, 칩·뱃지·
+    pill 버튼과 같은 토큰). 패딩은 Toast의 `px-4 py-3`를 그대로 재사용 —
+    기존 세로형 카드의 `px-4 py-5`보다 상하가 훨씬 낮아 컴팩트해짐. 좌우
+    바깥 여백은 바뀌지 않은 바깥 wrapper의 `px-4`. 전체 딤 없음, `z-20`
+    (바뀌지 않음).
+  - **메시지**: `min-w-0 flex-1 truncate text-[13.5px] font-medium
+    text-white` — Toast와 같은 13.5px medium(`typography.body-sm`)
+    서체를 재사용하고 색만 Toast와 동일한 `text-white`. 기존 서브텍스트
+    "떠오른 생각을 남겨보세요."는 제거하고 제목 한 줄만 남김. `truncate`
+    + `min-w-0 flex-1`이라 버튼 쪽이 아무리 좁아도 메시지만 말줄임되고
+    버튼은 밀려나지 않습니다.
+  - **"기록하기" 버튼**: `shrink-0 rounded-full bg-point px-3 py-2
+    type-record-action text-white active:bg-point-dark` — `button-48`
+    계열이 아니라 `RecordCardAction`과 같은 "작은 필 버튼" 레시피(Button
+    → 제외 범위 → "스낵바 전용 액션" 참고)를 재사용하고 배경·글자색·radius만
+    Primary 블루 + 흰색 + 완전히 둥근 모서리로 바꿨습니다(2026-10-18,
+    처음엔 `rounded-lg`였다가 변경). `shrink-0`이라 메시지가 길어도
+    버튼 크기는 고정입니다.
+  - **닫기(X) 버튼 제거**: 더 이상 수동으로 닫을 UI가 없고, 8초
+    자동 닫힘(`AUTO_DISMISS_MS`)만 있습니다.
+  - **애니메이션**: 마운트 한 프레임 뒤 `opacity-0 translate-y-2` →
+    `opacity-100 translate-y-0`으로 전환(`transition-[opacity,transform]
+    duration-200 ease-out`)해 아래에서 살짝 떠오르며 나타나고, 자동 닫힘
+    시에도 같은 클래스를 반대로 적용해 200ms 페이드·슬라이드 아웃 뒤에야
+    실제로 DOM에서 제거됩니다(바운스 없음). `motion-reduce:transition-none`
+    으로 `prefers-reduced-motion`을 존중합니다.
+  - **자동 닫힘·재노출**: `use-article-return-banner.ts`의 기존
+    `onDismiss`(클리어 + `article_return_prompt_dismissed` 트래킹 +
+    `setInfo(null)`)를 그대로 재사용 — 더 이상 X 클릭이 아니라 8초
+    타이머가 호출합니다. "기록하기"를 누르는 순간(`onPointerDown`)엔 이
+    타이머를 즉시 취소해, 누르고 있는 도중 타이머가 끝나 클릭이
+    증발하는 일이 없게 했습니다. 호출 측(`src/app/page.tsx`)은
+    `<ArticleReturnBanner key={articleReturnInfo.openedAt} .../>`로
+    복귀 시각을 `key`로 줘서, 이 배너가 떠 있는 동안 새 기사로 다시
+    돌아오면(새 `openedAt`) 컴포넌트가 통째로 리마운트되어 타이머·등장
+    애니메이션이 그 기사 기준으로 새로 시작됩니다.
+  - **기존 로직 재사용**: 기사 복귀 감지(`use-article-return-banner.ts`의
+    4가지 트리거), "기록하기" 클릭 시 기사 데이터 전달·라우팅, 로그인
+    여부 미확인, Mixpanel 이벤트(`article_return_prompt_shown`·
+    `_clicked`·`_dismissed`) — 전부 변경 없음. 바뀐 건 UI·타이밍뿐입니다.
 - `OnboardingGuide` — 스포트라이트 코치마크. 딤은 검정 80%(`coachmark-dim`,
   `var(--coachmark-dim)`를 `boxShadow`에 사용) — Dialog / Bottom Sheet의
   `overlay`(검정 40%, 위 Dialog / Bottom Sheet 섹션)와는 별개 토큰이라 코치마크만
@@ -964,7 +1013,9 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   - 오프셋은 경로만 보고 정합니다. 홈에서 ArticleReturnBanner가 보일 때는
     배너와 겹칠 수 있습니다.
   - 퇴장 애니메이션과 수동 닫기가 없습니다.
-  - `foreground`를 배경색으로 쓰는 유일한 사례입니다(다른 곳은 텍스트 색).
+  - `foreground`를 배경색으로 쓰는 사례 2곳 중 하나입니다(다른 곳은 텍스트
+    색) — 나머지 하나는 2026-10-18부터 `ArticleReturnBanner`(아래
+    "그 외 공통 컴포넌트" 참고).
 - **미사용 컴포넌트** — `NewsCarousel`(및 이를 통해서만 쓰이는 `NewsCard`)은
   어디에서도 import하지 않음.
 

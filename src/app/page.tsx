@@ -28,7 +28,17 @@ export default function HomePage() {
       <LatestNewsList />
 
       {articleReturnInfo ? (
-        <ArticleReturnBanner onRecord={onRecord} onDismiss={onDismiss} />
+        // Keyed by the return trip's own timestamp: a second "left for an
+        // article, came back" trip while this banner is still up (a new
+        // card tapped before the first banner's 8s elapsed) gets a fresh
+        // component instance — a fresh 8s auto-dismiss timer and enter
+        // animation for the new article — instead of reusing this one's
+        // already-running timer.
+        <ArticleReturnBanner
+          key={articleReturnInfo.openedAt}
+          onRecord={onRecord}
+          onDismiss={onDismiss}
+        />
       ) : null}
     </div>
   );
