@@ -149,6 +149,25 @@ export default function MyPage() {
         </div>
       )}
 
+      {user ? (
+        <section className="px-5 py-3">
+          <h2 className="text-[14px] font-bold text-foreground">내 활동</h2>
+          <div className="mt-2.5 rounded-2xl bg-background px-4 py-4 text-[14px] font-medium text-foreground">
+            {countLoading
+              ? null
+              : count > 0
+                ? `지금까지 ${count}개의 생각을 모았어요`
+                : "아직 모아둔 생각이 없어요"}
+          </div>
+          <Link
+            href="/mypage/searched-terms"
+            className="mt-2.5 block w-full rounded-2xl border border-border-subtle px-4 py-3.5 text-left text-[14px] font-medium text-foreground active:bg-background"
+          >
+            검색한 경제용어
+          </Link>
+        </section>
+      ) : null}
+
       <section className="px-5 py-3">
         <h2 className="text-[14px] font-bold text-foreground">도움말</h2>
         <button
@@ -168,44 +187,25 @@ export default function MyPage() {
       </section>
 
       {user ? (
-        <>
-          <section className="px-5 py-3">
-            <h2 className="text-[14px] font-bold text-foreground">내 활동</h2>
-            <div className="mt-2.5 rounded-2xl bg-background px-4 py-4 text-[14px] font-medium text-foreground">
-              {countLoading
-                ? null
-                : count > 0
-                  ? `지금까지 ${count}개의 생각을 모았어요`
-                  : "아직 모아둔 생각이 없어요"}
-            </div>
-            <Link
-              href="/mypage/searched-terms"
-              className="mt-2.5 block w-full rounded-2xl border border-border-subtle px-4 py-3.5 text-left text-[14px] font-medium text-foreground active:bg-background"
+        <section className="px-5 py-3">
+          <h2 className="text-[14px] font-bold text-foreground">계정 관리</h2>
+          <div className="mt-2.5 overflow-hidden rounded-2xl border border-border-subtle">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="block w-full px-4 py-3.5 text-left text-[14px] font-medium text-foreground active:bg-background"
             >
-              검색한 경제용어
-            </Link>
-          </section>
-
-          <section className="px-5 py-3">
-            <h2 className="text-[14px] font-bold text-foreground">계정 관리</h2>
-            <div className="mt-2.5 overflow-hidden rounded-2xl border border-border-subtle">
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="block w-full px-4 py-3.5 text-left text-[14px] font-medium text-foreground active:bg-background"
-              >
-                로그아웃
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmingWithdraw(true)}
-                className="block w-full border-t border-border-subtle px-4 py-3.5 text-left text-[14px] font-medium text-red-500 active:bg-background"
-              >
-                회원 탈퇴
-              </button>
-            </div>
-          </section>
-        </>
+              로그아웃
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingWithdraw(true)}
+              className="block w-full border-t border-border-subtle px-4 py-3.5 text-left text-[14px] font-medium text-red-500 active:bg-background"
+            >
+              회원 탈퇴
+            </button>
+          </div>
+        </section>
       ) : null}
 
       {confirmingWithdraw ? (

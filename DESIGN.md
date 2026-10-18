@@ -264,14 +264,14 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 19px | 1 | 기사 제목 (`/article/[id]`) |
 | 18px | 3 | 기록 제목, 온보딩 제목 — bold, `leading-snug` |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
-| 16px (`text-base` 포함) | 4 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 29곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold |
+| 16px (`text-base` 포함) | 4 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold |
 | 15px | 10 | 다이얼로그·섹션 제목(bold), `MonthPicker`의 연·월 레이블(bold) |
 | 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
 | 14px (`text-sm` 포함) | 33 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
 | 13.5px | 16 | 시트 본문, 메뉴 항목, 토스트 |
 | 13px | 34 | 설명, 에러 |
 | 12.5px | 14 | 캡션, 에러, 작은 링크 |
-| 12px (`text-xs` 포함) | 21 + 역할 3 | 뱃지, 메타 정보(언론사·날짜), 하단 내비 라벨(`type-nav-label`, medium, 3곳 — 2026-10-17까지 11px) |
+| 12px (`text-xs` 포함) | 21 + 역할 3 | 뱃지, 메타 정보(날짜·언론사), 하단 내비 라벨(`type-nav-label`, medium, 3곳 — 2026-10-17까지 11px) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
 
 굵기는 `font-semibold`(23, 역할 스타일 제외), `font-medium`(28), `font-bold`(28),
@@ -353,7 +353,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 | 토큰 | 값 | 사용 횟수 | 사용처 |
 | --- | --- | --- | --- |
-| `xl` | 12px | 43 | 버튼, 입력창, 채움 박스, 드롭다운, 리스트 썸네일 |
+| `xl` | 12px | 42 | 버튼, 입력창, 채움 박스, 드롭다운 |
 | `2xl` | 16px | 22 | 카드, 확인 다이얼로그, 대표 이미지, EmptyState |
 | `full` | 9999px | 19 | 칩, 뱃지, 아이콘 버튼, FAB(TermDictionaryButton), pill 버튼, 아바타 |
 | `3xl` | 24px | 3 | 바텀시트 상단(`rounded-t-3xl`) |
@@ -396,7 +396,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 | Variant | 스타일 (`button-48 type-button` + 아래) | 사용 화면 |
 | --- | --- | --- |
-| primary | `rounded-xl bg-point text-white` (+`active:bg-point-dark`) | 기록 작성 "다음"·"저장", 외부 기록 저장·"URL 다시 입력하기", 기사 상세 "메모 기록하기", 완료 화면 "확인"·"완료", 회고 "저장", 평가 "의견 보내기", 첫 기록 로그인 시트, LoginPrompt "로그인하기"(`px-5`), 용어 "검색"(`px-4`) |
+| primary | `rounded-xl bg-point text-white` (+`active:bg-point-dark`) | 기록 작성 "다음"·"저장", 외부 기록 저장·"URL 다시 입력하기", 기사 상세 "메모 기록하기", 완료 화면 "확인"·"완료", 회고 "저장", 평가 "의견 보내기", 첫 기록 로그인 시트, LoginPrompt "로그인하기"(`px-5`), 용어 "검색"(`px-4`), 내 기록 빈 상태 EmptyState `action` "뉴스 둘러보기"(`px-5`) |
 | primary-pill | `rounded-full bg-point text-white px-4`/`px-5` | ArticleReturnBanner "기록하기", OnboardingGuide "다음"·"시작하기" |
 | outline | `rounded-xl border border-border-subtle` (+`bg-surface`) | Google 로그인(아이콘 + `gap-2`, `SocialLoginButtons`), 다이얼로그 "취소", 회고 "취소", 용어 "다시 시도"(`px-4`) |
 | apple | `rounded-xl bg-black text-white`(아이콘 + `gap-2`) | Apple 로그인(`SocialLoginButtons`) |
@@ -408,7 +408,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   "저장 중..." 등으로 바뀜)·선택(choice) 모두 같은 요소라 높이와 글자가 같습니다.
 - **나란히 놓기**: 다이얼로그의 두 버튼은 `flex gap-2` + `flex-1`. 입력창 옆
   "검색"은 줄을 `flex items-center`로 두어 50px 입력창 세로 가운데에 맞춥니다.
-- **적용 범위**: 위 표의 텍스트 버튼 29곳(`<button>`과 버튼 모양 `<Link>`) +
+- **적용 범위**: 위 표의 텍스트 버튼 30곳(`<button>`과 버튼 모양 `<Link>`) +
   `SocialLoginButtons`의 Google·Apple 버튼 2곳.
 - **결정 사항 (2026-10-15)**: ghost(보조) 버튼과 primary-pill 버튼도 의도적으로
   같은 규칙(48px, 16px / 600)을 씁니다. 보조 버튼은 색(`text-muted`)으로만 주 버튼과
@@ -508,20 +508,18 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   (Button 섹션 "제외 범위" 참고). Chip과도 다릅니다 — Chip은 `type-chip`(14px
   Medium, 21px 지정)과 `rounded-full`을 쓰고 선택 상태가 있지만, 이 액션은
   `type-record-action`(12px Bold, 줄 높이 상속)과 `rounded-lg`를 쓰고 상태가 없습니다.
-- **배치**: 카드 오른쪽. 왼쪽 기사 정보(썸네일+텍스트)를 감싸는 안쪽 `flex` 묶음과
-  바깥 행 사이 간격이 **6px**(`gap-1.5`) — 썸네일↔텍스트 사이의 기존 12px(`gap-3`)와는
-  별개 값이라, 안쪽 묶음을 `flex min-w-0 flex-1 items-center gap-3`로 따로 감싸고
-  바깥 행의 `gap`을 6px로 낮췄습니다(한 flex 컨테이너는 인접 쌍마다 다른 gap을 줄 수
-  없어서). `shrink-0`이라 제목이 길어져도 액션 폭은 줄지 않고, 제목 쪽
-  (`min-w-0 flex-1`, 안쪽 묶음에도 한 번 더)이 먼저 줄바꿈됩니다 — 320px·393px에서도
-  겹치지 않습니다. 세로 정렬은 바깥 행의 `items-center`가 맡습니다.
+- **배치**: 카드 오른쪽. 왼쪽 기사 정보(제목+메타 정보)를 감싸는 텍스트 column과
+  이 액션 사이 간격이 **6px**(`gap-1.5`, 카드 최상위 행 자체의 `gap`). `shrink-0`이라
+  제목이 길어져도 액션 폭은 줄지 않고, 제목 쪽(`min-w-0 flex-1`)이 먼저
+  줄바꿈됩니다 — 320px·393px에서도 겹치지 않습니다. 세로 정렬은 카드 최상위 행의
+  `items-center`가 맡습니다. **2026-10-18**: 썸네일(`NewsThumbnail`)이 삭제되며
+  텍스트 column을 감싸던 바깥 `flex items-center gap-3` 묶음(썸네일↔텍스트 간격용)도
+  함께 제거해, 텍스트 column이 이제 이 gap-1.5 행의 직계 자식입니다.
 - **DOM 구조**: 카드를 감싸던 기존 `<a>`를, 카드 전체를 덮는 절대 위치
   `<a>`(원문 열기/기록 작성 폴백용 "스트레치드 링크")로 바꾸고 `RecordCardAction`은 그
   형제로 둡니다. `<a>` 안에 `<button>`/`<Link>`를 중첩하면 키보드·스크린리더 탐색이
   깨지기 때문입니다. `RecordCardAction`에 `relative`를 줘서 그 스트레치드 링크 위에
-  그려지게 하고, 썸네일(`NewsThumbnail`, 내부에 `position: relative`가 있어 그대로 두면
-  스트레치드 링크보다 위에 그려짐)에는 `pointer-events-none`을 줘서 탭이 항상 스트레치드
-  링크로 전달되게 합니다.
+  그려지게 합니다.
 - **동작**: 클릭 시 해당 기사의 `url`·`title`·`sector`를 query string으로 붙여
   `/record/new/external`로 이동(URL이 없는 피드 항목은 `url` 없이 `title`·`sector`만,
   `ArticleReturnBanner`의 "기록하기"가 쓰는 것과 같은 패턴). 카드의 원문 열기용
@@ -613,6 +611,10 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   bg-background px-2.5 py-1 text-xs font-medium text-foreground/70`.
   Variant: 기본 / `muted`(`text-foreground/40`, 읽은 기사). 사용: 홈, 내 기록,
   기록 상세·완료·회고, 기사 상세.
+  - **홈 뉴스 카드 메타 줄**(`LatestNewsList`) — 제목 아래 한 줄
+    (`flex flex-wrap items-center gap-2`)에 섹터 칩 → 날짜 → 언론사 순으로
+    표시. 칩이 맨 앞이라 공간이 부족해 줄바꿈될 때도 뒤의 날짜·언론사만
+    다음 줄로 밀리고 칩은 항상 첫 줄에 남습니다.
   - **AI 칩**(`TermDictionarySheet`, 2026-10-17) — `SectorBadge`와 똑같은
     시각 레시피를 그대로 쓰지만 공통 컴포넌트가 아니라 인라인 `<button>`입니다
     (`SectorBadge`는 `<span>`이라 탭 동작을 넣을 수 없어 별도 작성 —
@@ -816,7 +818,16 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 
 - `BackHeader` — `sticky top-0 h-14 border-b bg-surface/95 backdrop-blur`,
   뒤로가기 + 16px bold 제목 + 우측 슬롯. 탭 화면을 제외한 9개 화면.
-- `EmptyState` — dashed 카드. 제목 14px semibold + 설명 13px muted.
+- `EmptyState` — dashed 카드. 기본 제목 14px semibold + 설명 13px
+  muted(둘 다 선택) — `titleClassName`/`descriptionClassName`으로 호출부가
+  재정의 가능(기본값은 이 두 역할 밖 크기를 그대로 둠). **내 기록**만
+  18px semibold 제목 + `text-[14px] text-muted`(굵기 미지정 → 상속
+  Regular 400) 설명으로 재정의 — 역할 스타일이 없어 새 named 토큰을
+  추가하지 않고 기존처럼 `text-[Npx]` 임의값 + 기존 굵기 클래스로 적용
+  (Typography → 역할 밖 크기 표와 같은 패턴). 선택적 `action`(label + href)을
+  주면 설명 아래 `mt-2`로 버튼 variant primary(`button-48 rounded-xl
+  bg-point px-5 type-button text-white active:bg-point-dark`, `Link`)가
+  뜸 — 내 기록 빈 상태의 "뉴스 둘러보기"(`href="/"`)가 유일한 사용처.
 - `MonthPicker` — 내 기록 전용 월 선택. 레이블(`text-[15px] font-bold`) +
   좌우 화살표(`BackHeader` 뒤로가기와 같은 `h-9 w-9 rounded-full`, 20px
   아이콘). 레이블 탭 시 연/월 그리드 바텀시트(위 Dialog / Bottom Sheet의

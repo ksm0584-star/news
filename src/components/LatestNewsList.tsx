@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type MouseEvent } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import SectorBadge from "./SectorBadge";
 import CategoryTabs from "./CategoryTabs";
@@ -15,40 +14,6 @@ import { isHttpUrl, saveArticleReturnInfo } from "@/lib/article-return";
 import { getReadArticleUrls, markArticleRead } from "@/lib/read-articles";
 import { isNativePlatform } from "@/lib/platform";
 import type { LatestNewsItem } from "@/lib/news-rss";
-
-/**
- * Square thumbnail for a card whose article has `imageUrl` (only ever the
- * source feed's own media:content — see news-rss.ts). Hides itself (and
- * nothing else about the card) if the image actually fails to load —
- * `imageUrl` being present just means the feed listed one, not that it's
- * guaranteed to still resolve.
- */
-function NewsThumbnail({ src, read }: { src: string; read: boolean }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
-  return (
-    // pointer-events-none (inherited by its children below): this card's
-    // own `position: relative` would otherwise paint it, and swallow taps,
-    // above the card's absolutely-positioned stretched link (see that
-    // link's comment) — the thumbnail has no handler of its own, so
-    // without this a tap here would silently do nothing.
-    <div className="pointer-events-none relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-background">
-      <Image
-        src={src}
-        alt=""
-        fill
-        sizes="56px"
-        className="object-cover"
-        onError={() => setFailed(true)}
-      />
-      <div
-        className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-          read ? "opacity-10" : "opacity-0"
-        }`}
-      />
-    </div>
-  );
-}
 
 /**
  * Replaces NewsCarousel on the home screen with a vertical list backed by
@@ -209,8 +174,8 @@ export default function LatestNewsList() {
                       RecordCardAction rather than its wrapper — nesting two
                       interactive elements breaks keyboard/screen-reader
                       navigation — positioned (`absolute`) so it paints
-                      above the plain-static thumbnail/text below it, and
-                      under RecordCardAction's own `relative` stacking. */}
+                      above the plain-static text below it, and under
+                      RecordCardAction's own `relative` stacking. */}
                   {hasUrl ? (
                     <a
                       href={article.url}
@@ -232,31 +197,25 @@ export default function LatestNewsList() {
                     />
                   )}
 
-                  {/* Own gap-3 (12px, thumbnail↔text) nested inside the
-                      outer row — kept separate from the outer row's gap
-                      (6px, this wrapper↔RecordCardAction) since a single
-                      flex container can't give two adjacent-pair gaps
-                      different sizes. min-w-0 flex-1 here (and again on the
-                      text column below) lets the title shrink/wrap first,
-                      so it can never grow under the action button. */}
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    {article.imageUrl ? (
-                      <NewsThumbnail src={article.imageUrl} read={isRead} />
-                    ) : null}
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <p
-                        className={`type-article-title leading-snug transition-colors duration-300 ${
-                          isRead ? "text-[#9CA3AF]" : "text-foreground"
-                        }`}
-                      >
-                        {article.title}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-                        <span>{article.press}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{formatDate(article.publishedAt)}</span>
-                        <SectorBadge sector={article.sector} muted={isRead} />
-                      </div>
+                  {/* min-w-0 flex-1 lets the title shrink/wrap first, so it
+                      can never grow under the action button. */}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <p
+                      className={`type-article-title leading-snug transition-colors duration-300 ${
+                        isRead ? "text-[#9CA3AF]" : "text-foreground"
+                      }`}
+                    >
+                      {article.title}
+                    </p>
+                    {/* flex-wrap, chip listed first: when space is tight,
+                        only trailing items (date/press) wrap to a second
+                        line — the chip, with nothing before it, always
+                        stays on the first line. */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <SectorBadge sector={article.sector} muted={isRead} />
+                      <span>{formatDate(article.publishedAt)}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{article.press}</span>
                     </div>
                   </div>
 

@@ -8,7 +8,7 @@ import MonthPicker from "@/components/MonthPicker";
 import { ALL_CATEGORY, type NewsCategory } from "@/lib/news-categories";
 import { getCurrentKstYearMonth } from "@/lib/month-range";
 import { useAuth } from "@/lib/auth-context";
-import { useRecordsForMonth } from "@/lib/use-records-store";
+import { useRecordCount, useRecordsForMonth } from "@/lib/use-records-store";
 import { track } from "@/lib/mixpanel";
 import { usePendingToastRelease } from "@/lib/toast";
 
@@ -22,6 +22,7 @@ export default function RecordsPage() {
     error: recordsError,
     monthHasAnyRecords,
   } = useRecordsForMonth(year, month, category);
+  const { count: totalRecordCount, loading: totalCountLoading } = useRecordCount();
 
   usePendingToastRelease(
     authLoading || recordsLoading ? "loading" : recordsError ? "failed" : "ready",
@@ -43,7 +44,14 @@ export default function RecordsPage() {
     track("records_sector_filter_changed", { selected_sector: next });
   }
 
-  const loading = authLoading || recordsLoading;
+  const loading = authLoading || recordsLoading || totalCountLoading;
+
+  const emptyStateTitle =
+    totalRecordCount === 0
+      ? "아직 작성한 기록이 없어요"
+      : category !== ALL_CATEGORY && monthHasAnyRecords
+        ? "이 섹터에 작성한 기록이 없어요"
+        : `${month}월에 작성한 기록이 없어요`;
 
   return (
     <div style={{ paddingBottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}>
@@ -72,17 +80,13 @@ export default function RecordsPage() {
         className="mt-3 px-5"
       >
         {loading ? null : records.length === 0 ? (
-          category !== ALL_CATEGORY && monthHasAnyRecords ? (
-            <EmptyState
-              title="이 섹터에 작성한 기록이 없어요"
-              description="다른 분야를 선택해보세요"
-            />
-          ) : (
-            <EmptyState
-              title="이 달에 작성한 기록이 없어요"
-              description="이전 달을 확인해보세요"
-            />
-          )
+          <EmptyState
+            title={emptyStateTitle}
+            titleClassName="text-[18px] font-semibold text-foreground"
+            description="관심 있는 뉴스를 읽고 생각을 기록해 보세요."
+            descriptionClassName="text-[14px] text-muted"
+            action={{ label: "뉴스 둘러보기", href: "/" }}
+          />
         ) : (
           <div className="flex flex-col gap-2.5">
             {records.map((record) => (
