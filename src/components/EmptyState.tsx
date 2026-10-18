@@ -10,7 +10,7 @@ export default function EmptyState({
   title: string;
   description?: string;
   action?: { label: string; href: string };
-  /** Overrides the title's type styling — e.g. 내 기록's larger 18px/semibold. Defaults to every other EmptyState's existing 14px/semibold. */
+  /** Overrides the title's type styling — e.g. 내 기록's larger 18px/bold. Defaults to every other EmptyState's existing 14px/semibold. */
   titleClassName?: string;
   /** Overrides the description's type styling. Defaults to every other EmptyState's existing 13px/muted. */
   descriptionClassName?: string;

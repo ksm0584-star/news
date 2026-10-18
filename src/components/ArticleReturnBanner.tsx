@@ -26,25 +26,16 @@ export default function ArticleReturnBanner({
       style={{ bottom: "calc(4rem + env(safe-area-inset-bottom) + 0.5rem)" }}
       className="fixed inset-x-0 z-20 mx-auto w-full max-w-[430px] px-4"
     >
-      <div className="flex items-start gap-3 rounded-2xl border border-border-subtle bg-surface p-4 shadow-lg">
-        <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-bold text-foreground">
-            방금 본 뉴스, 기록해 볼까요?
-          </p>
-          <p className="mt-0.5 text-[12.5px] text-muted">떠오른 생각을 남겨보세요.</p>
-          <button
-            type="button"
-            onClick={onRecord}
-            className="button-48 mt-3 rounded-full bg-point px-4 type-button text-white active:bg-point-dark"
-          >
-            기록하기
-          </button>
-        </div>
+      {/* relative so the close button can sit absolutely in the corner —
+          title/subtext are centered across the card's full width, so they
+          can no longer share a flex row with it (that row's own layout
+          would narrow and off-center the text column instead). */}
+      <div className="relative rounded-2xl border border-border-subtle bg-surface px-4 py-5 shadow-lg">
         <button
           type="button"
           onClick={onDismiss}
           aria-label="닫기"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted active:bg-background"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-muted active:bg-background"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
@@ -54,6 +45,20 @@ export default function ArticleReturnBanner({
               strokeLinecap="round"
             />
           </svg>
+        </button>
+        <p className="text-center text-[18px] font-bold leading-snug text-foreground">
+          방금 본 뉴스, 기록해 볼까요?
+        </p>
+        {/* mt-1.5 (6px) — the same title↔description gap EmptyState uses
+            (its `gap-1.5` flex-col), reused rather than picking a new
+            arbitrary value. */}
+        <p className="mt-1.5 text-center text-[16px] font-medium text-muted">떠오른 생각을 남겨보세요.</p>
+        <button
+          type="button"
+          onClick={onRecord}
+          className="button-48 mt-8 w-full rounded-xl bg-point type-button text-white active:bg-point-dark"
+        >
+          기록하기
         </button>
       </div>
     </div>

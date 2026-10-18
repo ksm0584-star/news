@@ -46,12 +46,34 @@ export default function RecordsPage() {
 
   const loading = authLoading || recordsLoading || totalCountLoading;
 
+  // "뉴스 둘러보기" only makes sense for the month the user is actually
+  // living in — nudging them to go read news doesn't help an empty past
+  // month, so the CTA (and its encouraging subtext) only show there.
+  const isCurrentMonth = (() => {
+    const current = getCurrentKstYearMonth();
+    return year === current.year && month === current.month;
+  })();
+
+  // Title branching is unchanged from before — sector-specific keeps its
+  // own title regardless of month, otherwise "아직 작성한 기록이 없어요"
+  // only applies to the current month (a past month is always reported by
+  // name, even for a user with zero records anywhere).
   const emptyStateTitle =
-    totalRecordCount === 0
-      ? "아직 작성한 기록이 없어요"
-      : category !== ALL_CATEGORY && monthHasAnyRecords
-        ? "이 섹터에 작성한 기록이 없어요"
+    category !== ALL_CATEGORY && monthHasAnyRecords
+      ? "이 섹터에 작성한 기록이 없어요"
+      : isCurrentMonth && totalRecordCount === 0
+        ? "아직 작성한 기록이 없어요"
         : `${month}월에 작성한 기록이 없어요`;
+
+  // Description is independent of the title branch: current month always
+  // nudges toward reading news; a past month only points at other months
+  // if the user actually has records somewhere — otherwise showing that
+  // subtext would wrongly imply records exist elsewhere, so it's omitted.
+  const emptyStateDescription = isCurrentMonth
+    ? "관심 있는 뉴스를 읽고 생각을 기록해 보세요."
+    : totalRecordCount > 0
+      ? "다른 달에 남긴 생각들을 살펴보세요."
+      : undefined;
 
   return (
     <div style={{ paddingBottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}>
@@ -82,10 +104,10 @@ export default function RecordsPage() {
         {loading ? null : records.length === 0 ? (
           <EmptyState
             title={emptyStateTitle}
-            titleClassName="text-[18px] font-semibold text-foreground"
-            description="관심 있는 뉴스를 읽고 생각을 기록해 보세요."
-            descriptionClassName="text-[14px] text-muted"
-            action={{ label: "뉴스 둘러보기", href: "/" }}
+            titleClassName="text-[18px] font-bold text-foreground"
+            description={emptyStateDescription}
+            descriptionClassName="text-[16px] font-medium text-muted"
+            action={isCurrentMonth ? { label: "뉴스 둘러보기", href: "/" } : undefined}
           />
         ) : (
           <div className="flex flex-col gap-2.5">
