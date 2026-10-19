@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR } from "next/font/google";
+import AmplitudeInit from "@/components/AmplitudeInit";
 import AnalyticsPageView from "@/components/AnalyticsPageView";
 import BottomNav from "@/components/BottomNav";
 import OnboardingGuide from "@/components/OnboardingGuide";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ko" className={`${notoSansKr.variable} h-full antialiased`}>
       <body className="min-h-full">
         <AuthProvider>
+          <AmplitudeInit />
           <AnalyticsPageView />
           <div className="mx-auto min-h-screen w-full max-w-[430px] bg-surface shadow-sm sm:border-x sm:border-border-subtle">
             {children}
