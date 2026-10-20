@@ -69,7 +69,7 @@ const ExternalRecordFields = forwardRef<
       </div>
 
       <label className="mb-2 block text-[14px] font-semibold text-foreground">
-        기사 정리 *
+        내 생각 *
       </label>
       <textarea
         ref={articleSummaryRef}

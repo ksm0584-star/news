@@ -298,7 +298,7 @@ function ExternalArticleView() {
       return;
     }
     if (!isMemoValid(draft.articleSummary)) {
-      setError("기사 정리를 입력해주세요");
+      setError("내 생각을 입력해주세요");
       articleSummaryRef.current?.focus();
       return;
     }

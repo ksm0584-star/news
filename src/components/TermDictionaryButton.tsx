@@ -48,22 +48,25 @@ export default function TermDictionaryButton({
         right: `${rightOffsetPx}px`,
         bottom: `${bottomOffsetPx}px`,
       }}
-      className="fixed z-40 flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-surface text-point shadow-lg shadow-black/10 active:bg-background"
+      className="fixed z-40 flex h-[56px] w-[56px] flex-col items-center justify-center gap-0 rounded-full border border-border-subtle bg-surface text-point shadow-lg shadow-black/10 active:bg-background"
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
-          d="M4 5.5C4 4.67 4.67 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"
+          d="M12 7v14"
           stroke="currentColor"
           strokeWidth="1.8"
+          strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
-          d="M20 5.5c0-.83-.67-1.5-1.5-1.5H12v16h6.5c.83 0 1.5-.67 1.5-1.5v-13Z"
+          d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
           stroke="currentColor"
           strokeWidth="1.8"
+          strokeLinecap="round"
           strokeLinejoin="round"
         />
       </svg>
+      <span className="text-[10px] font-semibold">사전</span>
     </button>
   );
 }

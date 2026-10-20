@@ -230,7 +230,7 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 텍스트 버튼 | `type-button` (Figma `type-16-semibold`) | 16px | Semibold 600 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 텍스트 버튼 라벨 전체. 높이·정렬은 `button-48`과 함께 씀(Components → Button) |
 | 기록 카드 제목 | `type-record-card-title` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6) | ① 기록 상세(`/record/[id]`) "회고 기록" 목록 카드의 비교 기록 제목(날짜와 같은 flex 줄, `min-w-0 flex-1` + 날짜 `shrink-0`) ② 투자회고(회고 수정, `/record/[id]/reflection/[reflectionId]`) 화면의 과거·지금 기록 카드 제목 2곳. **한 줄 + 말줄임(…)** 을 역할에 포함(`overflow: hidden; text-overflow: ellipsis; white-space: nowrap`). 완료 화면 등 다른 화면의 기록 제목, 카드 본문·날짜·뱃지는 제외 |
 | 메모 본문 | `type-memo-body` | 16px | Medium 500 | **24px 지정**(`--spacing` × 6, `leading-6`과 같은 값) | 기록 상세(`/record/[id]`)의 메모 본문: "뉴스 기록"(기존 '나의 메모') 상자와 "투자에 적용하기" 상자. 섹션 제목, 빈 메모 안내(13.5px muted), 작성·수정 화면 입력창은 제외 |
-| 입력창 내부 텍스트 | `type-input` | 16px | Medium 500 | textarea `leading-6`(24px), 한 줄 input·평가 의견 상속(1.5 → 24px) | 모든 제품 input·textarea의 입력값과 placeholder: URL, 기록 제목(2), 용어 검색, 나의 메모, 기사 정리, 투자에 적용하기, 평가 의견. `/webview-test` 제외 |
+| 입력창 내부 텍스트 | `type-input` | 16px | Medium 500 | textarea `leading-6`(24px), 한 줄 input·평가 의견 상속(1.5 → 24px) | 모든 제품 input·textarea의 입력값과 placeholder: URL, 기록 제목(2), 용어 검색, 나의 메모, 내 생각(2026-10-20부터, 이전 '기사 정리'), 투자에 적용하기, 평가 의견. `/webview-test` 제외 |
 | 하단 내비 라벨 | `type-nav-label` (Figma `MOAYO/nav-label`) | 12px(2026-10-17까지 11px) | Medium 500 | 지정 안 함(상속) | `BottomNav`의 탭 라벨 3곳(뉴스·내 기록·마이페이지). 아이콘은 24×24px(기존 22px), 콘텐츠 높이는 `h-nav-content-height`(64px, 기존 56px) |
 
 - 색상은 역할에 포함하지 않습니다. 기사 제목은 `text-foreground`(홈은 읽은 기사
@@ -273,6 +273,7 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 12.5px | 13 | 캡션, 에러, 작은 링크 |
 | 12px (`text-xs` 포함) | 21 + 역할 3 | 뱃지, 메타 정보(날짜·언론사), 하단 내비 라벨(`type-nav-label`, medium, 3곳 — 2026-10-17까지 11px) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
+| 10px | 1 (2026-10-20 추가) | FAB(`TermDictionaryButton`) "사전" 라벨 — semibold, `text-[10px] font-semibold` (named 토큰 아님, 역할 전용) |
 
 굵기는 `font-semibold`(23, 역할 스타일 제외), `font-medium`(28), `font-bold`(28),
 `font-extrabold`(2)를 쓰고, 행간은 `leading-6`(본문·textarea),
@@ -298,7 +299,7 @@ spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 �
   - Figma `spacing/form-field-gap` = 코드 `--spacing-form-field-gap`
     (`src/app/globals.css`의 `@theme inline`, 값 `calc(var(--spacing) * 6)`).
     Tailwind가 이 토큰으로 `mb-form-field-gap`·`gap-form-field-gap` 등을 만듭니다.
-  - 사용: 각 항목의 마지막 요소(제목 입력창, 섹터 칩 묶음, 기사 정리 textarea)에
+  - 사용: 각 항목의 마지막 요소(제목 입력창, 섹터 칩 묶음, 내 생각 textarea)에
     `mb-form-field-gap`. 숫자 클래스(`mb-4`, `mb-6`)로 다시 지정하지 않고, 값을
     바꿀 때는 토큰 한 곳만 고칩니다. 부모 `gap`은 쓰지 않아 여백이 겹치지 않습니다.
   - textarea처럼 기본이 inline인 요소가 항목 끝에 오면 `block`을 함께 줍니다
@@ -549,7 +550,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   높이는 50px 고정(border 포함, `box-sizing: border-box`)이고 세로 패딩은 두지
   않습니다. 텍스트는 브라우저가 input 안에서 세로 가운데 정렬합니다.
 - **Textarea**: 높이 고정 없이 `rows`로 크기를 정합니다. `px-4 py-3 type-input
-  leading-6 resize-none`(기록 메모·기사 정리·투자에 적용하기),
+  leading-6 resize-none`(기록 메모·내 생각·투자에 적용하기),
   `px-3.5 py-3 type-input resize-none`(평가 의견, 행간 미지정이라 상속값 1.5 = 24px).
   - **평가 의견 크기 (결정 사항, 2026-10-15)**: `rows={3}` × 줄 높이 24px + 패딩·테두리
     = **높이 98px**로 유지합니다. 글자를 16px로 키우면서 86.75px에서 늘어난 값이며,
@@ -569,7 +570,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 - **State**: `focus:border-point`만 존재. 에러는 입력창이 아니라 아래쪽
   `text-red-500` 문구로 표시. placeholder 색은 지정하지 않음(브라우저 기본).
 - **Label**: `mb-2 block text-[14px] font-semibold text-foreground`. 한 줄
-  input·textarea 위 라벨(제목, 기사 정리, 투자에 적용하기, 나의 메모)에 씁니다.
+  input·textarea 위 라벨(제목, 내 생각, 투자에 적용하기, 나의 메모)에 씁니다.
   - **라벨 아래 8px**: 라벨 ↔ 자기 입력창·칩. `mb-2`, 부모 `gap` 없이 라벨 자체
     여백으로 관리합니다.
   - **입력 항목 사이 24px**: 앞 항목 마지막 요소 ↔ 다음 라벨. `mb-form-field-gap`
@@ -826,6 +827,38 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
   않습니다.
 - 성공 토스트를 띄우려고 지연(`setTimeout` 등)을 넣지 않습니다.
 
+### FAB — TermDictionaryButton (공통)
+
+기록 작성(외부 기사, `/record/new/external`) 화면에서 경제용어사전을 여는
+원형 플로팅 버튼. Button 섹션의 `button-48` 규칙 밖(제외 범위)이라 별도로 적습니다.
+
+| 항목 | 값 | 토큰 |
+| --- | --- | --- |
+| 크기 | **56×56px**(2026-10-20부터, 이전 68px → 그 이전 48px) | — |
+| 배경·테두리 | `bg-surface`(`#FFFFFF`) + `border border-border-subtle` | `colors.surface`, `colors.border` |
+| 모양 | `rounded-full` | `rounded.full` |
+| 그림자 | `shadow-lg shadow-black/10` | `shadows.lg` |
+| 내부 배치 | **세로**(2026-10-20부터, 이전 아이콘만 가운데) — `flex-col items-center justify-center gap-0`(2026-10-20부터, 이전 `gap-0.5`/2px), 아이콘 위 + "사전" 텍스트 아래, 간격 0px | 이 버튼만의 값 — BottomNav의 `gap-0.5`(Layout → Bottom Navigation)와 다름(Inconsistencies 참고) |
+| 아이콘 | book-open 모양 inline SVG, **22×22px**, `strokeWidth 1.8`, `text-point` | Icons → 22px(사전 버튼) |
+| 텍스트 | "사전", `text-[10px] font-semibold`(2026-10-20부터, 이전 `type-nav-label` 12px Medium) + `text-point` | 이 버튼 전용 값(Typography → 크기 표 "10px" 행) — 색만 BottomNav의 활성 탭과 같은 `primary` |
+| z-index | 40 | `zIndex.floating` |
+| 눌림 상태 | `active:bg-background` | — |
+| 클릭 영역 | 56×56px 원형 전체가 하나의 `<button>` — 아이콘·텍스트 모두 같은 클릭 영역, 분리된 하위 클릭 핸들러 없음 | — |
+
+- **위치**: `fixed`. `right`/`bottom`은 호출부(`/record/new/external`)가
+  `getBoundingClientRect()`로 직접 측정해 inline style로 내려주고, 이
+  컴포넌트는 그 값을 그대로 적용합니다. `bottom`은 저장 버튼 푸터의 실제
+  높이 + 키보드 인셋 + 12px 간격으로 계산되므로(`dictionaryBottomPx`,
+  `external/page.tsx`), 버튼 자체 높이가 바뀌어도(48→68→56px) 이 계산에는
+  영향이 없습니다 — `bottom`은 버튼의 아래쪽 모서리를 기준으로 하는
+  값이라 버튼은 항상 저장 버튼 위 12px에 고정되고, 높이 변화는 위쪽으로만
+  반영됩니다(저장 버튼과 겹치지 않음). iOS Safari 키보드가 열리고 닫힐
+  때도 같은 `keyboardInsetPx`를 저장 버튼 푸터와 공유해 둘 다 함께
+  움직이므로 화면 밖으로 벗어나지 않습니다. `right`은 앱 컬럼의 실제
+  오른쪽 끝에서 계산해 데스크톱 넓은 화면에서도 카드 바깥으로 벗어나지
+  않습니다.
+- **사용 화면**: `/record/new/external`(외부 기사 기록 작성·수정)에서만 마운트.
+
 ### 그 외 공통 컴포넌트
 
 - `BackHeader` — `sticky top-0 h-14 border-b bg-surface/95 backdrop-blur`,
@@ -997,6 +1030,11 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
 - **Bottom Sheet** — 셸(overlay + 컨테이너)이 3개 컴포넌트에 복제.
   Escape 닫기는 `FirstRecordLoginPromptSheet`에만 구현.
 - **닫기 아이콘** — 시트 18px vs 배너 16px. 아이콘 `strokeWidth` 4종.
+- **FAB 아이콘-텍스트 간격** — `TermDictionaryButton`만 `gap-0`(0px, 2026-10-20부터).
+  BottomNav는 같은 "아이콘 위 + 라벨 아래" 구성에 `gap-0.5`(2px)를 씀.
+- **FAB 라벨 크기·굵기** — `TermDictionaryButton`의 "사전" 라벨만
+  10px/semibold(2026-10-20부터, 신규 크기 단계). BottomNav는 같은 자리에
+  12px/medium `type-nav-label`을 씀 — 더 이상 이 토큰을 공유하지 않음.
 - **하단 오프셋** — `7.5rem`, `4rem + 0.5rem`, Toast의 `4rem + 1.25rem` /
   `1.25rem`이 inline style 매직 넘버로 흩어져 있음(토큰을 참조하지 않고 각자
   숫자로 적힘). 전부 BottomNav 크기를 직접 더한 값이라 BottomNav 크기가
