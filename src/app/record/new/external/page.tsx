@@ -94,6 +94,12 @@ function ExternalArticleView() {
   // ?title=&sector= to pre-fill the form for a specific article. Same
   // restoredDraft-gated pattern as edit mode above — never overwrites a
   // draft the user already started for this exact URL.
+  //
+  // `titleParam` no longer seeds the record-title input (that auto-fill was
+  // removed — the title field now always starts blank for a new record, so
+  // the user writes their own title). It's still read here for the news
+  // link banner (connected article's title, see `articleTitle` below) and
+  // for tracking.
   const titleParam = searchParams.get("title");
   const sectorParam = searchParams.get("sector");
   const [prefillApplied, setPrefillApplied] = useState(isEditMode);
@@ -101,14 +107,23 @@ function ExternalArticleView() {
     if (isEditMode || prefillApplied) return;
     if (draft.restoredDraft === null) return; // wait for the initial read
     if (!draft.restoredDraft) {
-      if (titleParam) draft.setTitle(titleParam);
       if (sectorParam && (WRITABLE_CATEGORIES as readonly string[]).includes(sectorParam)) {
         draft.setSector(sectorParam as (typeof WRITABLE_CATEGORIES)[number]);
       }
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrefillApplied(true);
-  }, [isEditMode, prefillApplied, draft, titleParam, sectorParam]);
+  }, [isEditMode, prefillApplied, draft, sectorParam]);
+
+  // The connected article's own title, shown in the news link banner only —
+  // never written into the record-title input. In edit mode there's no
+  // separately stored "original article title", so the record's own title
+  // (set from the article title at creation time, per the pre-existing edit
+  // seeding above) is reused. In create mode it's the `title` query param;
+  // a manual URL-paste entry (no title param) has no known article title,
+  // so the raw URL is shown instead — the banner still needs to display
+  // something and stay clickable either way.
+  const articleTitle = isEditMode ? (editingRecord?.title ?? "") : titleParam || rawUrl;
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -391,6 +406,7 @@ function ExternalArticleView() {
       <BackHeader title={isEditMode ? "기록 수정" : "기록하기"} />
       <ArticleOpenExternalBar
         url={rawUrl}
+        title={articleTitle}
         onOpenArticle={!isEditMode && titleParam && sectorParam ? undefined : handleOpenArticle}
       />
 

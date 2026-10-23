@@ -69,7 +69,7 @@ spacing:
   dialog-max-width: 320px # max-w-[320px]
 shadows:
   sm: "shadow-sm" # 앱 컬럼
-  lg: "shadow-lg" # FAB, 배너, 팝오버/드롭다운, 토스트
+  lg: "shadow-lg" # FAB, 배너, 드롭다운, 토스트
   sheet: "0 -8px 24px rgba(0,0,0,0.12)" # 바텀시트
 zIndex:
   dropdown: 10
@@ -344,7 +344,7 @@ spacing은 Tailwind 기본 스케일(1 step = 4px)을 그대로 쓰며, 이름 �
 | 토큰 | 값 | 사용처 |
 | --- | --- | --- |
 | `sm` | `shadow-sm` | 앱 컬럼 |
-| `lg` | `shadow-lg` | TermDictionaryButton, ArticleReturnBanner, 드롭다운 메뉴, 안내 팝오버, Toast |
+| `lg` | `shadow-lg` | TermDictionaryButton, ArticleReturnBanner, 드롭다운 메뉴, Toast |
 | `sheet` | `0 -8px 24px rgba(0,0,0,0.12)` | 바텀시트 3종 |
 
 BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리를 씁니다.
@@ -367,6 +367,15 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
 24px(하단 내비), 22px(사전 버튼), 20px(뒤로가기), 18/16px(닫기),
 18px(원문 보기 화살표), 32px(별점)이고 `strokeWidth`는 2(11회)가 기본,
 1.8(4회), 2.5(3회), 1.5가 섞여 있습니다. 이미지는 `next/image`를 씁니다.
+
+**예외(2026-10-24, 2곳)**: `ArticleLinkBanner`(Components → 뉴스 링크 배너)는
+두 가지를 예외로 씁니다 — ① 화살표는 `lucide-react`의 `ChevronRight`(20px,
+크기·레시피는 위 inline SVG 세트와 같아 시각적 이질감은 없음), ② 뉴스
+아이콘은 inline SVG도 `lucide-react`도 아닌 정적 파일
+`public/icon/newspaper_icon 1.svg`를 `<img>`로 참조(22px, 디자인팀 고정
+에셋이라 모양·색을 그대로 유지해야 해서 inline SVG로 옮기지 않음). 둘 다
+이 배너 하나만의 예외이고 다른 화면 아이콘은 전부 기존처럼 inline
+SVG입니다. 자세한 변경 이력은 아래 뉴스 링크 배너 섹션 참고.
 
 ## Components
 
@@ -420,7 +429,7 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   - 칩·탭 — 섹터·메모 힌트 칩, CategoryTabs
   - 하단 내비게이션 — BottomNav
   - 일반 링크·인라인 텍스트 액션 — "원문 보기"(`ArticleOriginalLink`), 완료
-    화면 "수정", 안내 팝오버 "닫기", 온보딩 "건너뛰기", 용어 카드 "삭제"
+    화면 "수정", 온보딩 "건너뛰기", 용어 카드 "삭제"
   - 뉴스 카드 전용 액션 — 홈 뉴스 카드 "기록하기"(`RecordCardAction`, 배경 있는
     필 모양이라 위 "일반 링크·인라인 텍스트 액션"과도 다름 — Components →
     기록하기 액션 참고)
@@ -473,20 +482,98 @@ BackHeader는 그림자 대신 `bg-surface/95 backdrop-blur` + 하단 테두리�
   ```
 
 - **사용 화면**: 기록 상세(`/record/[id]`, **2026-10-17부터 제목 위** —
-  섹터/날짜 행 바로 다음, 제목이 `mt-1`로 이 링크와의 간격을 가짐), 외부
-  기사 기록 작성·수정(`/record/new/external`, `ArticleOpenExternalBar`의
-  ⓘ 안내 버튼 왼쪽).
-- **규칙**: 원문을 여는 링크는 이 컴포넌트를 재사용하고, 문구·스타일을 화면별로
-  따로 만들지 않습니다.
-- **`ArticleOpenExternalBar`는 상쇄 margin 없음** (2026-10-17, `-mr-1` →
-  `-mr-0.5` → 제거 순으로 조정) — 이 아이콘의 화살표 SVG는
-  `viewBox 0 0 24 24`인데 글자 획 자체는 그 안의 10×10 정도만 차지해서,
-  아이콘 박스 오른쪽에 ~5px의 투명한 여백이 남습니다. 바로 옆 ⓘ 버튼과의
-  `gap-1`(4px)에 이 투명 여백이 그대로 더해져, 시각적 간격은 4px보다
-  넓습니다. Figma 인증 없이 수동으로 확인을 반복하며 간격을 2px씩 늘린
-  결과이며, 더 넓혀야 하면 `gap-1`을 `gap-1.5`(6px) 등으로 올립니다.
-  기록 상세의 단독 사용(원문 보기만 있고 옆에 아무것도 없음)에는 영향
-  없습니다. ⓘ 버튼 쪽 원인(아래)과 함께 봐야 전체 그림이 맞습니다.
+  섹터/날짜 행 바로 다음, 제목이 `mt-1`로 이 링크와의 간격을 가짐)만
+  사용합니다. **2026-10-23**: 외부 기사 기록 작성·수정(`/record/new/external`)
+  에서는 더 이상 쓰지 않습니다 — 아래 `ArticleLinkBanner`로 교체됐습니다.
+  (옛 "`ArticleOpenExternalBar`는 상쇄 margin 없음" 메모는 이 텍스트 링크가
+  ⓘ 버튼과 나란히 있던 그 레이아웃 전용이라 함께 제거했습니다.)
+- **규칙**: 원문을 여는 링크(배너가 아니라 인라인 텍스트로 여는 경우)는 이
+  컴포넌트를 재사용하고, 문구·스타일을 화면별로 따로 만들지 않습니다.
+
+#### 뉴스 링크 배너 — `ArticleLinkBanner` (공통, 2026-10-23)
+
+연결된 기사를 여는 가로형 배너. 기록 작성 화면의 "원문 보기" 텍스트 링크
+(`ArticleOriginalLink`)를 대체합니다 — 그 화면은 항상 기사 하나에 연결된
+상태로만 진입하므로(URL이 없으면 `/record/new`의 URL 입력 단계로 먼저
+보냄), 배너는 그 화면이 렌더링되는 한 항상 표시됩니다.
+
+| 항목 | 값 | 토큰 |
+| --- | --- | --- |
+| 높이 | **64px** (`h-16`) | — |
+| 배경 | `bg-surface` (흰색) | `colors.surface` |
+| 테두리 | `border border-border-subtle` | `colors.border` |
+| radius | `rounded-xl` (12px) | `rounded.xl` |
+| 좌우 패딩 | `px-4` (16px) | — |
+| 아이콘 | 단독 표시(감싸는 박스·배경·테두리·radius 없음), 22×22px, 정적 SVG 파일의 원본 색 그대로 | — (파일에 색이 고정돼 있어 토큰 연결 없음) |
+| 제목 | `text-[14px] font-medium text-foreground`, `truncate`(한 줄 말줄임) | — |
+| 화살표 | `lucide-react`의 `ChevronRight`, 20×20px, `text-muted` | `colors.muted-foreground` |
+| 간격(아이콘↔제목, 제목↔화살표) | `gap-3`(12px) | — |
+| 눌림 상태 | `active:bg-background` | `colors.background` |
+| 그림자 | 없음(떠 있는 요소가 아니라 Do's and Don'ts의 "그림자는 떠 있는 요소에만" 규칙대로 생략) | — |
+
+- **아이콘**: **2026-10-24 변경(3차)** — 처음엔 40×40px 뉴트럴 배경 박스 안에
+  `lucide-react`의 outline `Newspaper`를 넣었다가(1차), 박스를 걷어내고
+  손으로 그린 filled inline SVG로 바꿨습니다(2차). 이번엔 디자인팀이 만든
+  고정 에셋 **`public/icon/newspaper_icon 1.svg`**로 다시 교체했습니다(3차,
+  최종) — `<img src="/icon/newspaper_icon%201.svg" width={22} height={22}>`로
+  참조하며, 파일 안의 모양·색(연한 파랑 `#EFF6FF` 배경 페이지 +
+  `#3182F6` 접힌 모서리·텍스트 줄)을 그대로 씁니다. `#EFF6FF`는
+  `colors.record-action-background`와, `#3182F6`는 `colors.primary`와 같은
+  값이지만, 이 아이콘은 파일 자체에 색이 박혀 있어 CSS 토큰 클래스로
+  다시 칠하지 않습니다(파일을 바꾸면 자동으로 따라옴).
+  **next/image를 쓰지 않은 이유**: 이 프로젝트의 `next.config.ts`에
+  `images.dangerouslyAllowSVG`가 꺼져 있어(기본값) `next/image`가 SVG를
+  거부합니다 — 이 아이콘 하나 때문에 전역 이미지 설정을 바꾸는 대신 평범한
+  `<img>`를 씁니다(`@next/next/no-img-element` 경고 1건, 빌드를 막지
+  않음). Layout 섹션의 "이미지는 `next/image`를 씁니다" 규칙의 예외입니다.
+  **viewBox 크롭(2026-10-24, 4차)**: 파일의 원래 `viewBox`는 `0 0 64 64`였지만
+  실제 그림(스트로크 포함 좌표 전체)은 `x: 12~52, y: 11~53`(40×42)만
+  차지해, 가장자리에 그래픽이 없는 투명 여백이 있었습니다. 처음엔 그 파일을
+  그대로 22×22에 욱여넣어 아이콘이 체감상 훨씬 작아 보였는데
+  (렌더 결과 글자/화살표 대비 왜소), 이 여백이 "불필요한" 것으로 확인돼
+  `viewBox`를 그 실제 그림 영역(`12 11 40 42`)으로 좁혔습니다 — **패스
+  좌표는 1도 건드리지 않고** `viewBox`(와 거기 맞춘 `width`/`height` 속성,
+  `64 64` → `40 42`)만 바꿨으므로 모양·색·비율은 원본 그대로이고, 보이는
+  영역만 실제 그림에 딱 맞게 잘렸습니다. `<img>`에는 `h-[22px] w-[22px]`
+  클래스를 함께 줬습니다 — Tailwind preflight가 `img { height: auto }`를
+  강제해 `height={22}` 속성만으로는 40:42 비율 그대로 22×23.1로 늘어났기
+  때문입니다(클래스가 그 규칙보다 우선 적용되어 정확히 22×22 정사각형을
+  만듭니다). 정사각형 박스 + SVG 기본 `preserveAspectRatio`(`xMidYMid
+  meet`, stretch 아님)가 비율을 유지한 채 가로 쪽에 0.5px 미만의 여백만
+  남기므로 찌그러지지 않습니다.
+- **아이콘 라이브러리 예외(화살표만)**: Icons 섹션의 "아이콘 라이브러리
+  없이 inline SVG" 규칙의 유일한 예외는 화살표(`ChevronRight`) 하나입니다
+  — 기존 inline SVG 관례(`viewBox 0 0 24 24`, `stroke="currentColor"`,
+  round cap/join, `strokeWidth 2`)와 시각적으로 같은 레시피라
+  `lucide-react`를 그대로 씁니다. 뉴스 아이콘은 위처럼 정적 파일 참조로
+  바뀌어 inline SVG도 `lucide-react`도 아니지만, 화살표 하나 때문에
+  `package.json`의 `lucide-react` 의존성은 유지됩니다. 다른 화면의 아이콘
+  (하단 내비, 뒤로가기, 원문 보기 화살표 등)은 전부 기존처럼 inline SVG —
+  이 배너의 화살표 하나만의 예외이고 늘리지 않습니다.
+- **동작**: `ArticleOriginalLink`와 같은 `<a rel="noopener noreferrer">`,
+  `target` 없음(같은 탭에서 열고 브라우저 뒤로가기로 돌아옴), 네이티브
+  iOS/Android 앱에서는 인앱 브라우저로 여는 동작(`src/lib/native/article-browser.ts`)도
+  동일하게 재사용합니다. 접근성 이름은 `aria-label="{제목} 원문 보기"`.
+- **사용법**: 배너 전체가 하나의 링크입니다 — 안에 별도 버튼을 중첩하지
+  않습니다. `className`에는 바깥 레이아웃(`flex-1` 등)만 넘깁니다.
+
+  ```tsx
+  <ArticleLinkBanner href={rawUrl} title={articleTitle} onClick={trackOpen} />
+  ```
+
+- **사용 화면**: 외부 기사 기록 작성·수정(`/record/new/external`,
+  `ArticleOpenExternalBar` 안에서 `px-4 pt-4` 패딩만 받고 가로 폭 전체를
+  차지 — **2026-10-24**: 배너 옆에 있던 ⓘ 안내 버튼·팝오버가 제거되며,
+  배너가 그 행의 유일한 요소가 됐습니다. Components → "`ArticleOpenExternalBar`의
+  ⓘ 버튼 (제거됨, 2026-10-24)" 참고).
+- **기록 제목 자동 입력 제거(2026-10-23)**: 이 배너가 생기기 전에는 홈
+  "기록하기"·복귀 배너 "기록하기"로 진입할 때 쿼리로 넘어온 기사 제목이
+  기록 제목 입력창(`ExternalRecordFields`의 "제목 *")에 그대로 채워졌습니다.
+  이제 그 자동 입력은 제거되어 새 기록은 제목이 항상 빈 칸에서 시작하고,
+  연결된 기사 제목은 이 배너에서만 보여줍니다. 수정 화면은 영향 없음 —
+  저장된 기록 제목을 그대로 불러오는 기존 동작을 유지합니다(이 배너의
+  제목도 수정 화면에서는 같은 저장된 제목을 재사용 — 기사 원문의 제목을
+  별도로 저장해 두지 않기 때문).
 
 #### 기록하기 액션 — `RecordCardAction` (공통, Figma 노드 `109:1347`, 프레임 "개편안 2")
 
@@ -688,7 +775,7 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
 | --- | --- | --- | --- |
 | Bottom Sheet | `fixed bottom-0 max-w-[430px] rounded-t-3xl bg-surface p-5` + `shadows.sheet`, safe-area 하단 패딩 | `RatingPromptSheet`, `FirstRecordLoginPromptSheet`, `TermDictionarySheet`, `MonthPicker`의 연월 선택 시트(`YearMonthSheet`) (각자 셸을 직접 작성) | 기록 완료·상세, 마이페이지, 외부 기록 작성, 내 기록 |
 | Confirm Dialog | 중앙 정렬, `max-w-[320px] rounded-2xl bg-surface p-5`, 버튼 2개(outline + destructive) | inline 3곳 | 기록 상세(삭제), 마이페이지(탈퇴), 검색한 용어(삭제) |
-| Popover / Menu | `rounded-xl border border-border-subtle bg-surface shadow-lg z-10` | inline 2곳 | 기록 상세 더보기 메뉴, ArticleOpenExternalBar 안내 |
+| Popover / Menu | `rounded-xl border border-border-subtle bg-surface shadow-lg z-10` | inline 1곳 | 기록 상세 더보기 메뉴 (2026-10-24까지는 `ArticleOpenExternalBar`의 ⓘ 안내 팝오버도 이 스타일을 썼으나, 그 버튼 자체가 제거되며 함께 없어짐) |
 
 - 공통: `fixed inset-0 z-50` + `bg-black/40` overlay, `role="dialog"`. 코치마크
   (`OnboardingGuide`, 그 외 공통 컴포넌트 참고)의 검정 80% 딤(`coachmark-dim`)은
@@ -696,13 +783,13 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
 - **Size**: Bottom Sheet는 내용 높이(용어 사전만 `max-h-[80dvh]`), Dialog는 320px 고정.
 - **State**: 열림/닫힘만 존재. 진입·퇴장 애니메이션 없음.
 - **토큰**: `surface`, `overlay`, `border`, `rounded.3xl`, `rounded.2xl`, `shadows.sheet`.
-- **`ArticleOpenExternalBar`의 ⓘ 버튼** (2026-10-17) — 원래 `h-9 w-9`
-  고정 박스에 글자를 가운데 정렬했는데, 이 박스 크기 자체가 "원문 보기"
-  링크와의 `gap-1`(4px) 계산에 끼어들어 체감 간격이 훨씬 넓어 보였습니다.
-  이제 버튼 자체는 글자 크기만큼만 차지하고(`before:-inset-[10px]`로
-  ~36px 터치 영역·눌림 배경만 레이아웃에 영향 없이 바깥으로 확장) —
-  `RecordCardAction`(Components → 기록하기 액션)이 이미 쓰는 것과 같은
-  기법입니다. 보이는 아이콘 크기·색·눌림 피드백은 전과 동일합니다.
+- **`ArticleOpenExternalBar`의 ⓘ 버튼 (제거됨, 2026-10-24)** — "원문 보기 열면
+  같은 탭에서 열리고 돌아올 수 있다"는 안내 팝오버를 여는 버튼이 뉴스 링크
+  배너 옆에 있었으나, 요청에 따라 버튼과 팝오버 모두 제거했습니다.
+  `ArticleOpenExternalBar`는 이제 `ArticleLinkBanner`만 감싸는 얇은
+  래퍼(`px-4 pt-4` 패딩만 유지)이고, 배너가 그 행의 가로 폭 전체를
+  차지합니다. 버튼 자체의 과거 크기·터치 영역 조정 이력(2026-10-17)은
+  더 이상 적용 대상이 없어 함께 제거했습니다.
 
 ### Bottom Navigation
 
@@ -1019,7 +1106,7 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
 - **Button** — primary 버튼 중 4곳에 `active:bg-point-dark` 누락
   (`record/complete` 2곳, `reflection`, `LoginPrompt`). 텍스트 버튼의 높이·글자는
   `button-48 type-button`으로 통일됨. 버튼 범위에서 뺀 작은 인라인 액션
-  (용어 카드 "삭제" 12px, 안내 팝오버 "닫기"·완료 화면 링크형 12.5px, 온보딩
+  (용어 카드 "삭제" 12px, 완료 화면 링크형 12.5px, 온보딩
   "건너뛰기" 13px)은 각자 크기를 유지.
 - **Chip** — 같은 스타일이 4개 파일에 복제(글자는 `type-chip`으로 통일). 메모 힌트 칩만 12.5px.
 - **Input** — 한 줄 input 높이는 `h-[50px]`로 통일됨. 좌우 패딩은 `px-4` /

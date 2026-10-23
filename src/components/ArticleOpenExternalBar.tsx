@@ -1,114 +1,46 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { trackClick } from "@/lib/mixpanel";
-import ArticleOriginalLink from "@/components/ArticleOriginalLink";
-
-const INFO_POPOVER_ID = "article-open-external-info";
+import ArticleLinkBanner from "@/components/ArticleLinkBanner";
 
 /**
- * The "원문 보기" row on the record-writing screen. Deliberately a single
- * low-key row, not an error card: the goal is "read it over here," not
- * "this is broken."
+ * The connected-article row on the record-writing screen: a full-width
+ * news-link banner (ArticleLinkBanner). Deliberately a single low-key row,
+ * not an error card: the goal is "read it over here," not "this is broken."
  *
- * No `target="_blank"` — this opens in the *same* tab, as a normal
- * top-level navigation, so the browser's own back button returns here
- * (this screen's own draft/record state is what survives the round trip,
- * not window/tab state).
- *
- * Previously mounted only for a domain src/lib/iframe-support.ts had
- * confirmed blocks iframing, so a `track("article_load_failed", {reason:
- * "iframe_blocked"})` on mount was an accurate "this article couldn't be
- * framed" signal. Now that this is the universal record-writing screen for
- * every article (no iframe attempted at all here), that signal would fire
- * for every single write session regardless of whether framing would have
- * worked — not a real failure — so it was removed from this component.
+ * No `target="_blank"` on the banner — it opens in the *same* tab, as a
+ * normal top-level navigation, so the browser's own back button returns
+ * here (this screen's own draft/record state is what survives the round
+ * trip, not window/tab state).
  *
  * `onOpenArticle` (optional): the caller's own `article_opened` tracking —
  * this component doesn't know its caller's entry_point/properties, so it
  * just calls this back on an actual click, same moment as the generic
  * `external_open_new_tab` button_click below.
+ *
+ * 2026-10-24: the ⓘ info button that used to sit beside the banner (and
+ * its popover explaining "원문 보기 열면 같은 탭에서 열려요") was removed —
+ * the banner is now the only thing in this row and takes the full width.
  */
 export default function ArticleOpenExternalBar({
   url,
+  title,
   onOpenArticle,
 }: {
   url: string;
+  title: string;
   onOpenArticle?: () => void;
 }) {
-  const [infoOpen, setInfoOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!infoOpen) return;
-    function onPointerDownOutside(event: PointerEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setInfoOpen(false);
-      }
-    }
-    document.addEventListener("pointerdown", onPointerDownOutside);
-    return () => document.removeEventListener("pointerdown", onPointerDownOutside);
-  }, [infoOpen]);
-
   return (
-    <div ref={containerRef} className="relative flex items-center gap-1 px-4 pt-4">
-      {/* No mr-cancel on ArticleOriginalLink here (tried -mr-1, then
-          -mr-0.5) — the full row gap-1 (4px) now applies on top of the
-          arrow icon's own trailing transparent SVG padding (viewBox is
-          24×24 but the glyph itself only occupies roughly the middle
-          10×10 of it), so the visible gap before the ⓘ button is wider
-          than 4px. record/[id]/page.tsx's unrelated use of this same link
-          (no adjacent ⓘ there) is untouched either way. */}
-      <ArticleOriginalLink
+    <div className="px-4 pt-4">
+      <ArticleLinkBanner
         href={url}
-        onPointerDown={(event) => event.stopPropagation()}
+        title={title}
         onClick={() => {
           trackClick("external_open_new_tab");
           onOpenArticle?.();
         }}
       />
-
-      {/* Was `h-9 w-9` with the glyph centered inside — a 36px box whose
-          own internal centering padding (sized for an easy tap target) sat
-          entirely on this row's gap-1 side too, on top of the SVG padding
-          above. Shrunk to the glyph's own tight size so the visible "ⓘ"
-          sits right where this row's gap-1 ends, and the same ~36px tap
-          target (plus its active-state circle) moved to `before:`, which
-          is absolutely positioned and so doesn't count toward gap-1's
-          measurement at all. */}
-      <button
-        type="button"
-        onPointerDown={(event) => event.stopPropagation()}
-        onClick={() => setInfoOpen((open) => !open)}
-        aria-label="원문 보기 안내"
-        aria-expanded={infoOpen}
-        aria-controls={INFO_POPOVER_ID}
-        className="relative shrink-0 text-[15px] font-semibold leading-none text-muted before:absolute before:-inset-[10px] before:rounded-full before:content-[''] active:before:bg-background"
-      >
-        ⓘ
-      </button>
-
-      {infoOpen ? (
-        <div
-          id={INFO_POPOVER_ID}
-          role="dialog"
-          aria-label="원문 보기 안내"
-          onPointerDown={(event) => event.stopPropagation()}
-          className="absolute left-4 top-full z-10 mt-2 w-64 rounded-xl border border-border-subtle bg-surface p-4 text-[12.5px] leading-5 text-foreground shadow-lg"
-        >
-          <p>
-            언론사 페이지에서 기사를 읽을 수 있어요. 다 읽고 돌아오면
-            모아요에서 기록을 계속할 수 있어요.
-          </p>
-          <button
-            type="button"
-            onClick={() => setInfoOpen(false)}
-            className="mt-3 text-[12.5px] font-semibold text-point"
-          >
-            닫기
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }
