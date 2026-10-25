@@ -104,9 +104,9 @@ export default function RecordsPage() {
         {loading ? null : records.length === 0 ? (
           <EmptyState
             title={emptyStateTitle}
-            titleClassName="text-[18px] font-bold text-foreground"
+            titleClassName="type-header-title text-foreground"
             description={emptyStateDescription}
-            descriptionClassName="text-[16px] font-medium text-muted"
+            descriptionClassName="text-[14px] font-medium text-muted"
             action={isCurrentMonth ? { label: "뉴스 둘러보기", href: "/" } : undefined}
           />
         ) : (

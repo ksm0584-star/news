@@ -264,10 +264,10 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 19px | 1 | 기사 제목 (`/article/[id]`) |
 | 18px | 4 | 기록 제목, 온보딩 제목 — bold, `leading-snug`; `MonthPicker`의 연·월 레이블(bold, 2026-10-25, 15px에서 변경) |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
-| 16px (`text-base` 포함) | 5 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태 설명(medium, 역할 밖 — `type-input`/`type-memo-body`/`type-record-card-title`와는 용도가 달라 그 토큰들을 쓰지 않음) |
+| 16px (`text-base` 포함) | 4 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태 제목(`type-header-title`, bold, 2026-10-26부터) |
 | 15px | 9 | 다이얼로그·섹션 제목(bold), `MonthPicker`의 연월 선택 시트 안 연도 레이블(bold, 트리거 버튼과 별개) |
 | 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
-| 14px (`text-sm` 포함) | 31 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크 |
+| 14px (`text-sm` 포함) | 32 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크, 내 기록 빈 상태 설명(medium, 역할 밖, 2026-10-26부터 — 일치하는 named 토큰 없어 임의값 유지) |
 | 13.5px | 17 | 시트 본문, 메뉴 항목, 토스트, ArticleReturnBanner 메시지(2026-10-18, 스낵바로 개편되며 18px bold 제목 + 16px medium 설명 2줄에서 Toast와 같은 13.5px medium 한 줄로 변경) |
 | 13px | 34 | 설명, 에러 |
 | 12.5px | 13 | 캡션, 에러, 작은 링크 |
@@ -1019,16 +1019,16 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
 - `EmptyState` — dashed 카드. 기본 제목 14px semibold + 설명 13px
   muted(둘 다 선택) — `titleClassName`/`descriptionClassName`으로 호출부가
   재정의 가능(기본값은 이 두 역할 밖 크기를 그대로 둠). **내 기록**만
-  18px bold 제목(2026-10-18, semibold에서 변경 — 기록 상세 `h1`·온보딩
-  제목과 같은 "18px bold" 역할 밖 크기, Typography → 크기 표 "18px | 4"
-  행과 같은 굵기) + `text-[16px] font-medium text-muted`(2026-10-18,
-  14px Regular에서 변경) 설명으로 재정의. 16px Medium 자체는
-  `type-input`·`type-memo-body`·`type-record-card-title` 세 named
-  토큰이 이미 쓰지만, 이 셋은 Typography → "역할 구분"에 "서로 바꿔 쓰지
-  않는다"고 명시된 용도 전용 토큰(입력값 / 메모 본문 / 한 줄 카드 제목)이라
-  빈 상태 설명(어느 역할에도 안 맞음)엔 끌어쓰지 않고, 둘 다
-  `text-[Npx]` 임의값 + 기존 굵기 클래스로 적용하는 기존 "역할 밖" 관례를
-  그대로 따랐습니다. 새 named 토큰은 추가하지 않았습니다. 선택적 `action`(label + href)을
+  `type-header-title`(16px Bold — Figma `MOAYO/header-title`, 2026-10-26
+  변경. 이전엔 18px bold 역할 밖 크기였음) 제목 + `text-[14px] font-medium
+  text-muted`(2026-10-26, 16px Medium에서 변경) 설명으로 재정의. 제목은
+  BackHeader·`/record/new` URL 단계 안내와 같은 기존 named 토큰을 그대로
+  재사용했고, 설명의 14px Medium은 일치하는 named 토큰이 없어(`type-chip`은
+  14px medium이지만 `line-height: 21px`까지 지정된 칩 전용 토큰이라 본문
+  설명에 끌어쓰지 않음) 기존 "역할 밖" 관례대로 `text-[14px]` 임의값 +
+  굵기 클래스로 적용했습니다. 새 named 토큰은 추가하지 않았습니다.
+  `records/page.tsx`에 `EmptyState` 호출부가 하나뿐이라 제목 3갈래(전체 /
+  섹터별 / 월별) 모두 같은 타이포그래피를 공유합니다. 선택적 `action`(label + href)을
   주면 설명 아래 `mt-2`로 버튼 variant primary(`button-48 rounded-xl
   bg-point px-5 type-button text-white active:bg-point-dark`, `Link`)가
   뜸 — 내 기록 빈 상태의 "뉴스 둘러보기"(`href="/"`)가 유일한 사용처.
