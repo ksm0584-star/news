@@ -10,6 +10,7 @@ import {
   getRecords,
   getRecordsForMonth,
   getReflectionsForRecord,
+  peekRecord,
   subscribe,
 } from "./record-store";
 import { getSectorValuesForCategory, ALL_CATEGORY, type NewsCategory } from "./news-categories";
@@ -162,10 +163,20 @@ export function useRecordCount(): { count: number; loading: boolean } {
   return { count, loading };
 }
 
+/**
+ * Seeds its very first render from peekRecord() — a record already
+ * resolved earlier this session (same id, same user) renders immediately,
+ * with `loading` starting false, instead of flashing a loading state for
+ * data this session already has. A cache miss still starts `loading` true,
+ * same as before. Either way `refetch` below re-runs on every id/user
+ * change and on every write, so this never risks showing stale data — a
+ * cache hit just means that refetch resolves from the already-cached
+ * promise instead of a new network round trip.
+ */
 export function useRecord(id: string): { record: NewsRecord | null; loading: boolean } {
   const { user, loading: authLoading } = useAuth();
-  const [record, setRecord] = useState<NewsRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [record, setRecord] = useState<NewsRecord | null>(() => peekRecord(user, id) ?? null);
+  const [loading, setLoading] = useState(() => !id || peekRecord(user, id) === undefined);
 
   const refetch = useCallback(async () => {
     if (authLoading) {
@@ -177,13 +188,15 @@ export function useRecord(id: string): { record: NewsRecord | null; loading: boo
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (peekRecord(user, id) === undefined) {
+      setLoading(true);
+    }
     try {
       setRecord(await getRecord(user, id));
+      setLoading(false);
     } catch (err) {
       console.error("useRecord: failed to fetch record", err);
       setRecord(null);
-    } finally {
       setLoading(false);
     }
   }, [user, authLoading, id]);
@@ -196,6 +209,63 @@ export function useRecord(id: string): { record: NewsRecord | null; loading: boo
   useEffect(() => subscribe(refetch), [refetch]);
 
   return { record, loading };
+}
+
+/**
+ * Batch lookup for the "비교 대상 기록" titles the 회고 기록 section needs —
+ * replaces fetching every record via useRecords() just to find a handful of
+ * titles by id. Each id goes through record-store.ts's own getRecord()
+ * cache (see peekRecord/useRecord above), so an id that's also the record
+ * currently being viewed, or was viewed earlier this session, costs no
+ * extra request at all.
+ */
+export function useRecordsByIds(
+  ids: string[],
+): { recordsById: Map<string, NewsRecord>; loading: boolean } {
+  const { user, loading: authLoading } = useAuth();
+  const [recordsById, setRecordsById] = useState<Map<string, NewsRecord>>(new Map());
+  const [loading, setLoading] = useState(true);
+  // Dedupe + stabilize so `refetch` below doesn't re-identify on every
+  // render just because the caller passed a fresh array literal with the
+  // same contents.
+  const uniqueIds = [...new Set(ids)];
+  const key = uniqueIds.slice().sort().join(",");
+
+  const refetch = useCallback(async () => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+    if (uniqueIds.length === 0) {
+      setRecordsById(new Map());
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const results = await Promise.all(uniqueIds.map((recordId) => getRecord(user, recordId)));
+      const map = new Map<string, NewsRecord>();
+      results.forEach((record, index) => {
+        if (record) map.set(uniqueIds[index], record);
+      });
+      setRecordsById(map);
+    } catch (err) {
+      console.error("useRecordsByIds: failed to fetch records", err);
+      setRecordsById(new Map());
+    } finally {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, key]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see useRecords above
+    refetch();
+  }, [refetch]);
+
+  useEffect(() => subscribe(refetch), [refetch]);
+
+  return { recordsById, loading };
 }
 
 export function useReflectionsForRecord(

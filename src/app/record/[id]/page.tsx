@@ -11,7 +11,7 @@ import FirstRecordLoginPromptSheet from "@/components/FirstRecordLoginPromptShee
 import RatingPromptSheet from "@/components/RatingPromptSheet";
 import { deleteRecord } from "@/lib/record-store";
 import { queueToast, usePendingToastRelease } from "@/lib/toast";
-import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-records-store";
+import { useRecord, useRecordsByIds, useReflectionsForRecord } from "@/lib/use-records-store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
 import { splitExternalContent } from "@/lib/external-record-content";
@@ -70,8 +70,13 @@ function RecordDetailInner() {
     needsLiveTitleLookup ? (record!.url as string) : null,
   );
   const { reflections } = useReflectionsForRecord(params.id);
-  const { records: allRecords } = useRecords();
-  const recordsById = new Map(allRecords.map((r) => [r.id, r]));
+  // Only the "비교 대상 기록" titles this record's own reflections actually
+  // reference — replaces fetching every record via useRecords() just to
+  // look up a handful of titles by id (see useRecordsByIds's own comment).
+  const otherRecordIds = reflections.map((r) =>
+    r.recordId === params.id ? r.comparedRecordId : r.recordId,
+  );
+  const { recordsById } = useRecordsByIds(otherRecordIds);
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -137,7 +142,24 @@ function RecordDetailInner() {
     authLoading || recordLoading ? "loading" : record ? "ready" : "failed",
   );
 
-  if (authLoading || recordLoading) return null;
+  // Only shows the spinner while there's genuinely nothing to render yet —
+  // `record` is already seeded from a cached value when one exists (see
+  // useRecord), so a revisit or a background revalidation never flashes
+  // this even while `recordLoading` is still technically true. BackHeader
+  // renders either way so the back button is never delayed by this.
+  if (!record && (authLoading || recordLoading)) {
+    return (
+      <div>
+        <BackHeader title="기록" onBack={goBack} />
+        <div className="flex items-center justify-center py-20">
+          <span
+            aria-label="기록을 불러오는 중"
+            className="h-5 w-5 animate-spin rounded-full border-2 border-border-subtle border-t-point"
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (!record) {
     return (
@@ -415,10 +437,25 @@ function RecordDetailInner() {
   );
 }
 
+/**
+ * Keyed by `id` so navigating directly from one /record/[id] to a different
+ * one (not just via /records in between) fully remounts RecordDetailInner
+ * instead of Next.js reusing the existing instance — without this, a stale
+ * `record`/`reflections` from the previous id could render under the new
+ * URL for a tick before the new fetch resolves. Every lazily-initialized
+ * state inside RecordDetailInner (showLoginPrompt, peekRecord's seed, etc.)
+ * already assumes "runs once per mount," so this doesn't change their
+ * behavior — it just makes "per mount" also mean "per record."
+ */
+function RecordDetailKeyed() {
+  const params = useParams<{ id: string }>();
+  return <RecordDetailInner key={params.id} />;
+}
+
 export default function RecordDetailPage() {
   return (
     <Suspense fallback={null}>
-      <RecordDetailInner />
+      <RecordDetailKeyed />
     </Suspense>
   );
 }

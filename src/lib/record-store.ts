@@ -29,10 +29,6 @@ export async function getRecordCount(user: User | null): Promise<number> {
   return user ? remote.getRecordCount() : local.getRecordCount();
 }
 
-export async function getRecord(user: User | null, id: string): Promise<NewsRecord | null> {
-  return user ? remote.getRecord(id) : local.getRecord(id);
-}
-
 /**
  * Caches getRecordsForMonth/getRecordCountForMonth results by exact
  * (user, range, sector) key, so re-visiting a month/sector combo already
@@ -45,10 +41,69 @@ export async function getRecord(user: User | null, id: string): Promise<NewsReco
  */
 const monthCache = new Map<string, Promise<NewsRecord[]>>();
 const monthCountCache = new Map<string, Promise<number>>();
+/**
+ * Same promise-caching pattern as monthCache, for getRecord/
+ * getReflectionsForRecord — keyed by user id (or "anon") + id, so signing
+ * out, switching accounts, or an anonymous visitor never serves another
+ * account's cached record: a different user simply gets a different key,
+ * never stale data left under the old one. `recordSnapshots` additionally
+ * keeps the last *resolved* value per key (written once a getRecord() call
+ * settles) so a component can synchronously seed its first render from
+ * already-known data via peekRecord() instead of flashing a loading state
+ * for data it already has — see use-records-store.ts's useRecord.
+ */
+const recordCache = new Map<string, Promise<NewsRecord | null>>();
+const recordSnapshots = new Map<string, NewsRecord | null>();
+const reflectionsCache = new Map<string, Promise<Reflection[]>>();
 subscribe(() => {
   monthCache.clear();
   monthCountCache.clear();
+  recordCache.clear();
+  recordSnapshots.clear();
+  reflectionsCache.clear();
 });
+
+function recordCacheKey(user: User | null, id: string): string {
+  return `${user?.id ?? "anon"}|${id}`;
+}
+
+export function peekRecord(user: User | null, id: string): NewsRecord | null | undefined {
+  return recordSnapshots.get(recordCacheKey(user, id));
+}
+
+export function getRecord(user: User | null, id: string): Promise<NewsRecord | null> {
+  const key = recordCacheKey(user, id);
+  const cached = recordCache.get(key);
+  if (cached) return cached;
+
+  const promise = (user ? remote.getRecord(id) : local.getRecord(id))
+    .then((record) => {
+      recordSnapshots.set(key, record);
+      return record;
+    })
+    .catch((err) => {
+      recordCache.delete(key);
+      throw err;
+    });
+  recordCache.set(key, promise);
+  return promise;
+}
+
+export function getReflectionsForRecord(user: User | null, recordId: string): Promise<Reflection[]> {
+  const key = recordCacheKey(user, recordId);
+  const cached = reflectionsCache.get(key);
+  if (cached) return cached;
+
+  const promise = (user
+    ? remote.getReflectionsForRecord(recordId)
+    : local.getReflectionsForRecord(recordId)
+  ).catch((err) => {
+    reflectionsCache.delete(key);
+    throw err;
+  });
+  reflectionsCache.set(key, promise);
+  return promise;
+}
 
 function monthCacheKey(user: User | null, range: MonthRange, sectorValues: string[] | null): string {
   const sectorKey = sectorValues ? [...sectorValues].sort().join(",") : "*";
@@ -114,13 +169,6 @@ export async function findPastRecordWithThought(
   return user
     ? remote.findPastRecordWithThought(sector, excludeId)
     : local.findPastRecordWithThought(sector, excludeId);
-}
-
-export async function getReflectionsForRecord(
-  user: User | null,
-  recordId: string,
-): Promise<Reflection[]> {
-  return user ? remote.getReflectionsForRecord(recordId) : local.getReflectionsForRecord(recordId);
 }
 
 export async function saveReflection(
