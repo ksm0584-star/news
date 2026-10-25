@@ -129,18 +129,42 @@ const EXCLUDED_ARTICLE_URLS = new Set<string>([
   "https://view.asiae.co.kr/article/2026101415554159471",
 ]);
 
+/**
+ * Decodes XML/HTML entities exactly once per call (each `.replace` pass is
+ * non-overlapping and runs a single time — e.g. "&amp;amp;" becomes the
+ * literal text "&amp;", not a further-decoded "&", so this never
+ * double-unescapes a source that legitimately wanted to display an escaped
+ * entity as text). Numeric entities are handled generically (`&#39;` and
+ * `&#039;` — any digit count — both resolve to the same code point) rather
+ * than special-cased per digit-width, since 머니투데이's feed in particular
+ * emits the 3-digit form. `&amp;` is decoded last so it can't interfere
+ * with the other patterns above it.
+ */
 function decodeXmlEntities(value: string): string {
   return value
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
     .replace(/&amp;/g, "&");
 }
 
+/**
+ * CDATA content is raw text by XML definition (no entity parsing happens
+ * inside it), so a feed that writes a literal apostrophe has nothing to
+ * decode — but some sources (머니투데이 in particular) put
+ * already-HTML-entity-encoded text inside their own CDATA blocks (their own
+ * data-quality issue, not XML escaping), which readers see as literal
+ * "&#039;" if left alone. Running the same decodeXmlEntities used for the
+ * plain branch here is a no-op for every source that doesn't do this and
+ * fixes display for the ones that do — one single decode pass either way,
+ * matching the plain branch's behavior exactly.
+ */
 function extractField(itemXml: string, tag: string): string | null {
   const cdata = itemXml.match(new RegExp(`<${tag}><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`));
-  if (cdata) return cdata[1].trim();
+  if (cdata) return decodeXmlEntities(cdata[1]).trim();
   const plain = itemXml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
   if (plain) return decodeXmlEntities(plain[1]).trim();
   return null;
