@@ -69,7 +69,7 @@ function YearMonthSheet({
           >
             <ChevronIcon direction="left" />
           </button>
-          <span className="text-[15px] font-bold text-foreground">{displayedYear}년</span>
+          <span className="text-[18px] font-bold text-foreground">{displayedYear}년</span>
           <button
             type="button"
             aria-label="다음 연도"
