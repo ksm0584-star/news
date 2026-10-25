@@ -19,6 +19,7 @@ import { combineExternalContent, splitExternalContent } from "@/lib/external-rec
 import { isMemoValid } from "@/lib/validate-memo";
 import { shouldOfferFirstRecordLoginPrompt } from "@/lib/login-prompt";
 import { incrementNewSaveCount, shouldOfferRatingPrompt } from "@/lib/rating-prompt";
+import { articleAnalytics } from "@/lib/article-analytics";
 import { track } from "@/lib/mixpanel";
 
 function isHttpUrl(value: string): boolean {
@@ -50,6 +51,9 @@ function ExternalArticleView() {
   // — distinguishes that path from a (hypothetical) direct home-news-list
   // entry landing here with the same title/sector/url shape, for record_started.
   const entryParam = searchParams.get("entry");
+  const recordEntryPoint = entryParam === "article_return_prompt"
+    ? "article_return_prompt"
+    : searchParams.get("title") && searchParams.get("sector") ? "home_news_list" : "manual_url";
   const { record: editingRecord, loading: editingRecordLoading } = useRecord(editId ?? "");
 
   // Create mode takes the URL from the query string; edit mode takes it
@@ -220,11 +224,12 @@ function ExternalArticleView() {
     if (!urlIsValid || !titleParam || !sectorParam) return;
     trackedStartRef.current = true;
     track("record_started", {
-      entry_point: entryParam === "article_return_prompt" ? "article_return_prompt" : "home_news_list",
+      ...articleAnalytics(rawUrl),
+      entry_point: recordEntryPoint,
       source_type: "external",
       ...(sectorParam ? { sector: sectorParam } : {}),
     });
-  }, [isEditMode, authLoading, urlIsValid, titleParam, sectorParam, entryParam]);
+  }, [isEditMode, authLoading, urlIsValid, titleParam, sectorParam, recordEntryPoint, rawUrl]);
 
   // Fires once per mount, when the attached URL is confirmed usable —
   // distinct from merely typing/pasting a URL (which can still be
@@ -234,10 +239,12 @@ function ExternalArticleView() {
     if (isEditMode || trackedAttachRef.current || !urlIsValid) return;
     trackedAttachRef.current = true;
     track("record_article_attached", {
+      ...articleAnalytics(rawUrl),
+      entry_point: recordEntryPoint,
       source_type: "external",
       ...(sectorParam ? { sector: sectorParam } : {}),
     });
-  }, [isEditMode, urlIsValid, sectorParam]);
+  }, [isEditMode, urlIsValid, sectorParam, rawUrl, recordEntryPoint]);
 
   // Fires once the edit target has fully loaded (record + any restored
   // draft) and settled onto this screen.
@@ -268,6 +275,7 @@ function ExternalArticleView() {
   // button_click still fires for that re-open either way.
   function handleOpenArticle() {
     track("article_opened", {
+      ...articleAnalytics(rawUrl),
       source_type: "external",
       entry_point: isEditMode ? "record_edit" : "manual_url",
       ...(isEditMode && editingRecord
@@ -380,6 +388,8 @@ function ExternalArticleView() {
       }
 
       track("record_saved", {
+        ...articleAnalytics(rawUrl),
+        entry_point: recordEntryPoint,
         record_id: record.id,
         sector: record.sector,
         source_type: record.sourceType,
