@@ -3,8 +3,18 @@
 /**
  * Only ever mounted on the news-reading/writing screen
  * (src/app/record/new/external/page.tsx). `hidden` covers both "the
- * dictionary sheet is already open" and anything else the caller wants to
- * hide it for — the caller decides, this component just doesn't render.
+ * dictionary sheet is already open" and "the on-screen keyboard is
+ * currently covering the input the user is writing in" — the caller
+ * decides, this component just fades (never unmounts, so the fade has
+ * something to animate — see below).
+ *
+ * 2026-10-26: this used to `return null` outright when hidden (instant,
+ * no transition). Now it always stays mounted and toggles opacity instead,
+ * so hiding it for the keyboard gets a short fade rather than a pop —
+ * `pointer-events-none` while hidden keeps the invisible button from
+ * eating taps over whatever's now underneath it (the keyboard, or an
+ * input). `tabIndex`/`aria-hidden` keep it out of keyboard/screen-reader
+ * navigation while invisible.
  *
  * Positioning — both offsets are real DOM measurements the caller takes
  * (via getBoundingClientRect()), not logical/estimated values, so they
@@ -37,18 +47,20 @@ export default function TermDictionaryButton({
   bottomOffsetPx: number;
   onClick: () => void;
 }) {
-  if (hidden) return null;
-
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label="경제용어사전 열기"
+      aria-hidden={hidden}
+      tabIndex={hidden ? -1 : undefined}
       style={{
         right: `${rightOffsetPx}px`,
         bottom: `${bottomOffsetPx}px`,
       }}
-      className="fixed z-40 flex h-[56px] w-[56px] flex-col items-center justify-center gap-0 rounded-full border border-border-subtle bg-surface text-point shadow-lg shadow-black/10 active:bg-background"
+      className={`fixed z-40 flex h-[56px] w-[56px] flex-col items-center justify-center gap-0 rounded-full border border-border-subtle bg-surface text-point shadow-lg shadow-black/10 transition-opacity duration-[180ms] ease-out motion-reduce:transition-none active:bg-background ${
+        hidden ? "pointer-events-none opacity-0" : "opacity-100"
+      }`}
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path

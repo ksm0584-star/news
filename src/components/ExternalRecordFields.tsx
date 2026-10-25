@@ -22,6 +22,16 @@ const ExternalRecordFields = forwardRef<
     investmentNote: string;
     onInvestmentNoteChange: (value: string) => void;
     error: string | null;
+    /**
+     * Fallback-only signal for the dictionary FAB's keyboard-aware hiding
+     * (see external/page.tsx's `keyboardOpen`) — only actually consulted on
+     * a browser with no Visual Viewport API, where "a field is focused" is
+     * the best available proxy for "the keyboard is probably open". Wired
+     * to all three text fields here so the caller doesn't need to know
+     * which one the user is in.
+     */
+    onFieldFocus?: () => void;
+    onFieldBlur?: () => void;
   }
 >(function ExternalRecordFields(
   {
@@ -34,6 +44,8 @@ const ExternalRecordFields = forwardRef<
     investmentNote,
     onInvestmentNoteChange,
     error,
+    onFieldFocus,
+    onFieldBlur,
   },
   articleSummaryRef,
 ) {
@@ -45,6 +57,8 @@ const ExternalRecordFields = forwardRef<
       <input
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
+        onFocus={onFieldFocus}
+        onBlur={onFieldBlur}
         className="mb-form-field-gap w-full rounded-xl border border-border-subtle bg-background h-[50px] px-4 type-input text-foreground outline-none focus:border-point"
       />
 
@@ -75,6 +89,8 @@ const ExternalRecordFields = forwardRef<
         ref={articleSummaryRef}
         value={articleSummary}
         onChange={(e) => onArticleSummaryChange(e.target.value)}
+        onFocus={onFieldFocus}
+        onBlur={onFieldBlur}
         placeholder="무슨 일이 일어났나요? 왜 일어났나요? 구체적으로 어떤 내용인가요?"
         rows={5}
         className="mb-form-field-gap block w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 type-input leading-6 text-foreground outline-none focus:border-point"
@@ -86,6 +102,8 @@ const ExternalRecordFields = forwardRef<
       <textarea
         value={investmentNote}
         onChange={(e) => onInvestmentNoteChange(e.target.value)}
+        onFocus={onFieldFocus}
+        onBlur={onFieldBlur}
         placeholder="이 변화가 어떤 산업·기업·자산에 영향을 줄까요? 앞으로 어떻게 될 것 같나요?"
         rows={4}
         className="mb-2 w-full resize-none rounded-xl border border-border-subtle bg-background px-4 py-3 type-input leading-6 text-foreground outline-none focus:border-point"

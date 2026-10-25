@@ -175,6 +175,29 @@ function ExternalArticleView() {
   }, [keyboardInsetPx, footerHeightPx]);
   const dictionaryBottomPx = (footerHeightPx ?? 76) + keyboardInsetPx + 12;
 
+  // Hides the dictionary FAB while the on-screen keyboard is actually
+  // covering the field the user is writing in, across 제목/내 생각/투자에
+  // 적용하기 alike — `keyboardInsetPx` is a single viewport-level signal
+  // (not tied to which field triggered it), so no per-field wiring is
+  // needed for this to already cover all three uniformly. It also already
+  // handles "focus stayed but the keyboard itself was dismissed" (iOS
+  // Safari's own "done" sometimes doesn't blur the field) correctly on its
+  // own, since that drops keyboardInsetPx back toward 0 regardless of
+  // focus — no separate focus check needed for that case. The threshold
+  // absorbs ordinary visualViewport jitter (address-bar show/hide,
+  // momentum scroll) that's nowhere near an actual keyboard's height.
+  const KEYBOARD_VISIBLE_THRESHOLD_PX = 100;
+  // Fallback only for a browser with no Visual Viewport API at all
+  // (useKeyboardInsetPx silently stays 0 forever there, so the threshold
+  // check above could never fire) — per the task's "포커스를 보조 신호로"
+  // instruction. Every current iOS Safari/Chrome/Firefox build has this
+  // API, so `anyFieldFocused` never actually drives this in practice.
+  const hasVisualViewport = typeof window !== "undefined" && Boolean(window.visualViewport);
+  const [anyFieldFocused, setAnyFieldFocused] = useState(false);
+  const keyboardOpen = hasVisualViewport
+    ? keyboardInsetPx > KEYBOARD_VISIBLE_THRESHOLD_PX
+    : anyFieldFocused;
+
   function openDictionary() {
     track("dictionary_open", {
       source: "article_view",
@@ -424,6 +447,8 @@ function ExternalArticleView() {
               investmentNote={draft.investmentNote}
               onInvestmentNoteChange={draft.setInvestmentNote}
               error={error}
+              onFieldFocus={() => setAnyFieldFocused(true)}
+              onFieldBlur={() => setAnyFieldFocused(false)}
             />
           </div>
 
@@ -451,11 +476,12 @@ function ExternalArticleView() {
       )}
 
       {/* Independent of login state — dictionary lookup works whether
-          signed in or not, same as before. Hidden only while its own
-          sheet is open; there's no write bottom-sheet anymore to also
-          check against. */}
+          signed in or not, same as before. Hidden while its own sheet is
+          open, or while the keyboard is covering a field the user is
+          writing in (see keyboardOpen above) — fades rather than popping,
+          see TermDictionaryButton's own comment. */}
       <TermDictionaryButton
-        hidden={dictionaryOpen}
+        hidden={dictionaryOpen || keyboardOpen}
         rightOffsetPx={dictionaryRightPx}
         bottomOffsetPx={dictionaryBottomPx}
         onClick={openDictionary}
