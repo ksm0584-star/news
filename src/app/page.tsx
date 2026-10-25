@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import LatestNewsList from "@/components/LatestNewsList";
+import HotNewsSection from "@/components/HotNewsSection";
 import ArticleReturnBanner from "@/components/ArticleReturnBanner";
 import { useArticleReturnBanner } from "@/lib/use-article-return-banner";
 import { track } from "@/lib/mixpanel";
@@ -24,6 +25,8 @@ export default function HomePage() {
       <header className="flex items-center justify-between px-5 pt-6 pb-1">
         <h1 className="text-xl font-extrabold text-foreground">모아요</h1>
       </header>
+
+      <HotNewsSection />
 
       <LatestNewsList />
 

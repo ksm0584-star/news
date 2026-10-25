@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" role="img" aria-label="국내 증시·주식 주제 일러스트">
+  <rect width="400" height="225" fill="#f4f5f7"/>
+  <g stroke="#eef0f3" stroke-width="1">
+    <line x1="60" y1="60" x2="340" y2="60"/>
+    <line x1="60" y1="100" x2="340" y2="100"/>
+    <line x1="60" y1="140" x2="340" y2="140"/>
+    <line x1="60" y1="180" x2="340" y2="180"/>
+  </g>
+  <g fill="#3182f6">
+    <rect x="90" y="140" width="22" height="40" rx="3"/>
+    <rect x="140" y="110" width="22" height="70" rx="3"/>
+    <rect x="190" y="90" width="22" height="90" rx="3"/>
+  </g>
+  <g fill="#1b64da">
+    <rect x="240" y="60" width="22" height="120" rx="3"/>
+    <rect x="290" y="75" width="22" height="105" rx="3"/>
+  </g>
+  <polyline points="101,135 151,105 201,85 251,55 301,70" fill="none" stroke="#19202b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <polygon points="301,70 313,66 305,80" fill="#19202b" opacity="0.85"/>
+</svg>

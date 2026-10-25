@@ -43,30 +43,22 @@ export interface NewsSource {
 
 /**
  * Official RSS feed sources for the home screen's latest-news list — no API
- * key needed for any of them. Only an outlet whose article pages have
- * actually been confirmed to render correctly in a real mobile iframe
- * belongs here long-term; a domain not blocked and a reasonable-looking
- * viewport meta tag are not enough on their own (that's exactly how
- * hankyung.com — now kept only in src/lib/iframe-support.ts's
- * non-responsive list, never used as a home-feed source — ended up here
- * before actual mobile rendering showed it doesn't reflow correctly).
+ * key needed for any of them. Articles always open via direct external
+ * navigation (web: same-tab `<a href>`; native app: in-app browser, see
+ * src/lib/native/article-browser.ts) — there is no in-app iframe viewer of
+ * any article content, so iframe-embeddability (X-Frame-Options/CSP
+ * frame-ancestors) is not an inclusion criterion. (An earlier iframe-based
+ * ArticleViewer did gate sources on that basis — see git history around
+ * src/lib/iframe-support.ts — but that component was removed; a stale
+ * version of this comment kept citing it after the fact.) What actually
+ * matters: the feed is an official, currently-live RSS endpoint, and a
+ * sampled article URL from it actually loads (200, not a 404/paywall
+ * stub).
  *
- * TEMPORARY, DEV-ONLY: 매일경제 passed real mobile-device testing. 이데일리,
- * 아시아경제, 조선일보 have only passed the header/viewport checks and
- * mount successfully in ArticleViewer's iframe — their actual
- * mobile-rendered appearance has NOT been confirmed on a real device yet
- * (see the project's RSS-source research for the full findings) — they're
- * wired in now specifically so that confirmation can happen against this
- * dev server. Do not treat this as cleared for a public/production deploy
- * until that confirmation lands, and RSS usage terms still need an
- * explicit check before any public launch either way (조선일보's feed in
- * particular carries no copyright/terms line at all — the least clear of
- * any source checked so far).
- *
- * Excluded: 한국경제 (confirmed non-responsive — see
- * IFRAME_NON_RESPONSIVE_DOMAINS in iframe-support.ts), 서울경제 (confirmed
- * non-responsive on a real device test), 머니투데이/파이낸셜뉴스 (confirmed
- * iframe-blocked via X-Frame-Options/CSP headers).
+ * Each source's own comment below records what was actually checked for
+ * that outlet (item volume, date range, media tag presence, article URL
+ * check) at the time it was added — re-verify rather than assume if a
+ * source starts misbehaving.
  */
 export const NEWS_SOURCES: NewsSource[] = [
   { press: "매일경제", feedUrl: "https://www.mk.co.kr/rss/30100041/", allowThumbnail: true },
@@ -79,6 +71,49 @@ export const NEWS_SOURCES: NewsSource[] = [
   {
     press: "조선일보",
     feedUrl: "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
+    allowThumbnail: false,
+  },
+  // Added 2026-10-25, 경제 category feed. 50 items/pull, ~2-day span,
+  // official <copyright> line present, article URL spot-checked (200).
+  // Zero media:content/media:thumbnail/enclosure in any sampled item — no
+  // thumbnail to gate either way, allowThumbnail is false as a structural
+  // fact, not a cautious guess.
+  { press: "한국경제", feedUrl: "https://www.hankyung.com/feed/economy", allowThumbnail: false },
+  // Added 2026-10-25. Only "최신기사" (all-sections latest) feed found —
+  // hankyung-style per-category feeds (mt_economy.xml etc.) all 302
+  // redirect to a 404 page, so this is the one real feed this outlet
+  // offers; same classifySectorV2/evaluateNonEconomicFilter in
+  // parseRssFeed already used for 아시아경제's similarly mixed-topic feed
+  // does the economic-relevance narrowing. 100 items/pull, ~14h span (high
+  // update frequency), official <copyright> line present, article URL
+  // spot-checked (200). No <media:content>/<media:thumbnail>/<enclosure>
+  // in any sampled item — the feed's <description> CDATA does embed a raw
+  // `<img src=...>` for each item's teaser image, but that's a different,
+  // unverified reuse case (HTML inside a text field, not an aggregator
+  // media tag) that this parser deliberately does not extract from;
+  // allowThumbnail is false until that's separately decided.
+  { press: "머니투데이", feedUrl: "https://rss.mt.co.kr/mt_news.xml", allowThumbnail: false },
+  // Added 2026-10-25, three category feeds (경제/증권/산업) — found via the
+  // feed index at fnnews.com/rss; each individual category feed is thin
+  // (경제 5 / 증권 3 / 산업 4 items per pull, same-day span only), so three
+  // are combined for usable volume (dedupeByUrl already handles any
+  // overlap). Official <copyright> line present, article URL spot-checked
+  // (200). Zero media:content/media:thumbnail/enclosure in any sampled
+  // item across all three — same structural no-thumbnail situation as
+  // 한국경제.
+  {
+    press: "파이낸셜뉴스",
+    feedUrl: "https://www.fnnews.com/rss/r20/fn_realnews_economy.xml",
+    allowThumbnail: false,
+  },
+  {
+    press: "파이낸셜뉴스",
+    feedUrl: "https://www.fnnews.com/rss/r20/fn_realnews_stock.xml",
+    allowThumbnail: false,
+  },
+  {
+    press: "파이낸셜뉴스",
+    feedUrl: "https://www.fnnews.com/rss/r20/fn_realnews_industry.xml",
     allowThumbnail: false,
   },
 ];
@@ -191,4 +226,51 @@ export function dedupeByUrl(items: LatestNewsItem[]): LatestNewsItem[] {
     result.push(item);
   }
   return result;
+}
+
+async function fetchSource(source: (typeof NEWS_SOURCES)[number]): Promise<LatestNewsItem[]> {
+  const response = await fetch(source.feedUrl, {
+    next: { revalidate: 21600 },
+    headers: { "User-Agent": "NewsNoteBot/1.0 (+https://github.com/ksm0584-star/news)" },
+  });
+  if (!response.ok) throw new Error(`${source.press}: ${response.status}`);
+  const xml = await response.text();
+  return parseRssFeed(xml, source.press, source.allowThumbnail);
+}
+
+/**
+ * Fetches every configured source (Promise.allSettled — one outlet's feed
+ * being down never drops the others), dedupes, and sorts newest-first. The
+ * same aggregation GET /api/news has always done, pulled out here so the
+ * HOT 뉴스 cron (src/app/api/cron/hot-news/route.ts) can match keywords
+ * against the exact same article pool instead of re-implementing this
+ * fetch loop a second time. Behavior-preserving extraction — GET /api/news
+ * just calls this now instead of inlining it.
+ *
+ * `failed` is true only when sources are configured but every single one
+ * of them errored — zero configured sources is "nothing to fetch", not a
+ * failure (same distinction the original inline version drew).
+ */
+export async function fetchAllNewsItems(): Promise<{
+  articles: LatestNewsItem[];
+  failed: boolean;
+}> {
+  if (NEWS_SOURCES.length === 0) {
+    return { articles: [], failed: false };
+  }
+
+  const results = await Promise.allSettled(NEWS_SOURCES.map(fetchSource));
+  const succeeded = results.filter(
+    (result): result is PromiseFulfilledResult<LatestNewsItem[]> => result.status === "fulfilled",
+  );
+
+  if (succeeded.length === 0) {
+    return { articles: [], failed: true };
+  }
+
+  const articles = dedupeByUrl(succeeded.flatMap((result) => result.value)).sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  );
+
+  return { articles, failed: false };
 }

@@ -705,6 +705,72 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
 - **State**: 링크형 카드만 `active:bg-background`.
 - **토큰**: `surface`, `background`, `border`, `primary`, `rounded.2xl`, `rounded.xl`.
 
+#### HOT 뉴스 카드 — `HotNewsSection`/`HotNewsCard` (2026-10-24)
+
+홈 화면 최상단의 "지금 주목할 뉴스" — 관리자가 등록한 경제 이슈 키워드와
+기존 RSS 기사를 매칭한 결과(최대 5개)를 가로 스크롤 카드로 보여줍니다
+(선정 로직은 `src/lib/hot-news-matching.ts`, 자세한 내용은 프로젝트
+리서치/구현 보고 참고 — **실시간 조회수 기반 인기 순위가 아님**). **언론사와
+무관하게 전체 RSS 기사가 선정 대상**입니다 — 썸네일 보유는 선정 단계의
+조건이 아니라, 후보가 동률일 때 실제 사진을 우선하는 타이브레이커일
+뿐입니다(2026-10-25 재변경 — 하루 전 버전은 썸네일을 필수 조건으로 걸어
+매일경제만 선정되던 문제가 있었음, 아래 일러스트 폴백으로 해결).
+
+| 항목 | 값 | 토큰 |
+| --- | --- | --- |
+| 카드 폭 | `w-[240px]` (고정, `shrink-0`) | — |
+| 썸네일 비율 | `aspect-video`(16:9) | — |
+| 썸네일 radius·채움 | `rounded-2xl bg-background`(실사진 없을 때 아래 일러스트가 같은 박스를 채움) | `rounded.2xl`, `colors.background` |
+| 제목 | `type-article-title leading-snug line-clamp-2`(한 줄 역할과 동일, 2줄 말줄임만 추가) | Typography → 역할 스타일 |
+| 보조 정보 | `SectorBadge`(공통) + 언론사명(`text-xs text-muted`) | — |
+| 카드 사이 간격 | `gap-3`(12px) | — |
+| 가로 스크롤 | `overflow-x-auto snap-x snap-mandatory scroll-px-5 no-scrollbar`, 카드 `snap-start` — 다음 카드 일부가 항상 보이도록 폭을 일부러 뷰포트에 딱 안 맞게 잡음 | — |
+| 순위 숫자 | 없음(의도적으로 표시 안 함) | — |
+| "기록하기" 버튼 | 없음(홈 뉴스 목록의 `RecordCardAction`과 달리 카드 전체가 원문 열기 전용) | — |
+
+- **레이아웃 출처**: 가로 스크롤 image-first 카드라는 형태 자체는 미사용
+  컴포넌트 `NewsCarousel`/`NewsCard`(아래 "미사용 컴포넌트" 참고)에서 처음
+  설계됐던 패턴을 그대로 가져왔습니다 — `rounded-2xl` 이미지 박스 +
+  `line-clamp-2` 제목 + `snap-x` 스크롤. 다만 `NewsCard`는
+  `NewsArticle`/`mock-news.ts`(샘플 데이터) 전용으로 짜여 있어 그 컴포넌트
+  자체를 재사용하지 않고, 실제 RSS 데이터(`LatestNewsItem`) 위에 새로
+  작성했습니다 — `NewsCarousel`/`NewsCard`는 여전히 어디에서도 import되지
+  않습니다.
+- **주제 일러스트 폴백(2026-10-25 추가)**: 실제 썸네일(`imageUrl`, 소스별
+  `allowThumbnail` 허용 여부 — `src/lib/news-rss.ts` 참고, 바뀌지 않음)이
+  없거나 런타임에 로드가 실패하면, 같은 `aspect-video` 박스에 **사전 제작한
+  SVG 주제 일러스트**(`public/illustrations/hot-news/*.svg`, 10종: 반도체·AI·IT /
+  국내 증시·주식 / 금리·환율·금융 / 부동산 / 에너지·원자재 / 자동차·제조업 /
+  글로벌 경제·무역 / 기업 실적·산업 / 정부 정책·경제 지표 / 기타 경제
+  뉴스)을 대신 채웁니다. 어떤 일러스트를 쓸지는 `src/lib/hot-news-illustration.ts`의
+  `resolveIllustrationTheme()`이 기사 제목 키워드(우선) → 섹터 기본값(차순)
+  순으로 고릅니다. 일러스트는 외부 이미지 생성 API 없이 직접 제작한 정적
+  SVG이며(플랫 에디토리얼 스타일, 텍스트/로고/워터마크 없음, 보도사진처럼
+  보이지 않게), `next/image`가 아니라 일반 `<img>`로 렌더링합니다
+  (`ArticleLinkBanner`와 같은 이유 — next.config.ts에
+  `images.dangerouslyAllowSVG` 미설정). 실사진 카드와 구분하는 별도 라벨은
+  달지 않습니다(2026-10-25 — 이전엔 "주제 일러스트" 배지가 있었으나 요청에
+  따라 제거, 선정/표시 로직 자체는 그대로).
+- **동작**: 카드 전체가 `<a>` 하나 — 클릭 시 `ArticleOriginalLink`/
+  `LatestNewsList`와 같은 원문 열기 동작(네이티브 앱은 인앱 브라우저,
+  웹은 같은 탭)과 `saveArticleReturnInfo`(복귀 시 "기록하기" 유도 배너)를
+  그대로 재사용합니다.
+- **데이터 없음**: `GET /api/hot-news`가 오늘(KST) 데이터를 못 찾으면
+  섹션 전체(제목 포함)가 렌더링되지 않습니다 — 아래 최신 뉴스 목록에는
+  영향 없음.
+- **사용 화면**: 홈(`/`), 최신 뉴스 목록보다 위.
+
+#### 최신 경제 뉴스 헤더 — `LatestNewsList` (2026-10-25)
+
+섹터 필터(`CategoryTabs`) 바로 위에 **"최신 경제 뉴스"** `<h2>`를
+추가했습니다 — "지금 주목할 뉴스"와 **완전히 같은 타이포그래피·여백**
+(`px-5 text-[15px] font-bold text-foreground`)이라 두 섹션 제목이 시각적으로
+짝을 이룹니다. 헤더 → `CategoryTabs` 간격은 `mt-4`(16px, 별도 wrapper
+`<div>`에 적용 — `CategoryTabs` 자체는 내 기록 화면에서도 재사용되므로
+컴포넌트를 고치지 않음). HOT 뉴스 섹션 → 이 섹션 전체 간격은 `mt-6`(24px,
+기존 `mt-3`에서 변경) — 기록 상세 화면에서 "머리 영역 아래"에 쓰는 것과
+같은 24px 값이라 새 토큰을 만들지 않았습니다.
+
 ### Badge / Chip
 
 - **Badge** — `SectorBadge` (공통). 기사·기록의 분야 표시. `rounded-full
@@ -1142,7 +1208,10 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
     색) — 나머지 하나는 2026-10-18부터 `ArticleReturnBanner`(아래
     "그 외 공통 컴포넌트" 참고).
 - **미사용 컴포넌트** — `NewsCarousel`(및 이를 통해서만 쓰이는 `NewsCard`)은
-  어디에서도 import하지 않음.
+  어디에서도 import하지 않음. **2026-10-24**: 이 둘의 가로 스크롤 카드
+  레이아웃은 새 `HotNewsSection`/`HotNewsCard`(Components → Card → "HOT
+  뉴스 카드")가 패턴만 가져다 썼을 뿐, `NewsCarousel`/`NewsCard` 자체는
+  여전히 import되지 않습니다.
 
 ## 향후 토큰화가 필요한 항목
 

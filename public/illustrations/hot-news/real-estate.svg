@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" role="img" aria-label="부동산 주제 일러스트">
+  <rect width="400" height="225" fill="#f4f5f7"/>
+  <g fill="#c98a4b">
+    <rect x="70" y="120" width="40" height="80"/>
+    <rect x="120" y="90" width="48" height="110"/>
+    <rect x="178" y="60" width="54" height="140"/>
+    <rect x="242" y="100" width="42" height="100"/>
+    <rect x="294" y="130" width="38" height="70"/>
+  </g>
+  <g fill="#ffffff" opacity="0.85">
+    <rect x="78" y="132" width="8" height="8"/>
+    <rect x="94" y="132" width="8" height="8"/>
+    <rect x="78" y="150" width="8" height="8"/>
+    <rect x="94" y="150" width="8" height="8"/>
+    <rect x="130" y="104" width="8" height="8"/>
+    <rect x="148" y="104" width="8" height="8"/>
+    <rect x="130" y="122" width="8" height="8"/>
+    <rect x="148" y="122" width="8" height="8"/>
+    <rect x="130" y="140" width="8" height="8"/>
+    <rect x="148" y="140" width="8" height="8"/>
+    <rect x="190" y="74" width="9" height="9"/>
+    <rect x="210" y="74" width="9" height="9"/>
+    <rect x="190" y="96" width="9" height="9"/>
+    <rect x="210" y="96" width="9" height="9"/>
+    <rect x="190" y="118" width="9" height="9"/>
+    <rect x="210" y="118" width="9" height="9"/>
+    <rect x="252" y="114" width="8" height="8"/>
+    <rect x="268" y="114" width="8" height="8"/>
+    <rect x="252" y="132" width="8" height="8"/>
+    <rect x="268" y="132" width="8" height="8"/>
+    <rect x="302" y="144" width="7" height="7"/>
+    <rect x="316" y="144" width="7" height="7"/>
+  </g>
+  <rect x="60" y="200" width="280" height="6" rx="3" fill="#8b95a1" opacity="0.4"/>
+</svg>

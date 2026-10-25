@@ -122,8 +122,16 @@ export default function LatestNewsList() {
   }
 
   return (
-    <section className="mt-3">
-      <CategoryTabs selected={category} onSelect={setCategory} />
+    <section className="mt-6">
+      {/* Same h2 typography/padding as HotNewsSection's "지금 주목할 뉴스"
+          title (px-5 text-[15px] font-bold text-foreground) for visual
+          consistency between the two home-screen sections. CategoryTabs
+          itself stays untouched (also used on 내 기록) — the 16px gap below
+          this header lives on the wrapping div, not on that component. */}
+      <h2 className="px-5 text-[15px] font-bold text-foreground">최신 경제 뉴스</h2>
+      <div className="mt-4">
+        <CategoryTabs selected={category} onSelect={setCategory} />
+      </div>
 
       <div
         id="news-explorer-panel"
