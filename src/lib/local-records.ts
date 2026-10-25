@@ -131,6 +131,7 @@ export async function createRecord(input: CreateRecordInput): Promise<CreateReco
   const record: NewsRecord = {
     id: newLocalId("record"),
     title: input.title,
+    articleTitle: input.articleTitle,
     sector: input.sector,
     imageUrl: input.imageUrl,
     sourceType: input.sourceType,

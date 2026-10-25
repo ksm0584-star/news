@@ -16,6 +16,7 @@ import { useExternalDraft } from "@/lib/use-external-draft";
 import { useKeyboardInsetPx } from "@/lib/use-keyboard-inset";
 import { resolveCategoryForSector, WRITABLE_CATEGORIES } from "@/lib/news-categories";
 import { combineExternalContent, splitExternalContent } from "@/lib/external-record-content";
+import { useArticleTitleLookup } from "@/lib/use-article-title-lookup";
 import { isMemoValid } from "@/lib/validate-memo";
 import { shouldOfferFirstRecordLoginPrompt } from "@/lib/login-prompt";
 import { incrementNewSaveCount, shouldOfferRatingPrompt } from "@/lib/rating-prompt";
@@ -102,8 +103,8 @@ function ExternalArticleView() {
   // `titleParam` no longer seeds the record-title input (that auto-fill was
   // removed — the title field now always starts blank for a new record, so
   // the user writes their own title). It's still read here for the news
-  // link banner (connected article's title, see `articleTitle` below) and
-  // for tracking.
+  // link banner (connected article's title, see `bannerTitle` below), to
+  // save into the new record's own `articleTitle` field, and for tracking.
   const titleParam = searchParams.get("title");
   const sectorParam = searchParams.get("sector");
   const [prefillApplied, setPrefillApplied] = useState(isEditMode);
@@ -120,14 +121,29 @@ function ExternalArticleView() {
   }, [isEditMode, prefillApplied, draft, sectorParam]);
 
   // The connected article's own title, shown in the news link banner only —
-  // never written into the record-title input. In edit mode there's no
-  // separately stored "original article title", so the record's own title
-  // (set from the article title at creation time, per the pre-existing edit
-  // seeding above) is reused. In create mode it's the `title` query param;
-  // a manual URL-paste entry (no title param) has no known article title,
-  // so the raw URL is shown instead — the banner still needs to display
-  // something and stay clickable either way.
-  const articleTitle = isEditMode ? (editingRecord?.title ?? "") : titleParam || rawUrl;
+  // never written into the record-title input, and never the domain or
+  // the record's own `title` as a substitute (2026-10-26 bug fix: showing
+  // `editingRecord.title` here meant the banner displayed whatever the
+  // user had typed as their own record title instead of the actual
+  // headline; a later pass also rejected the domain-name fallback per an
+  // explicit requirement that the banner must show the real headline or
+  // an honest "확인할 수 없어요", never a stand-in). Priority: edit mode's
+  // `editingRecord.articleTitle` (saved at creation time) or create
+  // mode's `titleParam` (a known article title passed in the entry
+  // link) > a live lookup of the article page's own og:title (only run
+  // when neither of those is available) > an explicit unavailable state.
+  const knownTitle = isEditMode ? editingRecord?.articleTitle : titleParam || undefined;
+  const needsLiveTitleLookup = Boolean(!knownTitle && rawUrl && isHttpUrl(rawUrl));
+  const { title: liveArticleTitle, status: liveArticleTitleStatus } = useArticleTitleLookup(
+    needsLiveTitleLookup ? rawUrl : null,
+  );
+  const bannerTitle =
+    knownTitle ??
+    (liveArticleTitleStatus === "resolved" && liveArticleTitle
+      ? liveArticleTitle
+      : liveArticleTitleStatus === "loading"
+        ? "원문 제목을 불러오는 중..."
+        : "원문 제목을 확인할 수 없어요");
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -374,6 +390,15 @@ function ExternalArticleView() {
 
       const { record, duplicate } = await createRecord(user, {
         title: draft.title.trim(),
+        // The real RSS article title when known (titleParam, from the
+        // entry link's ?title= — see this file's titleParam comment); for
+        // a manual URL paste (no title param), the same live og:title
+        // lookup the banner itself uses (see `knownTitle`/`bannerTitle`
+        // above) is reused here too, so a successful lookup gets saved
+        // for next time instead of being re-fetched on every future view.
+        // Still omitted entirely (not a fabricated value) if neither is
+        // available by save time.
+        articleTitle: knownTitle || (liveArticleTitleStatus === "resolved" ? liveArticleTitle! : undefined),
         sector: draft.sector,
         sourceType: "external",
         url: rawUrl,
@@ -439,7 +464,7 @@ function ExternalArticleView() {
       <BackHeader title={isEditMode ? "기록 수정" : "기록하기"} />
       <ArticleOpenExternalBar
         url={rawUrl}
-        title={articleTitle}
+        title={bannerTitle}
         onOpenArticle={!isEditMode && titleParam && sectorParam ? undefined : handleOpenArticle}
       />
 

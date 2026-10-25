@@ -39,6 +39,7 @@ export async function migrateLocalRecordsToAccount(): Promise<void> {
     try {
       const { record: saved } = await remote.createRecord({
         title: record.title,
+        articleTitle: record.articleTitle,
         sector: record.sector,
         imageUrl: record.imageUrl,
         sourceType: record.sourceType,

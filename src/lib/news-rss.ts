@@ -139,8 +139,12 @@ const EXCLUDED_ARTICLE_URLS = new Set<string>([
  * than special-cased per digit-width, since 머니투데이's feed in particular
  * emits the 3-digit form. `&amp;` is decoded last so it can't interfere
  * with the other patterns above it.
+ *
+ * Exported (2026-10-26) for reuse by /api/article-title's og:title/<title>
+ * extraction — the exact same entity set shows up in arbitrary article
+ * HTML `<head>`, not just RSS XML.
  */
-function decodeXmlEntities(value: string): string {
+export function decodeXmlEntities(value: string): string {
   return value
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")

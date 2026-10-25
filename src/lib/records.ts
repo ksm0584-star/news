@@ -24,6 +24,7 @@ function toError(error: PostgrestError): Error {
 type RecordRow = {
   id: string;
   title: string;
+  article_title: string | null;
   sector: string;
   image_url: string | null;
   source_type: SourceType;
@@ -46,6 +47,7 @@ function rowToRecord(row: RecordRow): NewsRecord {
   return {
     id: row.id,
     title: row.title,
+    articleTitle: row.article_title ?? undefined,
     sector: row.sector,
     imageUrl: row.image_url ?? undefined,
     sourceType: row.source_type,
@@ -173,6 +175,8 @@ async function findExistingByDedupeKey(
 
 export interface CreateRecordInput {
   title: string;
+  /** See NewsRecord.articleTitle — omit entirely (not an empty string) when the original title isn't known. */
+  articleTitle?: string;
   sector: string;
   imageUrl?: string;
   sourceType: SourceType;
@@ -198,6 +202,7 @@ export async function createRecord(input: CreateRecordInput): Promise<CreateReco
     .from("records")
     .insert({
       title: input.title,
+      article_title: input.articleTitle ?? null,
       sector: input.sector,
       image_url: input.imageUrl ?? null,
       source_type: input.sourceType,
@@ -221,6 +226,11 @@ export async function createRecord(input: CreateRecordInput): Promise<CreateReco
   return { record: rowToRecord(data), duplicate: false };
 }
 
+// No `articleTitle` here, deliberately — same as `url`/`articleId` already
+// not being here: the connected article's own identity doesn't change
+// when a user edits their own note about it, so an edit save never
+// touches `article_title` (it keeps whatever it already was, including
+// staying null for a record that never had one — no backfill on edit).
 export interface UpdateRecordInput {
   title: string;
   sector: string;

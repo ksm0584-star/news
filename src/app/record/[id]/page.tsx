@@ -15,6 +15,7 @@ import { useRecord, useRecords, useReflectionsForRecord } from "@/lib/use-record
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/format";
 import { splitExternalContent } from "@/lib/external-record-content";
+import { useArticleTitleLookup } from "@/lib/use-article-title-lookup";
 import { track, trackClick } from "@/lib/mixpanel";
 import { hasSeenLoginPrompt } from "@/lib/login-prompt";
 import { hasSeenRatingPrompt } from "@/lib/rating-prompt";
@@ -57,6 +58,17 @@ function RecordDetailInner() {
 
   const { user, loading: authLoading } = useAuth();
   const { record, loading: recordLoading } = useRecord(params.id);
+  // Called unconditionally (hook rule) — before the early returns below,
+  // using optional chaining since `record` can still be null/undefined at
+  // this point. Only actually fetches when there's a real URL AND no
+  // already-known article_title (skips the network round trip otherwise —
+  // see the hook's own comment for why `null` short-circuits it).
+  const needsLiveTitleLookup = Boolean(
+    record && !record.articleTitle && record.url && isHttpUrl(record.url),
+  );
+  const { title: liveArticleTitle, status: liveArticleTitleStatus } = useArticleTitleLookup(
+    needsLiveTitleLookup ? (record!.url as string) : null,
+  );
   const { reflections } = useReflectionsForRecord(params.id);
   const { records: allRecords } = useRecords();
   const recordsById = new Map(allRecords.map((r) => [r.id, r]));
@@ -145,6 +157,17 @@ function RecordDetailInner() {
   // Gates the connected-article banner — a record with no usable URL
   // keeps its original layout exactly (nothing above the title).
   const hasOriginalLink = Boolean(record.url && isHttpUrl(record.url));
+  // The banner's actual displayed text — never the domain, never
+  // `record.title` (see the banner's own comment below for why). Priority:
+  // the record's own saved articleTitle > a successful live lookup > an
+  // explicit, honest "확인할 수 없어요" state while loading or on failure.
+  const bannerTitle =
+    record.articleTitle ??
+    (liveArticleTitleStatus === "resolved" && liveArticleTitle
+      ? liveArticleTitle
+      : liveArticleTitleStatus === "loading"
+        ? "원문 제목을 불러오는 중..."
+        : "원문 제목을 확인할 수 없어요");
 
   async function handleConfirmDelete() {
     setDeleting(true);
@@ -195,9 +218,25 @@ function RecordDetailInner() {
           // `mb-4` is the same 16px gap `record.imageUrl`'s block above
           // already uses before that row, so the row sits the same
           // distance from whichever block (image or banner) precedes it.
+          //
+          // 2026-10-26 bug fix: this used to pass `record.title` (the
+          // user's own record title) here, which is wrong — a record with
+          // a short/unrelated title (e.g. "ㅇㅇ") made the banner show that
+          // instead of the real article headline. `record.articleTitle` is
+          // the actual original title, saved separately at creation time
+          // (see records.ts/local-records.ts).
+          //
+          // 2026-10-26 (2nd pass): a record saved before `articleTitle`
+          // existed has none — rather than falling back to the URL's
+          // domain (tried first, then explicitly rejected: a domain name
+          // isn't "the original title" either), `bannerTitle` above now
+          // looks it up live from the article page's own og:title via
+          // useArticleTitleLookup, and shows a distinct, honest
+          // "확인할 수 없어요" state if that also fails — never the domain,
+          // never `record.title`.
           <ArticleLinkBanner
             href={record.url}
-            title={record.title}
+            title={bannerTitle}
             className="mb-4"
             onClick={() => {
               trackClick("external_open_new_tab");
