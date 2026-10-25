@@ -264,7 +264,7 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 19px | 1 | 기사 제목 (`/article/[id]`) |
 | 18px | 5 | 기록 제목, 온보딩 제목 — bold, `leading-snug`; `MonthPicker`의 연·월 레이블(트리거 버튼, bold, 2026-10-25, 15px에서 변경) + 연도 선택 시트 안 연도 레이블(bold, 2026-10-26, 트리거와 통일) |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
-| 16px (`text-base` 포함) | 5 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태 제목 + 마이페이지 비로그인 타이틀(둘 다 `type-header-title`, bold, 2026-10-26부터 — 두 화면 통일 요청으로 같은 토큰 공유) |
+| 16px (`text-base` 포함) | 5 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태 제목 + 마이페이지 비로그인 타이틀(둘 다 `type-header-title`, bold, 2026-10-26부터 — 두 화면 통일 요청으로 같은 토큰 공유. 타이틀↔서브 타이틀 간격도 `EmptyState`의 `gap-1.5`(6px)를 그대로 재사용 — 마이페이지는 avatar/버튼과의 바깥 `gap-3`은 그대로 두고 타이틀+서브 타이틀만 `gap-1.5`의 중첩 `flex flex-col`로 감쌈) |
 | 15px | 8 | 다이얼로그·섹션 제목(bold) |
 | 14.5px | 3 | 용어 이름(semibold·bold), 기사 본문(`/article/[id]`) |
 | 14px (`text-sm` 포함) | 33 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크, 내 기록 빈 상태 설명 + 마이페이지 비로그인 서브 타이틀(둘 다 medium, 역할 밖, 2026-10-26부터 — 일치하는 named 토큰 없어 임의값 유지, 두 화면이 같은 값 공유) |

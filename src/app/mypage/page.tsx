@@ -133,10 +133,16 @@ export default function MyPage() {
       ) : (
         <div className="flex flex-col items-center gap-3 px-5 py-10 text-center">
           <DefaultAvatar />
-          <p className="type-header-title text-foreground">나의 생각을 보관해 보세요</p>
-          <p className="text-[14px] font-medium text-muted">
-            로그인하면 다른 기기에서도 기록을 확인할 수 있어요.
-          </p>
+          {/* Title↔subtitle gap matches EmptyState's own gap-1.5 exactly
+              (records/page.tsx's "아직 작성한 기록이 없어요") — nested so the
+              outer gap-3 (avatar↔this block, this block↔buttons) stays
+              untouched. */}
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="type-header-title text-foreground">나의 생각을 보관해 보세요</p>
+            <p className="text-[14px] font-medium text-muted">
+              로그인하면 다른 기기에서도 기록을 확인할 수 있어요.
+            </p>
+          </div>
           {loginError ? <p className="text-[13px] text-red-500">{loginError}</p> : null}
           <SocialLoginButtons
             onGoogle={() => handleLogin("google")}
