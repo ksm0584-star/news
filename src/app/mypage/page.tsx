@@ -133,10 +133,8 @@ export default function MyPage() {
       ) : (
         <div className="flex flex-col items-center gap-3 px-5 py-10 text-center">
           <DefaultAvatar />
-          <p className="text-[14.5px] font-semibold text-foreground">
-            나의 생각을 안전하게 보관해 보세요
-          </p>
-          <p className="text-[13px] text-muted">
+          <p className="type-header-title text-foreground">나의 생각을 보관해 보세요</p>
+          <p className="text-[14px] font-medium text-muted">
             로그인하면 다른 기기에서도 기록을 확인할 수 있어요.
           </p>
           {loginError ? <p className="text-[13px] text-red-500">{loginError}</p> : null}

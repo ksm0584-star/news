@@ -264,12 +264,12 @@ Guidelines가 고정한 값이라 같은 이유로 토큰이 아닙니다.
 | 19px | 1 | 기사 제목 (`/article/[id]`) |
 | 18px | 5 | 기록 제목, 온보딩 제목 — bold, `leading-snug`; `MonthPicker`의 연·월 레이블(트리거 버튼, bold, 2026-10-25, 15px에서 변경) + 연도 선택 시트 안 연도 레이블(bold, 2026-10-26, 트리거와 통일) |
 | 17px | 5 | 시트·완료·로그인 제목 — bold |
-| 16px (`text-base` 포함) | 4 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태 제목(`type-header-title`, bold, 2026-10-26부터) |
+| 16px (`text-base` 포함) | 5 + 역할 38 | 텍스트 버튼(`type-button`, semibold, 30곳), 입력값·placeholder(`type-input`, medium, 8곳), URL 단계 안내 제목(`type-header-title`, bold), BackHeader 제목, 프로필 이름 — bold, 내 기록 빈 상태 제목 + 마이페이지 비로그인 타이틀(둘 다 `type-header-title`, bold, 2026-10-26부터 — 두 화면 통일 요청으로 같은 토큰 공유) |
 | 15px | 8 | 다이얼로그·섹션 제목(bold) |
-| 14.5px | 4 | 용어 이름(semibold·bold), 마이페이지 로그인 안내(semibold), 기사 본문(`/article/[id]`) |
-| 14px (`text-sm` 포함) | 32 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크, 내 기록 빈 상태 설명(medium, 역할 밖, 2026-10-26부터 — 일치하는 named 토큰 없어 임의값 유지) |
+| 14.5px | 3 | 용어 이름(semibold·bold), 기사 본문(`/article/[id]`) |
+| 14px (`text-sm` 포함) | 33 + 역할 7 | 칩(`type-chip`, medium), 본문, 기사 제목(`type-article-title`), 입력창 라벨(semibold), 섹터 라벨(`type-section-title`, bold), 카드 제목, 섹션 제목, 원문 보기 링크, 내 기록 빈 상태 설명 + 마이페이지 비로그인 서브 타이틀(둘 다 medium, 역할 밖, 2026-10-26부터 — 일치하는 named 토큰 없어 임의값 유지, 두 화면이 같은 값 공유) |
 | 13.5px | 17 | 시트 본문, 메뉴 항목, 토스트, ArticleReturnBanner 메시지(2026-10-18, 스낵바로 개편되며 18px bold 제목 + 16px medium 설명 2줄에서 Toast와 같은 13.5px medium 한 줄로 변경) |
-| 13px | 34 | 설명, 에러 |
+| 13px | 33 | 설명, 에러 |
 | 12.5px | 13 | 캡션, 에러, 작은 링크 |
 | 12px (`text-xs` 포함) | 21 + 역할 3 | 뱃지, 메타 정보(날짜·언론사), 하단 내비 라벨(`type-nav-label`, medium, 3곳 — 2026-10-17까지 11px) |
 | 11.5px | 4 | 글자 수, 면책 문구 |
