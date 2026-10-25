@@ -139,7 +139,7 @@ export default function MonthPicker({
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="rounded-xl px-2 py-1 text-[15px] font-bold text-foreground active:bg-background"
+        className="rounded-xl px-2 py-1 text-[18px] font-bold text-foreground active:bg-background"
       >
         {formatKoreanYearMonth(year, month)}
       </button>
