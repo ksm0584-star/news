@@ -8,7 +8,7 @@ import EmptyState from "./EmptyState";
 import RecordCardAction from "./RecordCardAction";
 import { ALL_CATEGORY, type NewsCategory } from "@/lib/news-categories";
 import { distributeAcrossSectors } from "@/lib/distribute-sectors";
-import { formatDate } from "@/lib/format";
+import { formatShortDate } from "@/lib/format";
 import { track, trackClick } from "@/lib/mixpanel";
 import { isHttpUrl, saveArticleReturnInfo } from "@/lib/article-return";
 import { getReadArticleUrls, markArticleRead } from "@/lib/read-articles";
@@ -221,7 +221,7 @@ export default function LatestNewsList() {
                         stays on the first line. */}
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
                       <SectorBadge sector={article.sector} muted={isRead} />
-                      <span>{formatDate(article.publishedAt)}</span>
+                      <span>{formatShortDate(article.publishedAt)}</span>
                       <span aria-hidden="true">·</span>
                       <span>{article.press}</span>
                     </div>
