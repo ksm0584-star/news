@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import ArticleOriginalLink from "@/components/ArticleOriginalLink";
+import ArticleLinkBanner from "@/components/ArticleLinkBanner";
 import BackHeader from "@/components/BackHeader";
 import SectorBadge from "@/components/SectorBadge";
 import FirstRecordLoginPromptSheet from "@/components/FirstRecordLoginPromptSheet";
@@ -142,9 +142,8 @@ function RecordDetailInner() {
   // column (see external-record-content.ts); split it back here for display
   // only. Records without the marker show their whole `thought` as-is.
   const { articleSummary, investmentNote } = splitExternalContent(record.thought);
-  // Gates both the "원문 보기" link and the title's conditional top margin
-  // below — a record with no usable URL keeps its original layout exactly
-  // (title with no extra top margin, nothing above it).
+  // Gates the connected-article banner — a record with no usable URL
+  // keeps its original layout exactly (nothing above the title).
   const hasOriginalLink = Boolean(record.url && isHttpUrl(record.url));
 
   async function handleConfirmDelete() {
@@ -182,6 +181,41 @@ function RecordDetailInner() {
           </div>
         ) : null}
 
+        {hasOriginalLink ? (
+          // Always the real article URL, same tab (no target="_blank") so
+          // the browser's own back button returns here — unified with the
+          // record-writing screen's connected-article banner
+          // (ArticleLinkBanner, ArticleOpenExternalBar's "원문 보기" text
+          // link → icon+title+chevron banner, 2026-10-26: record detail
+          // now follows the same unification). No more iframe-support
+          // branch: /record/[id]/article (the old iframe viewer for
+          // "supported" domains) is gone.
+          //
+          // 2026-10-26: moved above the 섹터/날짜/메뉴 row (was below it) —
+          // `mb-4` is the same 16px gap `record.imageUrl`'s block above
+          // already uses before that row, so the row sits the same
+          // distance from whichever block (image or banner) precedes it.
+          <ArticleLinkBanner
+            href={record.url}
+            title={record.title}
+            className="mb-4"
+            onClick={() => {
+              trackClick("external_open_new_tab");
+              // Distinct entry_point from the write/edit screen's — this
+              // is "reread a saved record's original article," not
+              // "attaching/editing a record" (뉴스 열람 구조 개편 3차:
+              // /record/[id]/article's old iframe-mount article_opened
+              // moves here, to the actual 원문 보기 click, since that
+              // route no longer renders an article at all).
+              track("article_opened", {
+                source_type: "external",
+                entry_point: "record_detail",
+                record_id: record.id,
+                sector: record.sector,
+              });
+            }}
+          />
+        ) : null}
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <SectorBadge sector={record.sector} />
@@ -231,40 +265,7 @@ function RecordDetailInner() {
             ) : null}
           </div>
         </div>
-        {hasOriginalLink ? (
-          // Always the real article URL, same tab (no target="_blank") so
-          // the browser's own back button returns here — unified with the
-          // record-writing screen's "원문 보기" (뉴스 열람 구조 개편 3차).
-          // No more iframe-support branch: /record/[id]/article (the old
-          // iframe viewer for "supported" domains) is gone.
-          //
-          // 2026-10-17: moved above the title (was below, with the title
-          // owning no top margin and this link's own `mt-1` providing the
-          // gap) so this screen's head order matches the write screen's
-          // "원문 보기 먼저, 제목 나중" — same `mt-1` value, just now on
-          // the title below it instead of on this link.
-          <ArticleOriginalLink
-            href={record.url}
-            onClick={() => {
-              trackClick("external_open_new_tab");
-              // Distinct entry_point from the write/edit screen's — this
-              // is "reread a saved record's original article," not
-              // "attaching/editing a record" (뉴스 열람 구조 개편 3차:
-              // /record/[id]/article's old iframe-mount article_opened
-              // moves here, to the actual 원문 보기 click, since that
-              // route no longer renders an article at all).
-              track("article_opened", {
-                source_type: "external",
-                entry_point: "record_detail",
-                record_id: record.id,
-                sector: record.sector,
-              });
-            }}
-          />
-        ) : null}
-        <h1
-          className={`${hasOriginalLink ? "mt-1 " : ""}text-[18px] font-bold leading-snug text-foreground`}
-        >
+        <h1 className="text-[18px] font-bold leading-snug text-foreground">
           {record.title}
         </h1>
 
