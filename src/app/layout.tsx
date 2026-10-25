@@ -32,7 +32,12 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og/og-image.png",
+        // v2 (2026-10-26): removed the giant background "MOAYO" wordmark,
+        // enlarged the brand name/tagline. A new filename (not just a
+        // redeploy of the same og-image.png path) so platforms that cache
+        // a link's preview by image URL — KakaoTalk in particular — see
+        // this as a different image and don't keep serving the stale one.
+        url: "/og/og-image-v2.png",
         width: 1200,
         height: 630,
         alt: "모아요 — 경제 뉴스를 모으고, 내 생각을 기록하다.",
@@ -43,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: OG_TITLE,
     description: OG_DESCRIPTION,
-    images: ["/og/og-image.png"],
+    images: ["/og/og-image-v2.png"],
   },
 };
 
