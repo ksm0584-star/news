@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type MouseEvent } from "react";
+import { articleAnalytics, articleAnalyticsId } from "@/lib/article-analytics";
 import Image from "next/image";
 import SectorBadge from "./SectorBadge";
 import { track, trackClick } from "@/lib/mixpanel";
@@ -54,12 +55,14 @@ export default function HotNewsCard({
     // list (home_news_list) and every other caller, so this never
     // double-counts against those.
     track("article_opened", {
+      ...articleAnalytics(article.url),
       source_type: "external",
       entry_point: "home_hot_news",
       sector: article.sector,
       effective_date: effectiveDate,
     });
     saveArticleReturnInfo({
+      articleId: articleAnalyticsId(article.url),
       url: article.url,
       title: article.title,
       sector: article.sector,

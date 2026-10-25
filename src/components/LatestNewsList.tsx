@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { articleAnalytics, articleAnalyticsId } from "@/lib/article-analytics";
+import { useNewsListAnalytics } from "@/lib/use-news-list-analytics";
 import Link from "next/link";
 import SectorBadge from "./SectorBadge";
 import CategoryTabs from "./CategoryTabs";
@@ -59,6 +61,10 @@ export default function LatestNewsList() {
       ? distributeAcrossSectors(articles ?? [])
       : (articles ?? []).filter((article) => article.sector === category);
 
+  const listRef = useRef<HTMLDivElement>(null);
+  const articleIds = JSON.stringify(filtered.map((article) => articleAnalyticsId(article.url)));
+  useNewsListAnalytics(listRef, category, articleIds, filtered.length);
+
   // Fired at the moment the user leaves for the original article — moved
   // here from the record-writing screen's own mount effect, which used to
   // fire this same event once the screen (reached via this exact click)
@@ -74,13 +80,16 @@ export default function LatestNewsList() {
   // so this always returns before reaching preventDefault, and the `<a
   // href>` does its normal same-tab navigation exactly as before.
   function handleArticleOpen(article: LatestNewsItem, event: MouseEvent) {
-    trackClick("home_news_item_open", { sector: article.sector });
+    trackClick("home_news_item_open", { ...articleAnalytics(article.url), entry_point: "home_news_list", selected_category: category, sector: article.sector });
     track("article_opened", {
+      ...articleAnalytics(article.url),
+      selected_category: category,
       source_type: "external",
       entry_point: "home_news_list",
       sector: article.sector,
     });
     saveArticleReturnInfo({
+      articleId: articleAnalyticsId(article.url),
       url: article.url,
       title: article.title,
       sector: article.sector,
@@ -112,7 +121,7 @@ export default function LatestNewsList() {
   // handleArticleOpen/handleArticleRead (those are "the user went to read
   // it" signals; this is "the user wants to record it").
   function handleRecordAction(article: LatestNewsItem) {
-    trackClick("home_news_card_record_action", { sector: article.sector });
+    trackClick("home_news_card_record_action", { ...articleAnalytics(article.url), entry_point: "home_news_list", selected_category: category, sector: article.sector });
   }
 
   function recordHref(article: LatestNewsItem): string {
@@ -134,6 +143,7 @@ export default function LatestNewsList() {
       </div>
 
       <div
+        ref={listRef}
         id="news-explorer-panel"
         role="tabpanel"
         aria-label={`${category} 뉴스 목록`}
@@ -165,6 +175,9 @@ export default function LatestNewsList() {
               return (
                 <div
                   key={cardKey}
+                  data-news-article-id={articleAnalyticsId(article.url)}
+                  data-news-sector={article.sector}
+                  data-news-position={index + 1}
                   data-onboarding-target={index === 0 ? "news-card-first" : undefined}
                   // iOS WebKit (Safari and this app's own Capacitor WebView
                   // alike) only evaluates `:active` on tap for elements

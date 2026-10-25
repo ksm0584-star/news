@@ -8,6 +8,7 @@ import {
   readPendingArticleReturn,
   type ArticleReturnInfo,
 } from "./article-return";
+import { articleAnalytics } from "./article-analytics";
 import { track } from "./mixpanel";
 import { isNativePlatform } from "./platform";
 
@@ -63,7 +64,8 @@ export function useArticleReturnBanner(): {
     markArticleReturnBannerShown();
     setInfo(pending);
     track("article_return_prompt_shown", {
-      ...(pending.articleId ? { article_id: pending.articleId } : {}),
+      ...articleAnalytics(pending.url),
+      entry_point: "article_return_prompt",
       sector: pending.sector,
       source: "home",
       elapsed_seconds: Math.round((Date.now() - pending.openedAt) / 1000),
@@ -108,7 +110,8 @@ export function useArticleReturnBanner(): {
   const onRecord = useCallback(() => {
     if (!info) return;
     track("article_return_prompt_clicked", {
-      ...(info.articleId ? { article_id: info.articleId } : {}),
+      ...articleAnalytics(info.url),
+      entry_point: "article_return_prompt",
       sector: info.sector,
       source: "home",
       elapsed_seconds: Math.round((Date.now() - info.openedAt) / 1000),
@@ -131,7 +134,8 @@ export function useArticleReturnBanner(): {
   const onDismiss = useCallback(() => {
     if (!info) return;
     track("article_return_prompt_dismissed", {
-      ...(info.articleId ? { article_id: info.articleId } : {}),
+      ...articleAnalytics(info.url),
+      entry_point: "article_return_prompt",
       sector: info.sector,
       source: "home",
       elapsed_seconds: Math.round((Date.now() - info.openedAt) / 1000),

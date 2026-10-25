@@ -16,6 +16,11 @@ function ensureInit(): boolean {
   if (!initialized) {
     mixpanel.init(MIXPANEL_TOKEN, {
       track_pageview: false,
+      autocapture: false,
+      ip: false,
+      // Record routes contain article titles/URLs in their query string.
+      // SDK automatic URL/referrer properties must not bypass our explicit payloads.
+      property_blacklist: ["$current_url", "$referrer", "$initial_referrer", "$initial_referring_domain"],
       persistence: "localStorage",
     });
     // Dev and Production currently share one Mixpanel token/project (no
