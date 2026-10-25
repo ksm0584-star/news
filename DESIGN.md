@@ -1101,6 +1101,30 @@ Toast 섹션 뒤의 "그 외 공통 컴포넌트" 항목에서 별도로 다룹�
     4가지 트리거), "기록하기" 클릭 시 기사 데이터 전달·라우팅, 로그인
     여부 미확인, Mixpanel 이벤트(`article_return_prompt_shown`·
     `_clicked`·`_dismissed`) — 전부 변경 없음. 바뀐 건 UI·타이밍뿐입니다.
+  - **아래로 스와이프해 닫기(2026-10-26)**: 카드에 Pointer Events(`onPointerDown`/
+    `Move`/`Up`/`Cancel`)를 달아 손가락을 따라 `translateY`로 실시간
+    추적합니다. 위로 끄는 움직임은 0으로 클램프(스와이프 업으로는 절대
+    닫히지 않음, 카드도 움직이지 않음). 50px 미만에서 떼면 기존
+    `transition-[opacity,transform] duration-200`(새 값 아님, 위 애니메이션
+    항목과 같은 트랜지션)으로 0으로 복귀, 50px 이상이면 같은 트랜지션으로
+    더 내려가며(기존 자동 닫힘의 `translate-y-2`보다 훨씬 멀리) 페이드
+    아웃하고 기존 `closing` 플로우(그대로, 자동 닫힘과 같은 `onDismiss`
+    타이밍)로 합류 — 트리거만 스와이프냐 타이머냐의 차이일 뿐 닫힘
+    로직·`onDismiss` 호출은 하나로 공유됩니다. 드래그 중엔 `transition:
+    "none"`으로 전환을 끄고 1:1로 직접 따라가다가, 손을 떼는 순간부터
+    다시 트랜지션이 붙습니다. 드래그가 8px 데드존을 넘는 순간 대기 중인
+    자동 닫힘 타이머를 취소하고(자동 닫힘·스와이프 닫힘이 서로 겹쳐
+    돌아가지 않음), `setPointerCapture`도 바로 그 순간에만 겁니다 —
+    pointerdown마다 걸면 일반 탭의 클릭이 캡처 때문에 "기록하기"에
+    전달되지 않는 문제가 있어, 실제 드래그로 확정된 뒤로 미뤘습니다.
+    같은 이유로 `onClickCapture`가 드래그로 확정된 제스처가 만드는
+    클릭만 capture 단계에서 걸러 "기록하기"가 눌리지 않게 하고(버튼
+    위에서 시작해 내려서 떼도 기록 화면으로 넘어가지 않음), 키보드
+    Enter/Space로 누르는 클릭은 Pointer Events 경로를 안 거치므로
+    전혀 영향받지 않습니다. 드래그 가능 영역엔 `touch-none`(모바일
+    Safari에서 브라우저 자체 스크롤/팬과 겹치지 않게)만 추가했고, 페이지
+    나머지 영역의 스크롤에는 손대지 않았습니다. 새 라이브러리·새 디자인
+    토큰 없음 — 색상·크기·위치·간격 전부 그대로입니다.
 - `OnboardingGuide` — 스포트라이트 코치마크. 딤은 검정 80%(`coachmark-dim`,
   `var(--coachmark-dim)`를 `boxShadow`에 사용) — Dialog / Bottom Sheet의
   `overlay`(검정 40%, 위 Dialog / Bottom Sheet 섹션)와는 별개 토큰이라 코치마크만
