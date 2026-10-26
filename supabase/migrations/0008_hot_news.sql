@@ -41,11 +41,13 @@ create trigger hot_news_keywords_set_updated_at
 -- The frozen daily result the cron job writes and the home screen reads.
 -- `effective_date` is the KST calendar date this result is "for" (computed
 -- by the cron job via src/lib/kst-date.ts, not by Postgres `now()`, to get
--- the UTC→KST day-rollover right). GET /api/hot-news only ever reads
--- today's KST date's rows — never an older date — so a cron failure or a
--- day with zero keyword matches simply means no rows for today, and the
--- home screen section hides itself rather than ever showing yesterday's
--- picks as if they were today's.
+-- the UTC→KST day-rollover right). GET /api/hot-news reads today's KST
+-- date's rows when present, else falls back to the latest prior date
+-- within HOT_NEWS_MAX_STALE_DAYS (src/lib/hot-news-lookup.ts) — so the
+-- home screen keeps showing yesterday's picks between midnight and
+-- whenever today's cron finishes, instead of going blank the moment the
+-- calendar date rolls over, and only hides the section once nothing
+-- within that window exists at all.
 create table if not exists public.hot_news_daily (
   id uuid primary key default gen_random_uuid(),
   effective_date date not null,

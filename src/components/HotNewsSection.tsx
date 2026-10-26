@@ -13,12 +13,15 @@ interface HotNewsResponse {
 /**
  * "지금 주목할 뉴스" — a horizontal-scroll row of admin-curated,
  * keyword-matched articles (see src/lib/hot-news-matching.ts), sourced
- * from GET /api/hot-news (today's KST row set the cron job froze into
- * hot_news_daily). Renders nothing at all — not even the section
- * title — when there's no data for today, per "적합한 기사가 없으면 HOT
- * 섹션을 숨기고 기존 뉴스 목록은 정상적으로 보여줍니다": a fetch failure
- * or an empty day never blocks or alters anything below it on the home
- * screen (LatestNewsList is a separate component, untouched either way).
+ * from GET /api/hot-news (the cron job's latest frozen row set in
+ * hot_news_daily — today's KST date if already written, else the most
+ * recent prior day, per src/lib/hot-news-lookup.ts). Renders nothing at
+ * all — not even the section title — only once nothing at all is
+ * available within that lookup's staleness window, per "적합한 기사가
+ * 없으면 HOT 섹션을 숨기고 기존 뉴스 목록은 정상적으로 보여줍니다": a
+ * fetch failure or a truly empty window never blocks or alters anything
+ * below it on the home screen (LatestNewsList is a separate component,
+ * untouched either way).
  *
  * Layout borrows the already-designed (but unused in production)
  * NewsCard/NewsCarousel pattern — snap-x horizontal scroll, rounded-2xl
