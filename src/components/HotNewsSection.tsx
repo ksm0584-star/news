@@ -34,7 +34,7 @@ export default function HotNewsSection() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/hot-news")
+    fetch("/api/hot-news", { cache: "no-store" })
       .then((res) => res.json())
       .then((json: HotNewsResponse) => {
         if (cancelled) return;

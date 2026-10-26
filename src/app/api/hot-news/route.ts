@@ -4,14 +4,14 @@ import { kstDateString } from "@/lib/kst-date";
 import type { LatestNewsItem } from "@/lib/news-rss";
 
 /**
- * This data only ever changes once a day, at the 08:00 KST cron run (see
- * src/app/api/cron/hot-news/route.ts) — a 1h cache window is a reasonable
- * freshness/cost tradeoff (any visitor sees the new day's picks within at
- * most an hour of the cron completing) without hitting Supabase on every
- * single home-screen load, same ISR-style approach /api/news already uses.
+ * Always runs per-request: a force-static + revalidate cache here froze a
+ * pre-cron empty response in production until the next deploy, since the
+ * CDN snapshot never revalidated on its own. The underlying query is a
+ * single indexed row lookup, so per-request cost is negligible.
  */
-export const dynamic = "force-static";
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+
+const NO_STORE_HEADERS = { "Cache-Control": "no-store, must-revalidate" };
 
 interface HotNewsRow {
   rank_order: number;
@@ -42,7 +42,10 @@ export async function GET() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const effectiveDate = kstDateString();
   if (!url || !anonKey) {
-    return NextResponse.json<HotNewsResponse>({ effectiveDate, articles: [] });
+    return NextResponse.json<HotNewsResponse>(
+      { effectiveDate, articles: [] },
+      { headers: NO_STORE_HEADERS },
+    );
   }
 
   const supabase = createClient(url, anonKey);
@@ -54,7 +57,10 @@ export async function GET() {
     .returns<HotNewsRow[]>();
 
   if (error || !data) {
-    return NextResponse.json<HotNewsResponse>({ effectiveDate, articles: [] });
+    return NextResponse.json<HotNewsResponse>(
+      { effectiveDate, articles: [] },
+      { headers: NO_STORE_HEADERS },
+    );
   }
 
   const articles: LatestNewsItem[] = data.map((row) => ({
@@ -66,5 +72,8 @@ export async function GET() {
     ...(row.image_url ? { imageUrl: row.image_url } : {}),
   }));
 
-  return NextResponse.json<HotNewsResponse>({ effectiveDate, articles });
+  return NextResponse.json<HotNewsResponse>(
+    { effectiveDate, articles },
+    { headers: NO_STORE_HEADERS },
+  );
 }
